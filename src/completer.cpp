@@ -43,7 +43,7 @@ public:
     {}
 
     //Set model information
-    void setData(const QString& wordBeforeCursor, const QString wholeWord) {
+    void setCompletionData(const QString& wordBeforeCursor, const QString wholeWord) {
         typedText_ = wordBeforeCursor;
         words_ = makeListOfCompletions(wordBeforeCursor, wholeWord);
         QString commonStart = commonWordStart(words_);
@@ -467,13 +467,13 @@ bool Completer::invokeCompletionIfAvailable(bool requestedByUser) {
             if (wordBeforeCursor.length() >= qpart_->completionThreshold() || forceShow) {
                 if (widget_ == nullptr) {
                     CompletionModel* model = new CompletionModel(wordSet_);
-                    model->setData(wordBeforeCursor, wholeWord);
+                    model->setCompletionData(wordBeforeCursor, wholeWord);
                     if (shouldShowModel(model, forceShow)) {
                         createWidget(model);
                         return true;
                     }
                 } else {
-                    widget_->completionModel()->setData(wordBeforeCursor, wholeWord);
+                    widget_->completionModel()->setCompletionData(wordBeforeCursor, wholeWord);
                     if (shouldShowModel(widget_->completionModel(), forceShow)) {
                         widget_->updateGeometry();
 
