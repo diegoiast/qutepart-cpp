@@ -2,6 +2,7 @@
 #include <QSharedPointer>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QFile>
 
 #include "qutepart.h"
 #include "rules.h"
@@ -447,14 +448,14 @@ Context* loadContext(QXmlStreamReader& xmlReader, QString& error) {
 }
 
 QList<ContextPtr> loadContexts(QXmlStreamReader& xmlReader, QString& error) {
-    if (xmlReader.name() != "contexts") {
+    if (xmlReader.name() != QLatin1String("contexts")) {
         error = QString("<contexts> tag not found. Found <%1>").arg(xmlReader.name().toString());
         return QList<ContextPtr>();
     }
 
     QList<ContextPtr> contexts; // result
     while (xmlReader.readNextStartElement()) {
-        if (xmlReader.name() != "context") {
+        if (xmlReader.name() != QLatin1String("context")) {
             error = QString("Not expected tag when parsing contexts <%1>").arg(xmlReader.name().toString());
             return QList<ContextPtr>();
         }
@@ -474,7 +475,7 @@ QList<ContextPtr> loadContexts(QXmlStreamReader& xmlReader, QString& error) {
 QStringList loadKeywordList(QXmlStreamReader& xmlReader, QString& error) {
     QStringList list;
     while (xmlReader.readNextStartElement()) {
-        if (xmlReader.name() != "item") {
+        if (xmlReader.name() != QLatin1String("item")) {
             error = QString("Not expected tag <%1> when loading list").arg(xmlReader.name().toString());
             return QStringList();
         }
@@ -513,7 +514,7 @@ QHash<QString, QStringList> loadKeywordLists(QXmlStreamReader& xmlReader, QStrin
 QHash<QString, Style> loadStyles(QXmlStreamReader& xmlReader, QString& error) {
     xmlReader.readNextStartElement();
 
-    if (xmlReader.name() != "itemDatas") {
+    if (xmlReader.name() != QLatin1String("itemDatas")) {
         error = QString("<itemDatas> tag not found. Found <%1>").arg(xmlReader.name().toString());
         return QHash<QString, Style>();
     }
@@ -521,7 +522,7 @@ QHash<QString, Style> loadStyles(QXmlStreamReader& xmlReader, QString& error) {
     QHash<QString, Style> styles;
 
     while (xmlReader.readNextStartElement()) {
-        if (xmlReader.name() != "itemData") {
+        if (xmlReader.name() != QLatin1String("itemData")) {
             error = QString("Not expected tag when parsing itemDatas <%1>").arg(xmlReader.name().toString());
             return QHash<QString, Style>();
         }
@@ -653,7 +654,7 @@ QList<ContextPtr> loadLanguageSytnax(
     while ( ! xmlReader.atEnd()) {
         xmlReader.readNextStartElement();
 
-        if (xmlReader.name() == "keywords") {
+        if (xmlReader.name() == QLatin1String("keywords")) {
             loadKeywordParams(xmlReader.attributes(), keywordDeliminators, keywordsKeySensitive, error);
             if ( ! error.isNull()) {
                 return QList<ContextPtr>();
@@ -663,7 +664,7 @@ QList<ContextPtr> loadLanguageSytnax(
             if ( ! keywordsKeySensitive) {
                 makeKeywordsLowerCase(keywordLists);
             }
-        } else if (xmlReader.name() == "indentation") {
+        } else if (xmlReader.name() == QLatin1String("indentation")) {
             if (xmlReader.attributes().hasAttribute("mode")) {
                 indenter = getAttribute(xmlReader.attributes(), "mode", QString());
             }
@@ -697,7 +698,7 @@ QSharedPointer<Language> parseXmlFile(const QString& xmlFileName, QXmlStreamRead
         return QSharedPointer<Language>();
     }
 
-    if (xmlReader.name() != "language") {
+    if (xmlReader.name() != QLatin1String("language")) {
         error = "'name' attribute not found in <language>";
         return QSharedPointer<Language>();
     }
@@ -738,7 +739,7 @@ QSharedPointer<Language> parseXmlFile(const QString& xmlFileName, QXmlStreamRead
     QStringList mimetypes = extensionsStr.split(';', Qt::SplitBehaviorFlags::SkipEmptyParts);
 
     if ( ! xmlReader.readNextStartElement() ||
-         xmlReader.name() != "highlighting") {
+         xmlReader.name() != QLatin1String("highlighting")) {
         error = "<highlighting> tag not found";
         return QSharedPointer<Language>();
     }
