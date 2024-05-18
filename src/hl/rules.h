@@ -99,7 +99,7 @@ public:
     QString args() const override {return listName;};
 
 private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
 
     QString listName;
     QStringList items;
@@ -118,7 +118,7 @@ public:
     QString args() const override;
 
 private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
 
     QChar value;
     int index;
@@ -143,7 +143,7 @@ public:
     QString name() const override {return "AnyChar";};
 
 private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const;
+    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
 };
 
 
@@ -153,7 +153,7 @@ public:
     QString name() const override {return "StringDetect";};
 
 private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const;
+    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
 };
 
 
@@ -167,7 +167,7 @@ public:
                           QString& error) override;
 
 private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const;
+    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
     QString mDeliminatorSet;
 };
 
@@ -183,7 +183,7 @@ private:
     QString args() const override;
 
     QRegularExpression compileRegExp(const QString& pattern) const;
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
 
     QString value;
     bool insensitive;
@@ -216,7 +216,7 @@ public:
     QString name() const override {return "Int";};
 
 private:
-    int tryMatchText(const QStringRef& text) const override;
+    virtual int tryMatchText(const QStringRef& text) const override;
 };
 
 
