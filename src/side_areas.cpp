@@ -51,7 +51,7 @@ int LineNumberArea::widthHint() const {
     int lines = std::max(1, qpart_->document()->blockCount());
     int digits = QString("%1").arg(lines).length();
 
-    return LEFT_LINE_NUM_MARGIN + qpart_->fontMetrics().width('9') * digits + RIGHT_LINE_NUM_MARGIN;
+    return LEFT_LINE_NUM_MARGIN + qpart_->fontMetrics().horizontalAdvance('9') * digits + RIGHT_LINE_NUM_MARGIN;
 }
 
 void LineNumberArea::updateWidth() {

@@ -228,7 +228,7 @@ public:
     QSize sizeHint() const override {
         int width = -1;
         foreach(const QString& word, completionModel_->words()) {
-            int wordWidth = fontMetrics().width(word);
+            int wordWidth = fontMetrics().horizontalAdvance(word);
             if (wordWidth > width) {
                 width = wordWidth;
             }
@@ -301,7 +301,7 @@ private:
     */
     int horizontalShift() const {
         int strangeAdjustment = 2;  // I don't know why. Probably, won't work on other systems and versions
-        return fontMetrics().width(completionModel_->typedText()) + strangeAdjustment;
+        return fontMetrics().horizontalAdvance(completionModel_->typedText()) + strangeAdjustment;
     }
 
     /* Cursor position changed. Schedule closing.

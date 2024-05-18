@@ -712,7 +712,7 @@ void Qutepart::setSolidEdgeGeometry() {
         // contents margin usually gives 1
         // cursor rectangle left edge for the very first character usually
         // gives 4
-        int x = fontMetrics().width(QString().fill('9', lineLengthEdge_)) +
+        int x = fontMetrics().horizontalAdvance(QString().fill('9', lineLengthEdge_)) +
             /* self._totalMarginWidth + */
             /* self.contentsMargins().left() + */
             cursorRect(firstVisibleBlock(), 0, 0).left();
@@ -758,7 +758,7 @@ void Qutepart::resizeEvent(QResizeEvent* event) {
 
 void Qutepart::updateTabStopWidth() {
     // Update tabstop width after font or indentation changed
-    int width = fontMetrics().width(QString().fill(' ', indenter_->width()));
+    int width = fontMetrics().horizontalAdvance(QString().fill(' ', indenter_->width()));
     setTabStopWidth(width);
 }
 
