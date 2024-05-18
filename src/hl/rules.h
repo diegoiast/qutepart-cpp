@@ -49,7 +49,7 @@ public:
 
 protected:
     virtual QString name() const {return "AbstractRule";};
-    virtual QString args() const {return QString::null;};
+    virtual QString args() const {return QString();};
 
     MatchResult* makeMatchResult(
         int length,

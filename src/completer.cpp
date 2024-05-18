@@ -506,7 +506,7 @@ QString Completer::getWordBeforeCursor() const {
     if (match.hasMatch()) {
         return match.captured();
     } else {
-        return QString::null;
+        return QString();
     }
 }
 
@@ -518,7 +518,7 @@ QString Completer::getWordAfterCursor() const {
     if (match.hasMatch()) {
         return match.captured();
     } else {
-        return QString::null;
+        return QString();
     }
 }
 

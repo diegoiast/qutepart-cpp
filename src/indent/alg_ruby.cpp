@@ -227,24 +227,24 @@ RubyStatement IndentAlgRuby::findBlockStart(QTextBlock block) const {
 
 QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) const {
     if ( ! isValidTrigger(block)) {
-        return QString::null;
+        return QString();
     }
 
     RubyStatement prevStmt = findPrevStmt(block);
     if ( ! prevStmt.endBlock.isValid() ) {
-        return QString::null;  // Can't indent the first line
+        return QString();  // Can't indent the first line
     }
 
     QTextBlock prevBlock = prevNonEmptyBlock(block);
 
     // HACK Detect here documents
     if (isHereDoc(prevBlock, prevBlock.length() - 2)) {
-      return QString::null;
+      return QString();
     }
 
     // HACK Detect embedded comments
     if (isBlockComment(prevBlock, prevBlock.length() - 2)) {
-        return QString::null;
+        return QString();
     }
 
     QString prevStmtContent = prevStmt.content();
@@ -292,7 +292,7 @@ QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
         if (prevStmt.startBlock == prevStmt.endBlock) {
             if (blockIndent(block).length() > blockIndent(prevStmt.endBlock).length()) {
                 // Don't force a specific indent level when aligning manually
-                return QString::null;
+                return QString();
             }
             return increaseIndent(increaseIndent(prevStmtIndent, indentText()), indentText());
         } else {
@@ -305,7 +305,7 @@ QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
         if (startStmt.startBlock.isValid()) {
             return startStmt.indent();
         } else {
-            return QString::null;
+            return QString();
         }
     }
 

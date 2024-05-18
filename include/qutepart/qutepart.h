@@ -80,9 +80,9 @@ public:
 /**
  * Choose language by available parameters.
  * First parameters have higher priority.
- * Returns `QString::null` if can not detect the language.
+ * Returns `QString()` if can not detect the language.
  *
- * Fill as much parameters as you can. Set `QString::null` for unknown parameters.
+ * Fill as much parameters as you can. Set `QString()` for unknown parameters.
  *
  * \param mimeType The file MIME type. i.e. ``text/html``
  * \param languageName The language name as written in the <a href="https://github.com/andreikop/qutepart-cpp/blob/master/src/hl/language_db_generated.cpp">language DB</a>
@@ -90,10 +90,10 @@ public:
  * \param firstLine Contents of the first line of the file which is going to be edited.
  */
 LangInfo chooseLanguage(
-    const QString& mimeType=QString::null,
-    const QString& languageName=QString::null,
-    const QString& sourceFilePath=QString::null,
-    const QString& firstLine=QString::null);
+    const QString& mimeType=QString(),
+    const QString& languageName=QString(),
+    const QString& sourceFilePath=QString(),
+    const QString& firstLine=QString());
 
 class Indenter;
 class BracketHighlighter;
@@ -216,7 +216,7 @@ class Qutepart: public QPlainTextEdit {
     Q_OBJECT
 
 public:
-    Qutepart(QWidget *parent = nullptr, const QString &text = QString::null);
+    Qutepart(QWidget *parent = nullptr, const QString &text = QString());
 
     // Not copyable or movable
     Qutepart(const Qutepart&) = delete;

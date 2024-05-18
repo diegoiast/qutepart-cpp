@@ -29,7 +29,7 @@ QString searchInGlobMap(const QMap<QString, QString>& map, const QString& string
         ++it;
     }
 
-    return QString::null;
+    return QString();
 }
 
 QString chooseLanguageXmlFileName(
@@ -65,7 +65,7 @@ QString chooseLanguageXmlFileName(
         }
     }
 
-    return QString::null;
+    return QString();
 }
 
 IndentAlg convertIndenter(const QString& stringVal) {

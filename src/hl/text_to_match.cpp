@@ -51,7 +51,7 @@ QString TextToMatch::word(const QString& deliminatorSet) const {
     if (currentColumnIndex > 0) {
         QChar prevChar = wholeLineText[currentColumnIndex - 1];
         if ( ! deliminatorSet.contains(prevChar)) {
-            return QString::null;
+            return QString();
         }
     }
 
@@ -65,7 +65,7 @@ QString TextToMatch::word(const QString& deliminatorSet) const {
         return text.left(wordEndIndex).toString();
     }
 
-    return QString::null;
+    return QString();
 }
 
 }  // namespace Qutepart

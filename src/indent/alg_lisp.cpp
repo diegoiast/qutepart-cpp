@@ -34,7 +34,7 @@ QString IndentAlgLisp::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
 
     TextPosition pos = findOpeningBracketBackward('(', TextPosition(block, 0));
     if ( ! pos.isValid()) {
-        return QString::null;
+        return QString();
     }
 
     return blockIndent(pos.block) + indentText();

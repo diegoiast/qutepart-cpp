@@ -160,7 +160,7 @@ Style::Style():
 
 Style::Style(const QString& defStyleName, QSharedPointer<QTextCharFormat> format):
     _format(format),
-    _textType(detectTextType(QString::null, defStyleName)),
+    _textType(detectTextType(QString(), defStyleName)),
     defStyleName(defStyleName)
 {}
 

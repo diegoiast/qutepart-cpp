@@ -19,7 +19,7 @@ bool openFile(const QString& filePath, Qutepart::Qutepart* qutepart) {
     QFile file(filePath);
     if (file.exists()) {
         Qutepart::LangInfo langInfo = Qutepart::chooseLanguage(
-            QString::null, QString::null, filePath);
+            QString(), QString(), filePath);
         if (langInfo.isValid()) {
             qutepart->setHighlighter(langInfo.id);
             qutepart->setIndentAlgorithm(langInfo.indentAlg);

@@ -438,11 +438,11 @@ void Qutepart::changeEvent(QEvent *event) {
 
 void Qutepart::initActions() {
     homeAction_ = createAction(
-        "Home", QKeySequence(Qt::Key_Home), QString::null,
+        "Home", QKeySequence(Qt::Key_Home), QString(),
         [this](){this->onShortcutHome(QTextCursor::MoveAnchor);});
 
     homeSelectAction_ = createAction(
-        "Home (select)", QKeySequence(Qt::SHIFT | Qt::Key_Home), QString::null,
+        "Home (select)", QKeySequence(Qt::SHIFT | Qt::Key_Home), QString(),
         [this](){this->onShortcutHome(QTextCursor::KeepAnchor);});
 
     increaseIndentAction_ = createAction(
@@ -454,52 +454,52 @@ void Qutepart::initActions() {
         [this](){this->changeSelectedBlocksIndent(false, false);});
 
     toggleBookmarkAction_ = createAction(
-        "Toggle bookmark", QKeySequence(Qt::CTRL | Qt::Key_B), QString::null,
+        "Toggle bookmark", QKeySequence(Qt::CTRL | Qt::Key_B), QString(),
         [this](){this->onShortcutToggleBookmark();});
 
-    prevBookmarkAction_ = createAction("Previous bookmark", QKeySequence(Qt::SHIFT | Qt::Key_F2), QString::null,
+    prevBookmarkAction_ = createAction("Previous bookmark", QKeySequence(Qt::SHIFT | Qt::Key_F2), QString(),
         [this](){this->onShortcutPrevBookmark();});
 
-    nextBookmarkAction_ = createAction("Next bookmark", QKeySequence(Qt::Key_F2), QString::null,
+    nextBookmarkAction_ = createAction("Next bookmark", QKeySequence(Qt::Key_F2), QString(),
         [this](){this->onShortcutNextBookmark();});
 
-    invokeCompletionAction_ = createAction("Invoke completion", QKeySequence(Qt::CTRL | Qt::Key_Space), QString::null,
+    invokeCompletionAction_ = createAction("Invoke completion", QKeySequence(Qt::CTRL | Qt::Key_Space), QString(),
         [this](){this->completer_->invokeCompletion();});
 
-    duplicateSelectionAction_ = createAction("Duplicate selection or line", QKeySequence(Qt::ALT | Qt::Key_D), QString::null,
+    duplicateSelectionAction_ = createAction("Duplicate selection or line", QKeySequence(Qt::ALT | Qt::Key_D), QString(),
         [this]{this->duplicateSelection();});
 
-    moveLineUpAction_ = createAction("Move line up", QKeySequence(Qt::ALT | Qt::Key_Up), QString::null,
+    moveLineUpAction_ = createAction("Move line up", QKeySequence(Qt::ALT | Qt::Key_Up), QString(),
         [this]{this->moveSelectedLines(-1);});
-    moveLineDownAction_ = createAction("Move line down", QKeySequence(Qt::ALT | Qt::Key_Down), QString::null,
+    moveLineDownAction_ = createAction("Move line down", QKeySequence(Qt::ALT | Qt::Key_Down), QString(),
         [this]{this->moveSelectedLines(+1);});
 
-    deleteLineAction_ = createAction("Delete line", QKeySequence(Qt::ALT | Qt::Key_Delete), QString::null,
+    deleteLineAction_ = createAction("Delete line", QKeySequence(Qt::ALT | Qt::Key_Delete), QString(),
         [this]{this->deleteLine();});
 
-    cutLineAction_ = createAction("Cut line", QKeySequence(Qt::ALT | Qt::Key_X), QString::null,
+    cutLineAction_ = createAction("Cut line", QKeySequence(Qt::ALT | Qt::Key_X), QString(),
         [this]{this->cutLine();});
-    copyLineAction_ = createAction("Copy line", QKeySequence(Qt::ALT | Qt::Key_C), QString::null,
+    copyLineAction_ = createAction("Copy line", QKeySequence(Qt::ALT | Qt::Key_C), QString(),
         [this]{this->copyLine();});
-    pasteLineAction_ = createAction("Paste line", QKeySequence(Qt::ALT | Qt::Key_V), QString::null,
+    pasteLineAction_ = createAction("Paste line", QKeySequence(Qt::ALT | Qt::Key_V), QString(),
         [this]{this->pasteLine();});
 
-    insertLineAboveAction_ = createAction("Insert line above", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Return), QString::null,
+    insertLineAboveAction_ = createAction("Insert line above", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Return), QString(),
         [this]{this->insertLineAbove();});
-    insertLineBelowAction_ = createAction("Insert line below", QKeySequence(Qt::CTRL | Qt::Key_Return), QString::null,
+    insertLineBelowAction_ = createAction("Insert line below", QKeySequence(Qt::CTRL | Qt::Key_Return), QString(),
         [this]{this->insertLineBelow();});
 
-    joinLinesAction_ = createAction("Join lines", QKeySequence(Qt::CTRL | Qt::Key_J), QString::null,
+    joinLinesAction_ = createAction("Join lines", QKeySequence(Qt::CTRL | Qt::Key_J), QString(),
         [this]{this->onShortcutJoinLines();});
 
-    scrollDownAction_ = createAction("Scroll down", QKeySequence(Qt::CTRL | Qt::Key_Down), QString::null,
+    scrollDownAction_ = createAction("Scroll down", QKeySequence(Qt::CTRL | Qt::Key_Down), QString(),
         [this](){this->scrollByOffset(1);});
-    scrollUpAction_ = createAction("Scroll up", QKeySequence(Qt::CTRL | Qt::Key_Up), QString::null,
+    scrollUpAction_ = createAction("Scroll up", QKeySequence(Qt::CTRL | Qt::Key_Up), QString(),
         [this](){this->scrollByOffset(-1);});
 
-    zoomInAction_ = createAction("Zoom In", QKeySequence(Qt::CTRL | Qt::Key_Equal), QString::null,
+    zoomInAction_ = createAction("Zoom In", QKeySequence(Qt::CTRL | Qt::Key_Equal), QString(),
         [this]{this->zoomIn();});
-    zoomOutAction_ = createAction("Zoom Out", QKeySequence(Qt::CTRL | Qt::Key_Minus), QString::null,
+    zoomOutAction_ = createAction("Zoom Out", QKeySequence(Qt::CTRL | Qt::Key_Minus), QString(),
         [this]{this->zoomOut();});
 }
 

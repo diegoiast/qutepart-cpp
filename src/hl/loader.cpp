@@ -33,7 +33,7 @@ QHash<QString, QString> attrsToInsensitiveHashMap(const QXmlStreamAttributes& at
 
 
 QString getAttribute(QXmlStreamAttributes attrs, QString name,
-                     QString defaultValue=QString::null,
+                     QString defaultValue=QString(),
                      bool warnIfNotSet=false) {
     if (attrs.hasAttribute(name)) {
         return attrs.value(name).toString();
@@ -50,7 +50,7 @@ QString getRequiredAttribute(QXmlStreamAttributes attrs, QString name, QString& 
         return attrs.value(name).toString();
     } else {
         error = QString("Required attribute %1 is not set").arg(name);
-        return QString::null;
+        return QString();
     }
 }
 
@@ -566,10 +566,10 @@ QHash<QString, Style> loadStyles(QXmlStreamReader& xmlReader, QString& error) {
 
     // HACK not documented, but 'normal' attribute is used by some parsers without declaration
     if ( ! styles.contains("normal")) {
-        styles["normal"] = makeStyle("dsNormal", QString::null, QString::null, QHash<QString, bool>(), error);
+        styles["normal"] = makeStyle("dsNormal", QString(), QString(), QHash<QString, bool>(), error);
     }
     if ( ! styles.contains("string")) {
-        styles["string"] = makeStyle("dsString", QString::null, QString::null, QHash<QString, bool>(), error);
+        styles["string"] = makeStyle("dsString", QString(), QString(), QHash<QString, bool>(), error);
     }
 
     return styles;
@@ -665,7 +665,7 @@ QList<ContextPtr> loadLanguageSytnax(
             }
         } else if (xmlReader.name() == "indentation") {
             if (xmlReader.attributes().hasAttribute("mode")) {
-                indenter = getAttribute(xmlReader.attributes(), "mode", QString::null);
+                indenter = getAttribute(xmlReader.attributes(), "mode", QString());
             }
         }
     }
@@ -714,10 +714,10 @@ QSharedPointer<Language> parseXmlFile(const QString& xmlFileName, QXmlStreamRead
         return QSharedPointer<Language>();
     }
 
-    QString mimetypesStr = getAttribute(attrs, "mimetypes", QString::null);
-    QString priorityStr = getAttribute(attrs, "priority", QString::null);
+    QString mimetypesStr = getAttribute(attrs, "mimetypes", QString());
+    QString priorityStr = getAttribute(attrs, "priority", QString());
     QString hiddenStr = getAttribute(attrs, "hidden", "false");
-    QString indenter = getAttribute(attrs, "indenter", QString::null);
+    QString indenter = getAttribute(attrs, "indenter", QString());
 
     int priority = 0;
     if ( ! priorityStr.isNull()) {
@@ -833,7 +833,7 @@ ContextPtr loadExternalContext(const QString& externalCtxName) {
         contextName = parts[0];
     }
 
-    LangInfo langInfo = chooseLanguage(QString::null, langName);
+    LangInfo langInfo = chooseLanguage(QString(), langName);
     if ( ! langInfo.isValid()) {
         qWarning() << "Unknown language" << langName;
         return ContextPtr();

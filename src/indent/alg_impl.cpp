@@ -36,7 +36,7 @@ QString IndentAlgImpl::computeSmartIndent(QTextBlock /*block*/, int /*cursorPos*
 
 
 const QString& IndentAlgImpl::triggerCharacters() const {
-    static const QString NULL_STRING = QString::null;
+    static const QString NULL_STRING = QString();
     return NULL_STRING;
 }
 

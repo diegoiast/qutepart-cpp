@@ -25,7 +25,7 @@ QString prevBlockIndent(QTextBlock block) {
     QTextBlock prevBlock = block.previous();
 
     if ( ! block.isValid()) {
-            return QString::null;
+            return QString();
     }
 
     return blockIndent(prevBlock);

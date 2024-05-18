@@ -72,7 +72,7 @@ const QString& IndentAlgCstyle::triggerCharacters() const {
 QString IndentAlgCstyle::findLeftBrace(const QTextBlock& block, int column) const {
     TextPosition pos = findOpeningBracketBackward('{', TextPosition(block, column));
     if ( ! pos.isValid()) {
-        return QString::null;
+        return QString();
     }
 
     TextPosition parenthisPos = tryParenthesisBeforeBrace(pos);
@@ -109,7 +109,7 @@ QString IndentAlgCstyle::trySwitchStatement(const QTextBlock& block) const {
     static const QRegularExpression switchRx("^\\s*switch\\b");
 
     if ( ! caseRx.match(block.text()).hasMatch()) {
-        return QString::null;
+        return QString();
     }
 
     QTextBlock currentBlock = block.previous();
@@ -128,7 +128,7 @@ QString IndentAlgCstyle::trySwitchStatement(const QTextBlock& block) const {
         currentBlock = currentBlock.previous();
     }
 
-    return QString::null;
+    return QString();
 }
 
 /* Check for private, protected, public, signals etc... and assume we are in a
@@ -137,18 +137,18 @@ class and return its indentation or null if not found.
 */
 QString IndentAlgCstyle::tryAccessModifiers(const QTextBlock& block) const {
     if (CFG_ACCESS_MODIFIERS < 0) {
-        return QString::null;
+        return QString();
     }
 
     QRegularExpression rx("^\\s*((public|protected|private)\\s*(slots|Q_SLOTS)?|(signals|Q_SIGNALS)\\s*):\\s*$");
 
     if ( ! rx.match(block.text()).hasMatch()) {
-        return QString::null;
+        return QString();
     }
 
     TextPosition pos = findOpeningBracketBackward('{', TextPosition(block, 0));
     if ( ! pos.isValid()) {
-        return QString::null;
+        return QString();
     }
 
     QString indentation = blockIndent(pos.block);
@@ -169,7 +169,7 @@ QString IndentAlgCstyle::tryCComment(const QTextBlock& block) const {
 
     QTextBlock prevNonEmptyBlock = prevNonEmptyNonCommentBlock(block);
     if ( ! prevNonEmptyBlock.isValid()) {
-        return QString::null;
+        return QString();
     }
 
     QString prevNonEmptyBlockText = prevNonEmptyBlock.text();
@@ -185,7 +185,7 @@ QString IndentAlgCstyle::tryCComment(const QTextBlock& block) const {
 
     if (prevNonEmptyBlock != block.previous()) {
         // inbetween was an empty line, so do not copy the "*" character
-        return QString::null;
+        return QString();
     }
 
     QString blockTextStripped = block.text().trimmed();
@@ -227,7 +227,7 @@ QString IndentAlgCstyle::tryCComment(const QTextBlock& block) const {
         return indentation;
     }
 
-    return QString::null;
+    return QString();
 }
 
 #if 0  // disabled while porting to C++
@@ -239,7 +239,7 @@ NOTE: otherwise comments get skipped generally and we use the last code-line
 QString IndentAlgCstyle::tryCppComment(const QTextBlock& block) const {
     if ( (! block.previous().isValid()) ||
          (! CFG_AUTO_INSERT_SLACHES)) {
-        return QString::null;
+        return QString();
     }
 
     QString prevLineText = block.previous().text();
@@ -306,7 +306,7 @@ bool isNamespace(QTextBlock block) {
 QString IndentAlgCstyle::tryBrace(const QTextBlock& block) const {
     QTextBlock currentBlock = prevNonEmptyNonCommentBlock(block);
     if ( ! currentBlock.isValid()) {
-        return QString::null;
+        return QString();
     }
 
     QString indentation;
@@ -343,7 +343,7 @@ Note: The code is written to be called *after* tryCComment and tryCppComment!
 QString IndentAlgCstyle::tryCKeywords(const QTextBlock& block, bool isBrace) const {
     QTextBlock currentBlock = prevNonEmptyNonCommentBlock(block);
     if ( ! currentBlock.isValid()) {
-        return QString::null;
+        return QString();
     }
 
     // if line ends with ')', find the '(' and check this line then.
@@ -358,7 +358,7 @@ QString IndentAlgCstyle::tryCKeywords(const QTextBlock& block, bool isBrace) con
     QRegularExpression rx("^\\s*(if\\b|for|do\\b|while|switch|[}]?\\s*else|((private|public|protected|case|default|signals|Q_SIGNALS).*:))");
 
     if ( ! rx.match(currentBlock.text()).hasMatch()) {
-        return QString::null;
+        return QString();
     }
 
     QString indentation;
@@ -400,7 +400,7 @@ Note: The code is written to be called *after* tryCComment and tryCppComment!
 QString IndentAlgCstyle::tryCondition(const QTextBlock& block) const {
     QTextBlock currentBlock = prevNonEmptyNonCommentBlock(block);
     if ( ! currentBlock.isValid()) {
-        return QString::null;
+        return QString();
     }
 
     // found non-empty line
@@ -415,7 +415,7 @@ QString IndentAlgCstyle::tryCondition(const QTextBlock& block) const {
         // indent level less.
         QString currentIndentation = lineIndent(currentText);
         if (currentIndentation.isEmpty()) {
-            return QString::null;
+            return QString();
         }
 
         currentBlock = currentBlock.previous();
@@ -436,7 +436,7 @@ QString IndentAlgCstyle::tryCondition(const QTextBlock& block) const {
         }
     }
 
-    return QString::null;
+    return QString();
 }
 
 /* If the non-empty line ends with ); or ',', then search for '(' and return its
@@ -446,7 +446,7 @@ QString IndentAlgCstyle::tryStatement(const QTextBlock& block) const {
     QTextBlock currentBlock = prevNonEmptyNonCommentBlock(block);
 
     if ( ! currentBlock.isValid()) {
-        return QString::null;
+        return QString();
     }
 
     QString indentation;
@@ -597,13 +597,13 @@ QString IndentAlgCstyle::tryMatchedAnchor(const QTextBlock& block, bool autoInde
     } else if (ch == ']') {
         oposite = '[';
     } else {
-        return QString::null;
+        return QString();
     }
 
     // we pressed enter in e.g. ()
     TextPosition foundPos = findOpeningBracketBackward(oposite, TextPosition(block, 0));
     if ( ! foundPos.isValid()) {
-        return QString::null;
+        return QString();
     }
 
    if (autoIndent) {
