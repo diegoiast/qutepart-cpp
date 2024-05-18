@@ -339,7 +339,7 @@ bool isCharEvent(QKeyEvent* ev) {
     }
 
     QChar code = text[0];
-    if (code <= 31 || code == 0x7f) {  // control characters
+    if (code <= QChar(31) || code == QChar(0x7f)) {  // control characters
         return false;
     }
 

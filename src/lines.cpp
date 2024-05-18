@@ -115,7 +115,7 @@ QString Lines::popAt(int lineNumber) {
     cursor.beginEditBlock();
 
     cursor.select(QTextCursor::BlockUnderCursor);
-    bool removedEolAtStart = cursor.selectedText().startsWith(0x2029);
+    bool removedEolAtStart = cursor.selectedText().startsWith(QChar(0x2029));
     cursor.removeSelectedText();
 
     if (cursor.atStart()) {
