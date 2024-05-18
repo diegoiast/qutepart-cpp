@@ -8,7 +8,7 @@ TextToMatch::TextToMatch(
         const QStringList& contextData):
     currentColumnIndex(0),
     wholeLineText(text),
-    text(wholeLineText.leftRef(wholeLineText.length())),
+    text(wholeLineText.left(wholeLineText.length())),
     textLength(text.length()),
     firstNonSpace(true), // copy-paste from Py code
     isWordStart(true), // copy-paste from Py code

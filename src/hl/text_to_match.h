@@ -22,7 +22,7 @@ public:
 
     int currentColumnIndex;
     QString wholeLineText;
-    QStringRef text;
+    QStringView text;
     int textLength;
     bool firstNonSpace;
     bool isWordStart;

@@ -262,15 +262,15 @@ RegExpRule* loadRegExp(const QXmlStreamAttributes& attrs,
     bool lineStart = false;
 
     if ( ! value.isEmpty()) {
-        QStringRef strippedValue = value.midRef(0);
+        QStringView strippedValue = value.mid(0);
         while (strippedValue.startsWith('(')) {
             strippedValue = strippedValue.mid(1);
         }
 
         if ( ! (strippedValue.length() > 1 &&
                 strippedValue.at(1) == '|')) {  // ^|blabla   This condition is not ideal but will cover majority of cases
-            wordStart = strippedValue.startsWith("\\b");
-            lineStart = strippedValue.startsWith("^");
+            wordStart = strippedValue.startsWith(QLatin1String("\\b"));
+            lineStart = strippedValue.startsWith('^');
         }
     }
 
@@ -325,44 +325,44 @@ AbstractRule* loadRule(QXmlStreamReader& xmlReader, QString& error) {
         return nullptr;
     }
 
-    QStringRef name = xmlReader.name();
+    QStringView name = xmlReader.name();
 
     AbstractRule* result = nullptr;
-    if (name == "keyword") {
+    if (name == QLatin1String("keyword")) {
         result = loadKeywordRule(attrs, params, error);
-    } else if (name == "DetectChar") {
+    } else if (name == QLatin1String("DetectChar")) {
         result = loadDetectChar(attrs, params, error);
-    } else if (name == "Detect2Chars") {
+    } else if (name == QLatin1String("Detect2Chars")) {
         result = loadDetect2Chars(attrs, params, error);
-    } else if (name == "AnyChar") {
+    } else if (name == QLatin1String("AnyChar")) {
         result = loadStringRule<AnyCharRule>(attrs, params, error);
-    } else if (name == "StringDetect") {
+    } else if (name == QLatin1String("StringDetect")) {
         result = loadStringRule<StringDetectRule>(attrs, params, error);
-    } else if (name == "WordDetect") {
+    } else if (name == QLatin1String("WordDetect")) {
         result = loadStringRule<WordDetectRule>(attrs, params, error);
-    } else if (name == "RegExpr") {
+    } else if (name == QLatin1String("RegExpr")) {
         result = loadRegExp(attrs, params, error);
-    } else if (name == "Int") {
+    } else if (name == QLatin1String("Int")) {
         result = loadNumberRule<IntRule>(xmlReader, params, error);
-    } else if (name == "Float") {
+    } else if (name == QLatin1String("Float")) {
         result = loadNumberRule<FloatRule>(xmlReader, params, error);
-    } else if (name == "HlCHex") {
+    } else if (name == QLatin1String("HlCHex")) {
         result = new HlCHexRule(params);
-    } else if (name == "HlCOct") {
+    } else if (name == QLatin1String("HlCOct")) {
         result = new HlCOctRule(params);
-    } else if (name == "HlCStringChar") {
+    } else if (name == QLatin1String("HlCStringChar")) {
         result = new HlCStringCharRule(params);
-    } else if (name == "HlCChar") {
+    } else if (name == QLatin1String("HlCChar")) {
         result = new HlCCharRule(params);
-    } else if (name == "RangeDetect") {
+    } else if (name == QLatin1String("RangeDetect")) {
         result = loadRangeDetectRule(attrs, params, error);
-    } else if (name == "LineContinue") {
+    } else if (name == QLatin1String("LineContinue")) {
         result = new LineContinueRule(params);
-    } else if (name == "IncludeRules") {
+    } else if (name == QLatin1String("IncludeRules")) {
         result = loadIncludeRulesRule(attrs, params, error);
-    } else if (name == "DetectSpaces") {
+    } else if (name == QLatin1String("DetectSpaces")) {
         result = new DetectSpacesRule(params);
-    } else if (name == "DetectIdentifier") {
+    } else if (name == QLatin1String("DetectIdentifier")) {
         result = new DetectIdentifierRule(params);
     } else {
         error = QString("Unknown rule %1").arg(name.toString());
@@ -488,7 +488,7 @@ QHash<QString, QStringList> loadKeywordLists(QXmlStreamReader& xmlReader, QStrin
     QHash<QString, QStringList> lists;
 
     while (xmlReader.readNextStartElement()) {
-        if (xmlReader.name() != "list") {
+        if (xmlReader.name() != QLatin1String("list")) {
             return lists;
         }
 

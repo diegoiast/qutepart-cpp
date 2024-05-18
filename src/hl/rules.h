@@ -202,8 +202,8 @@ public:
     void printDescription(QTextStream& out) const override;
 protected:
     MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
-    virtual int tryMatchText(const QStringRef& text) const = 0;
-    int countDigits(const QStringRef& text) const;
+    virtual int tryMatchText(const QStringView& text) const = 0;
+    int countDigits(const QStringView& text) const;
 
     QList<RulePtr> childRules;
 };
@@ -216,7 +216,7 @@ public:
     QString name() const override {return "Int";};
 
 private:
-    virtual int tryMatchText(const QStringRef& text) const override;
+    virtual int tryMatchText(const QStringView& text) const override;
 };
 
 
@@ -227,7 +227,7 @@ public:
     QString name() const override {return "Float";};
 
 private:
-    int tryMatchText(const QStringRef& text) const override;
+    int tryMatchText(const QStringView& text) const override;
 };
 
 

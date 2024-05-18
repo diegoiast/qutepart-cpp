@@ -380,7 +380,7 @@ MatchResult* AbstractNumberRule::tryMatchImpl(const TextToMatch& textToMatch) co
     return makeMatchResult(matchedLength);
 }
 
-int AbstractNumberRule::countDigits(const QStringRef& text) const {
+int AbstractNumberRule::countDigits(const QStringView& text) const {
     int index = 0;
     for(index = 0; index < text.length(); index++) {
         if ( ! text.at(index).isDigit()) {
@@ -391,12 +391,12 @@ int AbstractNumberRule::countDigits(const QStringRef& text) const {
 }
 
 
-int IntRule::tryMatchText(const QStringRef& text) const {
+int IntRule::tryMatchText(const QStringView& text) const {
     return countDigits(text);
 }
 
 
-int FloatRule::tryMatchText(const QStringRef& text) const {
+int FloatRule::tryMatchText(const QStringView& text) const {
     bool haveDigit = false;
     bool havePoint = false;
 
@@ -478,7 +478,7 @@ namespace { // HlC helpers
 
     const QString escapeChars = "abefnrtv'\"?\\";
 
-    int checkEscapedChar(QStringRef text) {
+    int checkEscapedChar(QStringView text) {
         int index = 0;
         if(text.length() > 1 && text.at(0) == '\\') {
             index = 1;
@@ -654,7 +654,7 @@ MatchResult* IncludeRulesRule::tryMatchImpl(const TextToMatch& textToMatch) cons
 
 
 MatchResult* LineContinueRule::tryMatchImpl(const TextToMatch& textToMatch) const {
-    if (textToMatch.text == "\\") {
+    if (textToMatch.text == QLatin1String("\\")) {
         return makeMatchResult(1, true);
     }
 

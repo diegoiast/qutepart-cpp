@@ -20,11 +20,11 @@ QString IndentAlgLisp::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
                       ;   -> usually on the same line as code -> ignore
      */
     QString text = block.text();
-    QStringRef leftStripped = text.rightRef(text.length() - firstNonSpaceColumn(text));
+    QStringView leftStripped = text.right(text.length() - firstNonSpaceColumn(text));
 
-    if (leftStripped.startsWith(";;;")) {
+    if (leftStripped.startsWith(QLatin1String(";;;"))) {
         return "";
-    } else if (leftStripped.startsWith(";;")) {
+    } else if (leftStripped.startsWith(QLatin1String(";;"))) {
         // try to align with the next line
         QTextBlock nextBlock = nextNonEmptyBlock(block);
         if (nextBlock.isValid()) {

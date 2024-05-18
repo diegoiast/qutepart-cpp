@@ -538,7 +538,7 @@ void Qutepart::drawIndentMarkersAndEdge(const QRect& paintEventRect) {
             // Draw indent markers, if good indentation is not drawn
             if (drawIndentations_ && (! drawAnyWhitespace_)) {
                 QString text = block.text();
-                QStringRef textRef(&text);
+                QStringView textRef(text);
                 int column = indenter_->width();
                 while (textRef.startsWith(indenter_->indentText()) &&
                        textRef.length() > indenter_->width() &&
