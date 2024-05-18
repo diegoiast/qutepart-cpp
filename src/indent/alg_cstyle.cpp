@@ -15,7 +15,7 @@ const bool CFG_INDENT_CASE = true;  // indent 'case' and 'default' in a switch?
 const bool CFG_INDENT_NAMESPACE = true;  // indent after 'namespace'?
 const bool CFG_AUTO_INSERT_STAR = true;  // auto insert '*' in C-comments
 const bool CFG_SNAP_SLASH = true;  // snap '/' to '*/' in C-comments
-const bool CFG_AUTO_INSERT_SLACHES = false;  // auto insert '//' after C++-comments
+//const bool CFG_AUTO_INSERT_SLACHES = false;  // auto insert '//' after C++-comments
 
 /* indent level of access modifiers, relative to the class indent level
    set to -1 to disable auto-indendation after access modifiers.
