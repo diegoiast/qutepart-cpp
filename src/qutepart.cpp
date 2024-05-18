@@ -759,7 +759,7 @@ void Qutepart::resizeEvent(QResizeEvent* event) {
 void Qutepart::updateTabStopWidth() {
     // Update tabstop width after font or indentation changed
     int width = fontMetrics().horizontalAdvance(QString().fill(' ', indenter_->width()));
-    setTabStopWidth(width);
+    setTabStopDistance(width);
 }
 
 void Qutepart::drawIndentMarker(QPainter* painter, QTextBlock block, int column) {
