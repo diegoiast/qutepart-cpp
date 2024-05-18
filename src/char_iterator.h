@@ -8,6 +8,7 @@ class CharIterator {
 public:
     // create iterator and make first step
     CharIterator(const TextPosition& position);
+    virtual ~CharIterator() = default;
 
     QChar step();  // return current character and then make step back
     TextPosition previousPosition() const;
