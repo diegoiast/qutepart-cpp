@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8.0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-add_subdirectory("docs")
+#add_subdirectory("docs")
 
 project(qutepart)
 
@@ -11,7 +11,7 @@ set(QUTEPART_VERSION_MINOR 1)
 set(QUTEPART_VERSION_PATCH 0)
 set(QUTEPART_VERSION
     ${QUTEPART_VERSION_MAJOR}.${QUTEPART_VERSION_MINOR}.${QUTEPART_VERSION_PATCH})
-set(QUTEPART_VERSION ${QUTEPART_VERSION} PARENT_SCOPE)
+#set(QUTEPART_VERSION ${QUTEPART_VERSION} PARENT_SCOPE)
 
 # Instruct CMake to run moc automatically when needed
 set(CMAKE_AUTOMOC ON)
@@ -70,14 +70,14 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Tell CMake to create the qutepart library
 add_library(qutepart ${qutepart_SRCS} include/qutepart/qutepart.h)
 
-# Use the Widgets module from Qt 5
-target_link_libraries(qutepart Qt5::Core Qt5::Widgets)
+# Use the Widgets module from Qt
+target_link_libraries(qutepart Qt::Core Qt::Widgets)
 
 target_compile_options(qutepart PRIVATE -Wall -Wextra -pedantic -Werror)
 
 # Build example executable
 add_executable(editor editor.cpp)
-target_link_libraries(editor Qt5::Core Qt5::Widgets qutepart)
+target_link_libraries(editor Qt::Core Qt::Widgets qutepart)
 
 # Install only library, not binaries
 install(TARGETS qutepart DESTINATION lib)
@@ -90,7 +90,7 @@ if(NOT DEFINED DISABLE_QUTEPART_TESTS)
     function(indent_test name)
         set(full_name test_indenter_${name})
         add_executable(${full_name} test/indenter/base_indenter_test.cpp test/indenter/${full_name}.cpp)
-        target_link_libraries(${full_name} Qt5::Test Qt5::Core Qt5::Widgets qutepart)
+        target_link_libraries(${full_name} Qt::Test Qt::Core Qt::Widgets qutepart)
         add_test(NAME ${name} COMMAND ${full_name})
     endfunction()
 
@@ -107,7 +107,7 @@ if(NOT DEFINED DISABLE_QUTEPART_TESTS)
     function(qpart_test name)
         set(full_name test_${name})
         add_executable(${full_name} test/${full_name}.cpp)
-        target_link_libraries(${full_name} Qt5::Test Qt5::Core Qt5::Widgets qutepart)
+        target_link_libraries(${full_name} Qt::Test Qt::Core Qt::Widgets qutepart)
         add_test(NAME ${name} COMMAND ${full_name})
     endfunction()
 
