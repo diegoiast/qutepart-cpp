@@ -734,8 +734,8 @@ QSharedPointer<Language> parseXmlFile(const QString& xmlFileName, QXmlStreamRead
         return QSharedPointer<Language>();
     }
 
-    QStringList extensions = extensionsStr.split(';', QString::SkipEmptyParts);
-    QStringList mimetypes = extensionsStr.split(';', QString::SkipEmptyParts);
+    QStringList extensions = extensionsStr.split(';', Qt::SplitBehaviorFlags::SkipEmptyParts);
+    QStringList mimetypes = extensionsStr.split(';', Qt::SplitBehaviorFlags::SkipEmptyParts);
 
     if ( ! xmlReader.readNextStartElement() ||
          xmlReader.name() != "highlighting") {
