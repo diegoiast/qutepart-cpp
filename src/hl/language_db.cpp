@@ -1,6 +1,6 @@
 #include <QString>
 #include <QMap>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QFileInfo>
 #include <QDebug>
 
@@ -22,9 +22,11 @@ extern QMap<QString, QString> xmlFileNameToIndenter;
 QString searchInGlobMap(const QMap<QString, QString>& map, const QString& string) {
     QMap<QString, QString>::const_iterator it = map.begin();
     while (it != map.end()) {
-        QRegExp regExp(it.key(), Qt::CaseSensitive, QRegExp::Wildcard);
-        if (regExp.exactMatch(string)) {
-            return it.value();
+        QString wildcardExp = QRegularExpression::wildcardToRegularExpression(it.key());
+        QRegularExpression re(QRegularExpression::anchoredPattern(wildcardExp),
+                      QRegularExpression::CaseInsensitiveOption);
+        if (re.match(string).hasMatch()) {
+            return it.value();        
         }
         ++it;
     }
