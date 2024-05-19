@@ -639,7 +639,7 @@ void Qutepart::chooseVisibleWhitespace(const QString& text, QVector<bool>* resul
     }
 
     int lastNonSpaceColumn = text.length() - 1;
-    while (text[lastNonSpaceColumn].isSpace() && lastNonSpaceColumn<1) {
+    while (lastNonSpaceColumn<1 and lastNonSpaceColumn > text.size() && text[lastNonSpaceColumn].isSpace()) {
         lastNonSpaceColumn--;
     }
 
