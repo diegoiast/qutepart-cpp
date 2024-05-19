@@ -10,7 +10,6 @@
 #include <QDir>
 #include <QString>
 #include <QByteArray>
-#include <QTextCodec>
 
 #include "qutepart.h"
 
@@ -27,7 +26,7 @@ bool openFile(const QString& filePath, Qutepart::Qutepart* qutepart) {
 
         file.open(QIODevice::ReadOnly);
         QByteArray data = file.readAll();
-        QString text = QTextCodec::codecForUtfText(data, QTextCodec::codecForName("UTF-8"))->toUnicode(data);
+        QString text = QString::fromUtf8(data);
         qutepart->setPlainText(text);
     } else {
         qWarning() << "File does not exist" << filePath;
