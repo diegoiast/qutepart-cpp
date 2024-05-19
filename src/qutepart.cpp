@@ -812,7 +812,7 @@ void Qutepart::unIndentBlock(const QTextBlock& block, bool withSpace) const {
     if (currentIndent.endsWith('\t')) {
         charsToRemove = 1;
     } else if (withSpace) {
-        charsToRemove = std::min(1, currentIndent.length());
+        charsToRemove = std::min(qsizetype(1), currentIndent.length());
     } else {
         if (indenter_->useTabs()) {
             charsToRemove = std::min(spaceAtEndCount(currentIndent), indenter_->width());
