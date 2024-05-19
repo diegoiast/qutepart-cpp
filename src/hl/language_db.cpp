@@ -26,7 +26,7 @@ QString searchInGlobMap(const QMap<QString, QString>& map, const QString& string
         QRegularExpression re(QRegularExpression::anchoredPattern(wildcardExp),
                       QRegularExpression::CaseInsensitiveOption);
         if (re.match(string).hasMatch()) {
-            return it.value();        
+            return it.value();
         }
         ++it;
     }

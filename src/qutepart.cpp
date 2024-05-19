@@ -385,7 +385,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         // make action shortcuts override keyboard events (non-default Qt behaviour)
         foreach(QAction* action, actions()) {
             QKeySequence seq = action->shortcut();
-            if (seq.count() == 1 && seq[0] == (event->key() | int(event->modifiers()))) {
+            if (seq.count() == 1 && seq[0].key() == (event->key() | int(event->modifiers()))) {
                 action->trigger();
                 return;
             }

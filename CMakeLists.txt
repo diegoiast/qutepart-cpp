@@ -17,12 +17,11 @@ set(QUTEPART_VERSION
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find the QtWidgets library
-find_package(Qt5Core CONFIG REQUIRED)
-find_package(Qt5Widgets CONFIG REQUIRED)
-find_package(Qt5Test CONFIG REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets Test)
 
 # Populate a CMake variable with the sources
 set(qutepart_SRCS

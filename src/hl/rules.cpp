@@ -320,10 +320,10 @@ MatchResult* RegExpRule::tryMatchImpl(const TextToMatch& textToMatch) const {
         QString pattern = makeDynamicSubsctitutions(value, *textToMatch.contextData);
         QRegularExpression dynamicRegExp = compileRegExp(pattern);
         match = dynamicRegExp.match(textToMatch.text,
-            0, QRegularExpression::NormalMatch, QRegularExpression::AnchoredMatchOption);
+            0, QRegularExpression::NormalMatch, QRegularExpression::AnchorAtOffsetMatchOption);
     } else {
         match = regExp.match(textToMatch.text,
-            0, QRegularExpression::NormalMatch, QRegularExpression::AnchoredMatchOption);
+            0, QRegularExpression::NormalMatch, QRegularExpression::AnchorAtOffsetMatchOption);
     }
 
     if (match.hasMatch() && match.capturedLength() > 0) {
