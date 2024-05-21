@@ -10,7 +10,7 @@ class Test: public BaseTest
 private slots:
     void python_data() {
         addColumns();
-        QTest::newRow("dedent return")
+        QTest::newRow("dedent return 1")
             <<  "def some_function():\n"
                 "  return"
             <<  std::make_pair(1, 8)
@@ -113,7 +113,7 @@ private slots:
                 "  pass\n"
                 "pass";
 
-        QTest::newRow("dedent return")
+        QTest::newRow("dedent return 2")
             <<  "def some_function():\n"
                 "  return"
             <<  std::make_pair(1, 8)
