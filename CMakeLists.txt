@@ -72,7 +72,11 @@ add_library(qutepart ${qutepart_SRCS} include/qutepart/qutepart.h)
 # Use the Widgets module from Qt
 target_link_libraries(qutepart Qt::Core Qt::Widgets)
 
-target_compile_options(qutepart PRIVATE -Wall -Wextra -pedantic -Werror)
+if (MSVC)
+    target_compile_options(qutepart PRIVATE /W4)
+else()
+    target_compile_options(qutepart PRIVATE -Wall -Wextra -pedantic -Werror)
+endif()
 
 # Build example executable
 add_executable(editor editor.cpp)
