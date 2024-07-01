@@ -166,7 +166,7 @@ DetectCharRule::DetectCharRule(const AbstractRuleParams& params,
 {}
 
 QString DetectCharRule::args() const {
-    if (value == '\0') {
+    if (value == QChar('\0')) {
         return QString("index: %1").arg(index);
     } else {
         return value;
