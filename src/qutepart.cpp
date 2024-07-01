@@ -97,13 +97,11 @@ void Qutepart::goTo(int line, int column) {
 
     if (column != 0) {
         if (column < 0) {
-            qFatal("Qutepart::goTo got invalid column %d", column);
+            column = 0;
         } else if (column > cursor.block().length()) {
-            qFatal("Qutepart::goTo got too big column %d. Line length only %d",
-                column, cursor.block().length());
-        } else {
-            cursor.setPosition(cursor.position() + column);
+            column = cursor.block().length() - 1;
         }
+        cursor.setPosition(cursor.position() + column);
     }
 
     setTextCursor(cursor);
