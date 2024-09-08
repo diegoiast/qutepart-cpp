@@ -69,6 +69,7 @@ void LineNumberArea::paintEvent(QPaintEvent* event) {
     painter.fillRect(event->rect(), palette().color(QPalette::Window));
     painter.setPen(Qt::black);
 
+    auto currentBlock = qpart_->textCursor().block().fragmentIndex();
     QTextBlock block = qpart_->firstVisibleBlock();
     int blockNumber = block.blockNumber();
     int top = int(qpart_->blockBoundingGeometry(block).translated(qpart_->contentOffset()).top());
@@ -81,6 +82,9 @@ void LineNumberArea::paintEvent(QPaintEvent* event) {
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
             QString number = QString("%1").arg(blockNumber + 1);
+            QFont font = painter.font();
+            font.setBold(block.fragmentIndex() == currentBlock);
+            painter.setFont(font);
             painter.drawText(LEFT_LINE_NUM_MARGIN, top,
                              availableWidth, availableHeight,
                              Qt::AlignRight, number);
