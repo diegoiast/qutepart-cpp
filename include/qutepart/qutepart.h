@@ -425,6 +425,8 @@ private:
     int lineLengthEdge_;
     QColor lineLengthEdgeColor_;
     QColor currentLineColor_;
+    QColor indentColor_;
+    QColor whitespaceColor_;
 
     bool completionEnabled_;
     int completionThreshold_;

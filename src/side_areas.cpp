@@ -65,9 +65,13 @@ void LineNumberArea::updateWidth() {
 }
 
 void LineNumberArea::paintEvent(QPaintEvent* event) {
+    auto palette = this->palette();
+    auto background = palette.color(QPalette::AlternateBase);
+    auto foreground = palette.color(QPalette::Text);
+    auto wrapColor = palette.color(QPalette::Dark);
     QPainter painter(this);
-    painter.fillRect(event->rect(), palette().color(QPalette::Window));
-    painter.setPen(Qt::black);
+    painter.fillRect(event->rect(), background);
+    painter.setPen(foreground);
 
     auto currentBlock = qpart_->textCursor().block().fragmentIndex();
     QTextBlock block = qpart_->firstVisibleBlock();
@@ -91,7 +95,7 @@ void LineNumberArea::paintEvent(QPaintEvent* event) {
             if (boundingRect.height() >= singleBlockHeight * 2) {  // wrapped block
                 painter.fillRect(1, top + singleBlockHeight,
                                  width() - 2, boundingRect.height() - singleBlockHeight - 2,
-                                 Qt::darkGreen);
+                                 wrapColor);
             }
         }
 
@@ -138,7 +142,7 @@ int MarkArea::widthHint() const {
 
 void MarkArea::paintEvent(QPaintEvent* event) {
     QPainter painter(this);
-    painter.fillRect(event->rect(), palette().color(QPalette::Window));
+    painter.fillRect(event->rect(), palette().color(QPalette::AlternateBase));
 
     QTextBlock block = qpart_->firstVisibleBlock();
     QRectF blockBoundingGeometry = qpart_->blockBoundingGeometry(block).translated(qpart_->contentOffset());

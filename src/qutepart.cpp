@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <QScrollBar>
 #include <QDebug>
+#include <QStyle>
 
 #include "qutepart.h"
 #include "hl_factory.h"
@@ -40,7 +41,6 @@ private:
     Qutepart* qpart;
 };
 
-
 Qutepart::Qutepart(QWidget *parent, const QString& text):
     QPlainTextEdit(text, parent),
     indenter_(std::make_unique<Indenter>()),
@@ -51,13 +51,20 @@ Qutepart::Qutepart(QWidget *parent, const QString& text):
     drawIncorrectIndentation_(true),
     drawSolidEdge_(true),
     lineLengthEdge_(80),
-    lineLengthEdgeColor_(Qt::red),
-    currentLineColor_("#ffffa3"),
     completionEnabled_(true),
     completionThreshold_(3),
     solidEdgeLine_(new EdgeLine(this)),
     totalMarginWidth_(0)
 {
+    QPalette palette = style()->standardPalette();
+    currentLineColor_ = palette.color(QPalette::Highlight);
+    currentLineColor_.setAlphaF(0.2);
+    whitespaceColor_ = palette.color(QPalette::Text);
+    whitespaceColor_.setAlphaF(0.2);
+    lineLengthEdgeColor_ = palette.color(QPalette::Accent);
+    lineLengthEdgeColor_.setAlphaF(0.5);
+    
+    indentColor_ = QColor(Qt::blue).lighter();
     initActions();
     setAttribute(Qt::WA_KeyCompression, false);  // vim can't process compressed keys
 
@@ -585,11 +592,11 @@ void Qutepart::drawWhiteSpace(QPainter* painter, QTextBlock block, int column, Q
         int middleHeight = (leftCursorRect.top() + leftCursorRect.bottom()) / 2;
         if (ch == ' ') {
             painter->setPen(Qt::transparent);
-            painter->setBrush(QBrush(Qt::gray));
+            painter->setBrush(QBrush(whitespaceColor_));
             int xPos = (leftCursorRect.x() + rightCursorRect.x()) / 2;
             painter->drawRect(QRect(xPos, middleHeight, 2, 2));
         } else {
-            painter->setPen(QColor(Qt::gray).lighter(120));
+            painter->setPen(whitespaceColor_.lighter(120));
             painter->drawLine(leftCursorRect.x() + 3, middleHeight,
                              rightCursorRect.x() - 3, middleHeight);
         }
@@ -761,7 +768,7 @@ void Qutepart::updateTabStopWidth() {
 }
 
 void Qutepart::drawIndentMarker(QPainter* painter, QTextBlock block, int column) {
-    painter->setPen(QColor(Qt::blue).lighter());
+    painter->setPen(indentColor_);
     QRect rect = cursorRect(block, column, 0);
     painter->drawLine(rect.topLeft(), rect.bottomLeft());
 }
