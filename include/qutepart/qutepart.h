@@ -304,6 +304,11 @@ public:
 
     bool lineNumbersVisible() const;
     void setLineNumbersVisible(bool value);
+    
+    /// To to logical, or phisical end/start of line.
+    bool getSmartHomeEnd() const;
+    /// To to logical, or phisical end/start of line.
+    void setSmartHomeEnd(bool value);
 
     // Autocompletion
     void setCompletionEnabled(bool);
@@ -402,6 +407,7 @@ private slots:
     void updateExtraSelections();
 
     void onShortcutHome(QTextCursor::MoveMode moveMode);
+    void onShortcutEnd(QTextCursor::MoveMode moveMode);
 
     void onShortcutToggleBookmark();
     void onShortcutPrevBookmark();
@@ -422,6 +428,8 @@ private:
     bool drawAnyWhitespace_;
     bool drawIncorrectIndentation_;
     bool drawSolidEdge_;
+    bool enableSmartHomeEnd_;
+    
     int lineLengthEdge_;
     QColor lineLengthEdgeColor_;
     QColor currentLineColor_;
@@ -434,8 +442,11 @@ private:
     QWidget* solidEdgeLine_;
     int totalMarginWidth_;
 
-    QAction* homeAction_;  // private, not API
-    QAction* homeSelectAction_;  // private, not API
+    // private, not API
+    QAction* homeAction_;
+    QAction* homeSelectAction_;
+    QAction* endAction_;
+    QAction* endSelectAction_;
 
     QAction* increaseIndentAction_;
     QAction* decreaseIndentAction_;

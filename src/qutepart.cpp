@@ -50,6 +50,7 @@ Qutepart::Qutepart(QWidget *parent, const QString& text):
     drawAnyWhitespace_(false),
     drawIncorrectIndentation_(true),
     drawSolidEdge_(true),
+    enableSmartHomeEnd_(true),
     lineLengthEdge_(80),
     completionEnabled_(true),
     completionThreshold_(3),
@@ -225,6 +226,16 @@ void Qutepart::setLineNumbersVisible(bool value) {
         connect(lineNumberArea_.get(), &LineNumberArea::widthChanged, this, &Qutepart::updateViewport);
     }
     updateViewport();
+}
+
+bool Qutepart::getSmartHomeEnd() const
+{
+    return enableSmartHomeEnd_;
+}
+
+void Qutepart::setSmartHomeEnd(bool value)
+{
+    enableSmartHomeEnd_ = value;
 }
 
 bool Qutepart::completionEnabled() const {
@@ -449,6 +460,14 @@ void Qutepart::initActions() {
     homeSelectAction_ = createAction(
         "Home (select)", QKeySequence(Qt::SHIFT | Qt::Key_Home), QString(),
         [this](){this->onShortcutHome(QTextCursor::KeepAnchor);});
+
+    endAction_ = createAction(
+        "Home", QKeySequence(Qt::Key_End), QString(),
+        [this](){this->onShortcutEnd(QTextCursor::MoveAnchor);});
+
+    endSelectAction_ = createAction(
+        "Home (select)", QKeySequence(Qt::SHIFT | Qt::Key_End), QString(),
+        [this](){this->onShortcutEnd(QTextCursor::KeepAnchor);});
 
     increaseIndentAction_ = createAction(
         "Increase indent", QKeySequence(Qt::Key_Tab), "format-indent-more",
@@ -1063,10 +1082,23 @@ void Qutepart::updateExtraSelections() {
 void Qutepart::onShortcutHome(QTextCursor::MoveMode moveMode) {
     QTextCursor cursor = textCursor();
     int firstNonSpace = firstNonSpaceColumn(cursor.block().text());
-    if (cursor.positionInBlock() == firstNonSpace) {
+    if (enableSmartHomeEnd_ &&  cursor.positionInBlock() == firstNonSpace) {
         setPositionInBlock(&cursor, 0, moveMode);
     } else {
         setPositionInBlock(&cursor, firstNonSpace, moveMode);
+    }
+    setTextCursor(cursor);
+}
+
+// Smart end behaviour. Move to last non-space or to end of line
+void Qutepart::onShortcutEnd(QTextCursor::MoveMode moveMode) {
+    QTextCursor cursor = textCursor();
+    int lastNonSpace = lastNonSpaceColumn(cursor.block().text());
+    int lastChar = cursor.block().length() - 1;
+    if (enableSmartHomeEnd_ && cursor.positionInBlock() == lastNonSpace) {
+        setPositionInBlock(&cursor, lastChar, moveMode);
+    } else {
+        setPositionInBlock(&cursor, lastNonSpace, moveMode);
     }
     setTextCursor(cursor);
 }
