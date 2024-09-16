@@ -4,29 +4,24 @@
 
 #include "hl_factory.h"
 
-
 namespace Qutepart {
 
-QSyntaxHighlighter* makeHighlighter(
-    QObject* parent,
-    const QString& languageId) {
+QSyntaxHighlighter *makeHighlighter(QObject *parent, const QString &languageId) {
     QSharedPointer<Language> language = loadLanguage(languageId);
-    if ( ! language.isNull()) {
+    if (!language.isNull()) {
         return new SyntaxHighlighter(parent, language);
     }
 
     return nullptr;
 }
 
-QSyntaxHighlighter* makeHighlighter(
-    QTextDocument* parent,
-    const QString& languageId) {
+QSyntaxHighlighter *makeHighlighter(QTextDocument *parent, const QString &languageId) {
     QSharedPointer<Language> language = loadLanguage(languageId);
-    if ( ! language.isNull()) {
+    if (!language.isNull()) {
         return new SyntaxHighlighter(parent, language);
     }
 
     return nullptr;
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

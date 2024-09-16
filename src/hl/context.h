@@ -1,14 +1,13 @@
 #pragma once
 
-#include <QTextStream>
-#include <QSharedPointer>
 #include <QHash>
+#include <QSharedPointer>
 #include <QTextLayout>
+#include <QTextStream>
 
-#include "style.h"
 #include "context_stack.h"
 #include "context_switcher.h"
-
+#include "style.h"
 
 namespace Qutepart {
 
@@ -21,49 +20,36 @@ typedef QSharedPointer<AbstractRule> RulePtr;
 class TextToMatch;
 class MatchResult;
 
-
 class Context {
-public:
-    Context(const QString& name,
-            const QString& attribute,
-            const ContextSwitcher& lineEndContext,
-            const ContextSwitcher& lineBeginContext,
-            const ContextSwitcher& lineEmptyContext,
-            const ContextSwitcher& fallthroughContext,
-            bool dynamic,
-            const QList<RulePtr>& rules);
+  public:
+    Context(const QString &name, const QString &attribute, const ContextSwitcher &lineEndContext,
+            const ContextSwitcher &lineBeginContext, const ContextSwitcher &lineEmptyContext,
+            const ContextSwitcher &fallthroughContext, bool dynamic, const QList<RulePtr> &rules);
 
-    void printDescription(QTextStream& out) const;
+    void printDescription(QTextStream &out) const;
 
     QString name() const;
 
-    void resolveContextReferences(const QHash<QString, ContextPtr>& contexts, QString& error);
-    void setKeywordParams(const QHash<QString, QStringList>& lists,
-                          const QString& deliminators,
-                          bool caseSensitive,
-                          QString& error);
-    void setStyles(const QHash<QString, Style>& styles, QString& error);
+    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error);
+    void setKeywordParams(const QHash<QString, QStringList> &lists, const QString &deliminators,
+                          bool caseSensitive, QString &error);
+    void setStyles(const QHash<QString, Style> &styles, QString &error);
 
-    bool dynamic() const {return _dynamic;};
-    ContextSwitcher lineBeginContext() const {return _lineBeginContext;};
-    ContextSwitcher lineEndContext() const {return _lineEndContext;};
+    bool dynamic() const { return _dynamic; };
+    ContextSwitcher lineBeginContext() const { return _lineBeginContext; };
+    ContextSwitcher lineEndContext() const { return _lineEndContext; };
 
-    const ContextStack parseBlock(
-            const ContextStack& contextStack,
-            TextToMatch& textToMatch,
-            QVector<QTextLayout::FormatRange>& formats,
-            QString& textTypeMap,
-            bool& lineContinue) const;
+    const ContextStack parseBlock(const ContextStack &contextStack, TextToMatch &textToMatch,
+                                  QVector<QTextLayout::FormatRange> &formats, QString &textTypeMap,
+                                  bool &lineContinue) const;
 
     // Try to match textToMatch with nested rules
-    MatchResult* tryMatch(const TextToMatch& textToMatch) const;
+    MatchResult *tryMatch(const TextToMatch &textToMatch) const;
 
-protected:
-    void applyMatchResult(const TextToMatch& textToMatch,
-                          const MatchResult* matchRes,
-                          const Context* context,
-                          QVector<QTextLayout::FormatRange>& formats,
-                          QString& textTypeMap) const;
+  protected:
+    void applyMatchResult(const TextToMatch &textToMatch, const MatchResult *matchRes,
+                          const Context *context, QVector<QTextLayout::FormatRange> &formats,
+                          QString &textTypeMap) const;
 
     QString _name;
     QString attribute;
@@ -78,4 +64,4 @@ protected:
     Style style;
 };
 
-}  // namespace Qutepart
+} // namespace Qutepart

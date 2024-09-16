@@ -2,22 +2,21 @@
 
 #include "text_type.h"
 
-
 namespace Qutepart {
 
 namespace {
 
-TextBlockUserData* getData(const QTextBlock& block) {
-    QTextBlockUserData* data = block.userData();
+TextBlockUserData *getData(const QTextBlock &block) {
+    QTextBlockUserData *data = block.userData();
     if (data == nullptr) {
         return nullptr;
     }
 
-    return dynamic_cast<TextBlockUserData*>(data);
+    return dynamic_cast<TextBlockUserData *>(data);
 }
 
-QChar getTextType(const QTextBlock& block, int column) {
-    TextBlockUserData* data = getData(block);
+QChar getTextType(const QTextBlock &block, int column) {
+    TextBlockUserData *data = getData(block);
     if (data == nullptr) {
         return ' ';
     } else {
@@ -25,10 +24,10 @@ QChar getTextType(const QTextBlock& block, int column) {
     }
 }
 
-}  // anonymous workspace
+} // namespace
 
-QString textTypeMap(const QTextBlock& block) {
-    TextBlockUserData* data = getData(block);
+QString textTypeMap(const QTextBlock &block) {
+    TextBlockUserData *data = getData(block);
     if (data == nullptr) {
         return QString().fill(' ', block.text().length());
     }
@@ -36,22 +35,18 @@ QString textTypeMap(const QTextBlock& block) {
     return data->textTypeMap();
 }
 
-bool isCode(const QTextBlock& block, int column) {
-    return getTextType(block, column) == ' ';
-}
+bool isCode(const QTextBlock &block, int column) { return getTextType(block, column) == ' '; }
 
-bool isComment(const QTextBlock& block, int column) {
+bool isComment(const QTextBlock &block, int column) {
     QChar type = getTextType(block, column);
 
     return type == 'c' || type == 'b' || type == 'h';
 }
 
-bool isBlockComment(const QTextBlock& block, int column) {
+bool isBlockComment(const QTextBlock &block, int column) {
     return getTextType(block, column) == 'b';
 }
 
-bool isHereDoc(const QTextBlock& block, int column) {
-    return getTextType(block, column) == 'h';
-}
+bool isHereDoc(const QTextBlock &block, int column) { return getTextType(block, column) == 'h'; }
 
-}  // namespace Qutepart
+} // namespace Qutepart

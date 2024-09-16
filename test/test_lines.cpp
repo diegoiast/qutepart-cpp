@@ -4,11 +4,10 @@
 
 #include "qutepart.h"
 
-
-class Test: public QObject {
+class Test : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void Append() {
         QString text = "asdf\nfd";
         Qutepart::Qutepart qpart(nullptr, text);
@@ -25,29 +24,18 @@ private slots:
         QTest::addColumn<QString>("removed");
         QTest::addColumn<QString>("expected");
 
-        QTest::newRow("first")
-                << "one\ntwo\nthree"
-                << 0
-                << "one"
-                << "two\nthree";
+        QTest::newRow("first") << "one\ntwo\nthree" << 0 << "one"
+                               << "two\nthree";
 
-        QTest::newRow("middle")
-                << "one\ntwo\nthree"
-                << 1
-                << "two"
-                << "one\nthree";
+        QTest::newRow("middle") << "one\ntwo\nthree" << 1 << "two"
+                                << "one\nthree";
 
-        QTest::newRow("last")
-                << "one\ntwo\nthree"
-                << 2
-                << "three"
-                << "one\ntwo";
+        QTest::newRow("last") << "one\ntwo\nthree" << 2 << "three"
+                              << "one\ntwo";
 
-        QTest::newRow("empty line")
-                << "one\ntwo\nthree\n"
-                << 3
-                << ""
-                << "one\ntwo\nthree";
+        QTest::newRow("empty line") << "one\ntwo\nthree\n"
+                                    << 3 << ""
+                                    << "one\ntwo\nthree";
     }
 
     void PopAt() {
@@ -71,29 +59,17 @@ private slots:
         QTest::addColumn<QString>("inserted");
         QTest::addColumn<QString>("expected");
 
-        QTest::newRow("first")
-                << "one\ntwo\nthree"
-                << 0
-                << "new"
-                << "new\none\ntwo\nthree";
+        QTest::newRow("first") << "one\ntwo\nthree" << 0 << "new"
+                               << "new\none\ntwo\nthree";
 
-        QTest::newRow("middle")
-                << "one\ntwo\nthree"
-                << 1
-                << "new"
-                << "one\nnew\ntwo\nthree";
+        QTest::newRow("middle") << "one\ntwo\nthree" << 1 << "new"
+                                << "one\nnew\ntwo\nthree";
 
-        QTest::newRow("last")
-                << "one\ntwo\nthree"
-                << 2
-                << "new"
-                << "one\ntwo\nnew\nthree";
+        QTest::newRow("last") << "one\ntwo\nthree" << 2 << "new"
+                              << "one\ntwo\nnew\nthree";
 
-        QTest::newRow("after last")
-                << "one\ntwo\nthree"
-                << 3
-                << "new"
-                << "one\ntwo\nthree\nnew";
+        QTest::newRow("after last") << "one\ntwo\nthree" << 3 << "new"
+                                    << "one\ntwo\nthree\nnew";
     }
 
     void InsertAt() {
@@ -122,7 +98,6 @@ private slots:
         QCOMPARE(lines.at(4).text(), QString("5"));
         QCOMPARE(lines.at(6).text(), QString(""));
     }
-
 };
 
 QTEST_MAIN(Test)

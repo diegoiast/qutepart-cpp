@@ -1,9 +1,9 @@
-#include <QPainter>
-#include <QTextBlock>
+#include <QDebug>
 #include <QIcon>
 #include <QPaintEvent>
+#include <QPainter>
 #include <QScrollBar>
-#include <QDebug>
+#include <QTextBlock>
 
 #include "qutepart.h"
 #include "text_block_flags.h"
@@ -19,12 +19,9 @@ const int RIGHT_LINE_NUM_MARGIN = 3;
 
 const int MARK_MARGIN = 1;
 
-}
+} // namespace
 
-SideArea::SideArea(Qutepart *textEdit):
-    QWidget(textEdit),
-    qpart_(textEdit)
-{
+SideArea::SideArea(Qutepart *textEdit) : QWidget(textEdit), qpart_(textEdit) {
     connect(textEdit, &Qutepart::updateRequest, this, &SideArea::onTextEditUpdateRequest);
 }
 
@@ -35,15 +32,15 @@ void SideArea::onTextEditUpdateRequest(const QRect &rect, int dy) {
         update(0, rect.y(), width(), rect.height());
     }
 
-    if (rect.contains(qpart_->viewport()->rect()))
+    if (rect.contains(qpart_->viewport()->rect())) {
         updateWidth();
+    }
 }
 
-LineNumberArea::LineNumberArea(Qutepart* textEdit):
-    SideArea(textEdit)
-{
+LineNumberArea::LineNumberArea(Qutepart *textEdit) : SideArea(textEdit) {
     resize(widthHint(), height());
-    connect(textEdit->document(), &QTextDocument::blockCountChanged, this, &LineNumberArea::updateWidth);
+    connect(textEdit->document(), &QTextDocument::blockCountChanged, this,
+            &LineNumberArea::updateWidth);
     updateWidth();
 }
 
@@ -51,7 +48,8 @@ int LineNumberArea::widthHint() const {
     int lines = std::max(1, qpart_->document()->blockCount());
     int digits = QString("%1").arg(lines).length();
 
-    return LEFT_LINE_NUM_MARGIN + qpart_->fontMetrics().horizontalAdvance('9') * digits + RIGHT_LINE_NUM_MARGIN;
+    return LEFT_LINE_NUM_MARGIN + qpart_->fontMetrics().horizontalAdvance('9') * digits +
+           RIGHT_LINE_NUM_MARGIN;
 }
 
 void LineNumberArea::updateWidth() {
@@ -64,7 +62,7 @@ void LineNumberArea::updateWidth() {
     update();
 }
 
-void LineNumberArea::paintEvent(QPaintEvent* event) {
+void LineNumberArea::paintEvent(QPaintEvent *event) {
     auto palette = this->palette();
     auto background = palette.color(QPalette::AlternateBase);
     auto foreground = palette.color(QPalette::Text);
@@ -89,13 +87,11 @@ void LineNumberArea::paintEvent(QPaintEvent* event) {
             QFont font = painter.font();
             font.setBold(block.fragmentIndex() == currentBlock);
             painter.setFont(font);
-            painter.drawText(LEFT_LINE_NUM_MARGIN, top,
-                             availableWidth, availableHeight,
+            painter.drawText(LEFT_LINE_NUM_MARGIN, top, availableWidth, availableHeight,
                              Qt::AlignRight, number);
-            if (boundingRect.height() >= singleBlockHeight * 2) {  // wrapped block
-                painter.fillRect(1, top + singleBlockHeight,
-                                 width() - 2, boundingRect.height() - singleBlockHeight - 2,
-                                 wrapColor);
+            if (boundingRect.height() >= singleBlockHeight * 2) { // wrapped block
+                painter.fillRect(1, top + singleBlockHeight, width() - 2,
+                                 boundingRect.height() - singleBlockHeight - 2, wrapColor);
             }
         }
 
@@ -107,45 +103,43 @@ void LineNumberArea::paintEvent(QPaintEvent* event) {
     }
 }
 
-void LineNumberArea::changeEvent(QEvent* event) {
+void LineNumberArea::changeEvent(QEvent *event) {
     if (event->type() == QEvent::FontChange) {
         updateWidth();
     }
 }
 
-
-MarkArea::MarkArea(Qutepart* textEdit):
-    SideArea(textEdit)
-{
+MarkArea::MarkArea(Qutepart *textEdit) : SideArea(textEdit) {
 #if 0
     setMouseTracking(true);
 #endif
 
     bookmarkPixmap_ = loadIcon("emblem-favorite");
     // self._lintPixmaps = {qpart.LINT_ERROR: self._loadIcon('emblem-error'),
-    //                      qpart.LINT_WARNING: self._loadIcon('emblem-warning'),
-    //                      qpart.LINT_NOTE: self._loadIcon('emblem-information')}
+    //                      qpart.LINT_WARNING:
+    //                      self._loadIcon('emblem-warning'), qpart.LINT_NOTE:
+    //                      self._loadIcon('emblem-information')}
 
-    connect(textEdit->document(), &QTextDocument::blockCountChanged, [this] {this->update();});
-    connect(textEdit->verticalScrollBar(), &QScrollBar::valueChanged, [this] {this->update();});
+    connect(textEdit->document(), &QTextDocument::blockCountChanged, [this] { this->update(); });
+    connect(textEdit->verticalScrollBar(), &QScrollBar::valueChanged, [this] { this->update(); });
 }
 
-QPixmap MarkArea::loadIcon(const QString& name) const {
+QPixmap MarkArea::loadIcon(const QString &name) const {
     QIcon icon = QIcon::fromTheme(name);
     int size = qpart_->cursorRect(qpart_->document()->begin(), 0, 0).height() - 6;
-    return icon.pixmap(size, size);  // This also works with Qt.AA_UseHighDpiPixmaps
+    return icon.pixmap(size,
+                       size); // This also works with Qt.AA_UseHighDpiPixmaps
 }
 
-int MarkArea::widthHint() const {
-    return MARK_MARGIN + bookmarkPixmap_.width() + MARK_MARGIN;
-}
+int MarkArea::widthHint() const { return MARK_MARGIN + bookmarkPixmap_.width() + MARK_MARGIN; }
 
-void MarkArea::paintEvent(QPaintEvent* event) {
+void MarkArea::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     painter.fillRect(event->rect(), palette().color(QPalette::AlternateBase));
 
     QTextBlock block = qpart_->firstVisibleBlock();
-    QRectF blockBoundingGeometry = qpart_->blockBoundingGeometry(block).translated(qpart_->contentOffset());
+    QRectF blockBoundingGeometry =
+        qpart_->blockBoundingGeometry(block).translated(qpart_->contentOffset());
     int top = blockBoundingGeometry.top();
 
     while (block.isValid() && top <= event->rect().bottom()) {
@@ -162,7 +156,7 @@ void MarkArea::paintEvent(QPaintEvent* event) {
 #endif
 
             if (isBookmarked(block)) {
-                int yPos = top + ((height - bookmarkPixmap_.height()) / 2);  // centered
+                int yPos = top + ((height - bookmarkPixmap_.height()) / 2); // centered
                 painter.drawPixmap(0, yPos, bookmarkPixmap_);
             }
         }
@@ -172,7 +166,7 @@ void MarkArea::paintEvent(QPaintEvent* event) {
     }
 }
 
-#if 0  // TODO linter marks
+#if 0 // TODO linter marks
 void MarkArea::mouseMoveEvent(QMouseEvent* event) {
     blockNumber = self.qpart_.cursorForPosition(event.pos()).blockNumber()
     if blockNumber in self.qpart_._lintMarks:
@@ -185,4 +179,4 @@ void MarkArea::mouseMoveEvent(QMouseEvent* event) {
 }
 #endif
 
-}  // namespace Qutepart
+} // namespace Qutepart

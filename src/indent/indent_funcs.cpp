@@ -1,20 +1,15 @@
-#include "text_block_utils.h"
 #include "hl/text_type.h"
+#include "text_block_utils.h"
 
 #include "indent_funcs.h"
 
 namespace Qutepart {
 
+QString lineIndent(const QString &line) { return line.left(firstNonSpaceColumn(line)); }
 
-QString lineIndent(const QString& line) {
-    return line.left(firstNonSpaceColumn(line));
-}
+QString blockIndent(QTextBlock block) { return lineIndent(block.text()); }
 
-QString blockIndent(QTextBlock block) {
-    return lineIndent(block.text());
-}
-
-void setBlockIndent(QTextCursor* cursor, const QString& indent) {
+void setBlockIndent(QTextCursor *cursor, const QString &indent) {
     int currentIndentLength = blockIndent(cursor->block()).size();
     setPositionInBlock(cursor, 0, QTextCursor::MoveAnchor);
     setPositionInBlock(cursor, currentIndentLength, QTextCursor::KeepAnchor);
@@ -24,21 +19,19 @@ void setBlockIndent(QTextCursor* cursor, const QString& indent) {
 QString prevBlockIndent(QTextBlock block) {
     QTextBlock prevBlock = block.previous();
 
-    if ( ! block.isValid()) {
-            return QString();
+    if (!block.isValid()) {
+        return QString();
     }
 
     return blockIndent(prevBlock);
 }
 
-QString increaseIndent(const QString& line, const QString& indent) {
-    return indent + line;
-}
+QString increaseIndent(const QString &line, const QString &indent) { return indent + line; }
 
-QString decreaseIndent(const QString& line, const QString& indent) {
+QString decreaseIndent(const QString &line, const QString &indent) {
     if (line.startsWith(indent)) {
         return line.mid(indent.length());
-    } else {  // oops, strange indentation, just return previous indent
+    } else { // oops, strange indentation, just return previous indent
         return line;
     }
 }
@@ -64,10 +57,8 @@ QString makeIndentFromWidth(int width, int confWidth, bool confUseTabs) {
     }
 }
 
-QString makeIndentAsColumn(
-        QTextBlock block, int column,
-        int confIndentWidth, bool confUseTabs,
-        int offset) {
+QString makeIndentAsColumn(QTextBlock block, int column, int confIndentWidth, bool confUseTabs,
+                           int offset) {
     QString blockText = block.text();
     QString textBeforeColumn = blockText.left(column);
     int tabCount = textBeforeColumn.count('\t');
@@ -76,15 +67,14 @@ QString makeIndentAsColumn(
     return makeIndentFromWidth(visibleColumn + offset, confIndentWidth, confUseTabs);
 }
 
-
-QString prevNonEmptyBlockIndent(const QTextBlock& block) {
+QString prevNonEmptyBlockIndent(const QTextBlock &block) {
     return blockIndent(prevNonEmptyBlock(block));
 }
 
-QString textWithCommentsWiped(const QTextBlock& block) {
+QString textWithCommentsWiped(const QTextBlock &block) {
     QString text = block.text();
     QString typeMap = textTypeMap(block);
-    for(int i = 0; i < text.length(); i++) {
+    for (int i = 0; i < text.length(); i++) {
         if (typeMap[i] == 'c') {
             text[i] = ' ';
         }
@@ -93,7 +83,7 @@ QString textWithCommentsWiped(const QTextBlock& block) {
     return text;
 }
 
-QChar firstNonSpaceChar(const QTextBlock& block) {
+QChar firstNonSpaceChar(const QTextBlock &block) {
     QString textStripped = stripLeftWhitespace(block.text());
     if (textStripped.isEmpty()) {
         return QChar();
@@ -102,7 +92,7 @@ QChar firstNonSpaceChar(const QTextBlock& block) {
     }
 }
 
-QChar lastNonSpaceChar(const QTextBlock& block) {
+QChar lastNonSpaceChar(const QTextBlock &block) {
     QString textStripped = stripRightWhitespace(block.text());
     if (textStripped.isEmpty()) {
         return QChar();
@@ -111,5 +101,4 @@ QChar lastNonSpaceChar(const QTextBlock& block) {
     }
 }
 
-}  // namespace Qutepart
-
+} // namespace Qutepart

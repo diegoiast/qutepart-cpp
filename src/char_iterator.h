@@ -5,33 +5,35 @@
 namespace Qutepart {
 
 class CharIterator {
-public:
+  public:
     // create iterator and make first step
-    CharIterator(const TextPosition& position);
+    CharIterator(const TextPosition &position);
     virtual ~CharIterator() = default;
 
-    QChar step();  // return current character and then make step back
+    QChar step(); // return current character and then make step back
     TextPosition previousPosition() const;
     TextPosition currentPosition() const;
     bool atEnd() const;
 
-protected:
+  protected:
     TextPosition previousPosition_;
     TextPosition position_;
 
     virtual void movePosition() = 0;
 };
 
-class ForwardCharIterator: public CharIterator {
+class ForwardCharIterator : public CharIterator {
     using CharIterator::CharIterator;
-private:
+
+  private:
     virtual void movePosition() override;
 };
 
-class BackwardCharIterator: public CharIterator {
+class BackwardCharIterator : public CharIterator {
     using CharIterator::CharIterator;
-private:
+
+  private:
     virtual void movePosition() override;
 };
 
-}  // namespace Qutepart
+} // namespace Qutepart

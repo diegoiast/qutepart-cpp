@@ -1,11 +1,10 @@
-#include <string>
 #include <map>
+#include <string>
 
-#include <QApplication>
-#include <QTextDocument>
 #include <QAbstractTextDocumentLayout>
+#include <QApplication>
 #include <QPainter>
-
+#include <QTextDocument>
 
 #include "html_delegate.h"
 
@@ -23,7 +22,7 @@ std::map<QChar, QString> HTML_ESCAPE_TABLE = {
     {'\t', "&nbsp;&nbsp;&nbsp;&nbsp;"},
 };
 
-#if 0  // FIXME not used. Remove?
+#if 0 // FIXME not used. Remove?
 // Replace special HTML symbols with escase sequences
 QString htmlEscape(const QString& text) {
     QString result;
@@ -40,20 +39,17 @@ QString htmlEscape(const QString& text) {
 }
 #endif
 
-}  // anonymous namespace
+} // anonymous namespace
 
-
-void HTMLDelegate::paint(
-        QPainter *painter,
-        const QStyleOptionViewItem& option,
-        const QModelIndex& index) const {
+void HTMLDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
+                         const QModelIndex &index) const {
     QStyleOptionViewItem myOption(option);
-    myOption.state &= ~QStyle::State_HasFocus;  // never draw focus rect
+    myOption.state &= ~QStyle::State_HasFocus; // never draw focus rect
 
     QStyleOptionViewItem options(myOption);
     initStyleOption(&options, index);
 
-    QStyle* style = nullptr;
+    QStyle *style = nullptr;
     if (options.widget == nullptr) {
         style = QApplication::style();
     } else {
@@ -67,7 +63,8 @@ void HTMLDelegate::paint(
     if (options.widget != nullptr) {
         doc.setDefaultFont(options.widget->font());
     }
-    // bad long (multiline) strings processing doc.setTextWidth(options.rect.width())
+    // bad long (multiline) strings processing
+    // doc.setTextWidth(options.rect.width())
 
     options.text = "";
     style->drawControl(QStyle::CE_ItemViewItem, &options, painter);
@@ -76,9 +73,8 @@ void HTMLDelegate::paint(
 
     // Highlighting text if item is selected
     if (myOption.state & QStyle::State_Selected) {
-        ctx.palette.setColor(
-                QPalette::Text,
-                myOption.palette.color(QPalette::Active, QPalette::HighlightedText));
+        ctx.palette.setColor(QPalette::Text,
+                             myOption.palette.color(QPalette::Active, QPalette::HighlightedText));
     }
 
     QRect textRect = style->subElementRect(QStyle::SE_ItemViewItemText, &options);
@@ -95,18 +91,16 @@ void HTMLDelegate::paint(
     painter->restore();
 }
 
-QSize HTMLDelegate::sizeHint(
-        const QStyleOptionViewItem &option,
-        const QModelIndex &index) const {
+QSize HTMLDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const {
     QStyleOptionViewItem options(option);
     initStyleOption(&options, index);
 
     QTextDocument doc;
     doc.setDocumentMargin(1);
-    //  bad long (multiline) strings processing doc.setTextWidth(options.rect.width())
+    //  bad long (multiline) strings processing
+    //  doc.setTextWidth(options.rect.width())
     doc.setHtml(options.text);
-    return QSize(doc.idealWidth(),
-                 QStyledItemDelegate::sizeHint(option, index).height());
+    return QSize(doc.idealWidth(), QStyledItemDelegate::sizeHint(option, index).height());
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

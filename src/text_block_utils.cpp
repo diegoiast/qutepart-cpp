@@ -1,5 +1,5 @@
-#include <utility>
 #include <map>
+#include <utility>
 
 #include <QDebug>
 
@@ -9,44 +9,41 @@
 
 namespace Qutepart {
 
-int firstNonSpaceColumn(const QString& line) {
-    for(int i = 0; i < line.size(); i++) {
-        if ( ! line[i].isSpace()) {
+int firstNonSpaceColumn(const QString &line) {
+    for (int i = 0; i < line.size(); i++) {
+        if (!line[i].isSpace()) {
             return i;
         }
     }
     return line.size();
 }
 
-int lastNonSpaceColumn(const QString& line) {
-    for(int i = line.size() - 1; i >= 0; i--) {
-        if ( ! line[i].isSpace()) {
+int lastNonSpaceColumn(const QString &line) {
+    for (int i = line.size() - 1; i >= 0; i--) {
+        if (!line[i].isSpace()) {
             return i;
         }
     }
     return 0;
 }
 
-int spaceAtEndCount(const QString& text) {
+int spaceAtEndCount(const QString &text) {
     int i = text.length() - 1;
-    while (i >= 0 &&
-           text[i] == ' ') {
+    while (i >= 0 && text[i] == ' ') {
         i--;
     }
 
     return i + 1;
 }
 
-QString stripLeftWhitespace(const QString& line) {
-    return line.mid(firstNonSpaceColumn(line));
-}
+QString stripLeftWhitespace(const QString &line) { return line.mid(firstNonSpaceColumn(line)); }
 
-QString stripRightWhitespace(const QString& line) {
+QString stripRightWhitespace(const QString &line) {
     return line.left(lastNonSpaceColumn(line) + 1);
 }
 
 QTextBlock prevNonEmptyBlock(QTextBlock block) {
-    if ( ! block.isValid()) {
+    if (!block.isValid()) {
         return QTextBlock();
     }
 
@@ -59,7 +56,7 @@ QTextBlock prevNonEmptyBlock(QTextBlock block) {
 }
 
 QTextBlock nextNonEmptyBlock(QTextBlock block) {
-    if ( ! block.isValid()) {
+    if (!block.isValid()) {
         return block;
     }
 
@@ -77,12 +74,11 @@ QString textBeforeCursor(QTextCursor cursor) {
     return blockText.left(cursor.positionInBlock());
 }
 
-
-void setPositionInBlock(QTextCursor* cursor, int positionInBlock, QTextCursor::MoveMode anchor) {
+void setPositionInBlock(QTextCursor *cursor, int positionInBlock, QTextCursor::MoveMode anchor) {
     return cursor->setPosition(cursor->block().position() + positionInBlock, anchor);
 }
 
-TextPosition findClosingBracketForward(QChar bracket, const TextPosition& position) {
+TextPosition findClosingBracketForward(QChar bracket, const TextPosition &position) {
     QChar opening = bracket;
     QChar closing;
 
@@ -102,13 +98,13 @@ TextPosition findClosingBracketForward(QChar bracket, const TextPosition& positi
     ForwardCharIterator it(position);
     it.step();
 
-    while ( ! it.atEnd()) {
+    while (!it.atEnd()) {
         QChar ch = it.step();
-        // TODO if not self._qpart.isComment(foundBlock.blockNumber(), foundColumn):
+        // TODO if not self._qpart.isComment(foundBlock.blockNumber(),
+        // foundColumn):
         if (ch == opening) {
             depth++;
-        }
-        else if (ch == closing) {
+        } else if (ch == closing) {
             depth--;
         }
 
@@ -120,7 +116,7 @@ TextPosition findClosingBracketForward(QChar bracket, const TextPosition& positi
     return TextPosition();
 }
 
-TextPosition findOpeningBracketBackward(QChar bracket, const TextPosition& position) {
+TextPosition findOpeningBracketBackward(QChar bracket, const TextPosition &position) {
     QChar opening = QChar::Null;
     QChar closing = QChar::Null;
 
@@ -142,13 +138,13 @@ TextPosition findOpeningBracketBackward(QChar bracket, const TextPosition& posit
 
     BackwardCharIterator it(position);
     it.step();
-    while ( ! it.atEnd()) {
+    while (!it.atEnd()) {
         QChar ch = it.step();
-        // TODO if not self._qpart.isComment(foundBlock.blockNumber(), foundColumn):
+        // TODO if not self._qpart.isComment(foundBlock.blockNumber(),
+        // foundColumn):
         if (ch == opening) {
             depth--;
-        }
-        else if (ch == closing) {
+        } else if (ch == closing) {
             depth++;
         }
 
@@ -160,7 +156,7 @@ TextPosition findOpeningBracketBackward(QChar bracket, const TextPosition& posit
     return TextPosition();
 }
 
-TextPosition findAnyOpeningBracketBackward(const TextPosition& pos) {
+TextPosition findAnyOpeningBracketBackward(const TextPosition &pos) {
     std::map<std::pair<QChar, QChar>, int> depth;
 
     depth[std::make_pair('(', ')')] = 1;
@@ -170,7 +166,7 @@ TextPosition findAnyOpeningBracketBackward(const TextPosition& pos) {
     BackwardCharIterator it(pos);
     it.step();
 
-    while ( ! it.atEnd()) {
+    while (!it.atEnd()) {
         QChar ch = it.step();
         // if self._qpart.isCode(foundBlock.blockNumber(), foundColumn):
 
@@ -192,4 +188,4 @@ TextPosition findAnyOpeningBracketBackward(const TextPosition& pos) {
     return TextPosition();
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

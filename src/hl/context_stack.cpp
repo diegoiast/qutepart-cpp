@@ -1,54 +1,36 @@
 #include <QDebug>
 
-#include "context_switcher.h"
 #include "context.h"
+#include "context_switcher.h"
 
 #include "context_stack.h"
-
 
 #define VERBOSE_LOGS 0
 
 namespace Qutepart {
 // FIXME avoid data where possible
 
+ContextStackItem::ContextStackItem() : context(nullptr) {}
 
-ContextStackItem::ContextStackItem():
-    context(nullptr)
-{}
+ContextStackItem::ContextStackItem(const Context *context, const QStringList &data)
+    : context(context), data(data) {}
 
-ContextStackItem::ContextStackItem(const Context* context, const QStringList& data):
-    context(context),
-    data(data)
-{}
-
-bool ContextStackItem::operator==(const ContextStackItem& other) const {
+bool ContextStackItem::operator==(const ContextStackItem &other) const {
     return context == other.context && data == other.data;
 }
 
-ContextStack::ContextStack(Context* context)
-{
-    items.append(ContextStackItem(context));
-}
+ContextStack::ContextStack(Context *context) { items.append(ContextStackItem(context)); }
 
-ContextStack::ContextStack(const QVector<ContextStackItem>& items):
-    items(items)
-{}
+ContextStack::ContextStack(const QVector<ContextStackItem> &items) : items(items) {}
 
-bool ContextStack::operator==(const ContextStack& other) const{
-    return items == other.items;
-}
+bool ContextStack::operator==(const ContextStack &other) const { return items == other.items; }
 
-const Context* ContextStack::currentContext() const {
-    return items.last().context;
-}
+const Context *ContextStack::currentContext() const { return items.last().context; }
 
-const QStringList& ContextStack::currentData() const {
-    return items.last().data;
-}
+const QStringList &ContextStack::currentData() const { return items.last().data; }
 
-ContextStack ContextStack::switchContext(
-        const ContextSwitcher& operation,
-        const QStringList& data) const{
+ContextStack ContextStack::switchContext(const ContextSwitcher &operation,
+                                         const QStringList &data) const {
     auto newItems = items;
 
     if (operation.popsCount() > 0) {
@@ -65,7 +47,7 @@ ContextStack ContextStack::switchContext(
         }
     }
 
-    if ( ! operation.context().isNull() ) {
+    if (!operation.context().isNull()) {
         QStringList dataToSave;
 
         if (operation.context()->dynamic()) {
@@ -78,4 +60,4 @@ ContextStack ContextStack::switchContext(
     return ContextStack(newItems);
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

@@ -4,13 +4,12 @@
 
 #include "qutepart.h"
 
-typedef std::pair<int,int> CursorPos;
+typedef std::pair<int, int> CursorPos;
 
-
-class BaseTest: public QObject {
+class BaseTest : public QObject {
     Q_OBJECT
 
-protected:
+  protected:
     Qutepart::Qutepart qpart;
 
     void addColumns();
@@ -18,14 +17,14 @@ protected:
     void setCursorPosition(int line, int col);
     void enter();
     void tab();
-    void type(const QString& text);
-    void verifyExpected(const QString& expected);
+    void type(const QString &text);
+    void verifyExpected(const QString &expected);
     void runDataDrivenTest();
 
     virtual void init();
-private slots:
+  private slots:
     void initTestCase();
 
-private:
+  private:
     void autoIndentBlock(int blockIndex);
 };

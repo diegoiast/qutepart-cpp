@@ -4,11 +4,10 @@
 
 #include "qutepart.h"
 
-
-class Test: public QObject {
+class Test : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void Iter() {
         Qutepart::Qutepart qpart(nullptr, "a\nb\nc");
 
@@ -34,7 +33,7 @@ private slots:
         QStringList expectedLines = {"a", "b", "c"};
         QStringList actualLines;
 
-        for(auto it = qpart.lines().begin(); it != qpart.lines().end(); ++it) {
+        for (auto it = qpart.lines().begin(); it != qpart.lines().end(); ++it) {
             actualLines << (*it).text();
         }
 
@@ -46,7 +45,7 @@ private slots:
 
         QStringList expectedLines = {"a", "b", "c"};
         QStringList actualLines;
-        for(const auto& line: qpart.lines()) {
+        for (const auto &line : qpart.lines()) {
             actualLines << line.text();
         }
 

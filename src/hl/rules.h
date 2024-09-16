@@ -1,10 +1,9 @@
 #pragma once
 
-#include <QString>
-#include <QSharedPointer>
-#include <QTextStream>
 #include <QRegularExpression>
-
+#include <QSharedPointer>
+#include <QString>
+#include <QTextStream>
 
 #include "context.h"
 
@@ -14,92 +13,80 @@ class Context;
 typedef QSharedPointer<Context> ContextPtr;
 class TextToMatch;
 
-
 struct AbstractRuleParams {
-    QString attribute;          // may be null
+    QString attribute; // may be null
     ContextSwitcher context;
     bool lookAhead;
     bool firstNonSpace;
-    int column;                 // -1 if not set
+    int column; // -1 if not set
     bool dynamic;
 };
 
-
 class AbstractRule {
-public:
-    AbstractRule(const AbstractRuleParams& params);
-    virtual ~AbstractRule() {};
+  public:
+    AbstractRule(const AbstractRuleParams &params);
+    virtual ~AbstractRule(){};
 
-    virtual void printDescription(QTextStream& out) const;
+    virtual void printDescription(QTextStream &out) const;
     virtual QString description() const;
 
-    virtual void resolveContextReferences(const QHash<QString, ContextPtr>& contexts, QString& error);
-    virtual void setKeywordParams(const QHash<QString, QStringList>&,
-                                  bool,
-                                  const QString&,
-                                  QString&) {};
-    void setStyles(const QHash<QString, Style>& styles, QString& error);
+    virtual void resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
+                                          QString &error);
+    virtual void setKeywordParams(const QHash<QString, QStringList> &, bool, const QString &,
+                                  QString &){};
+    void setStyles(const QHash<QString, Style> &styles, QString &error);
 
     bool lookAhead;
 
     /* Matching entrypoint. Checks common params and calls tryMatchImpl()
      * Result ownership is passed to caller
      */
-    MatchResult* tryMatch(const TextToMatch& textToMatch) const;
+    MatchResult *tryMatch(const TextToMatch &textToMatch) const;
 
-protected:
-    virtual QString name() const {return "AbstractRule";};
-    virtual QString args() const {return QString();};
+  protected:
+    virtual QString name() const { return "AbstractRule"; };
+    virtual QString args() const { return QString(); };
 
-    MatchResult* makeMatchResult(
-        int length,
-        bool lineContinue=false,
-        const QStringList& data=QStringList()) const;
+    MatchResult *makeMatchResult(int length, bool lineContinue = false,
+                                 const QStringList &data = QStringList()) const;
 
     /* Rule matching implementation
      * Result ownership is passed to caller
      */
-    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const = 0;
+    virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const = 0;
 
-    QString attribute;          // may be null
+    QString attribute; // may be null
     ContextSwitcher context;
     bool firstNonSpace;
-    int column;                 // -1 if not set
+    int column; // -1 if not set
     bool dynamic;
 
     Style style;
 };
 
-
 // A rule which has 1 string as a parameter
-class AbstractStringRule: public AbstractRule {
-public:
-    AbstractStringRule (const AbstractRuleParams& params,
-                        const QString& value,
-                        bool insensitive);
+class AbstractStringRule : public AbstractRule {
+  public:
+    AbstractStringRule(const AbstractRuleParams &params, const QString &value, bool insensitive);
 
-protected:
+  protected:
     QString args() const override;
     QString value;
     bool insensitive;
 };
 
+class KeywordRule : public AbstractRule {
+  public:
+    KeywordRule(const AbstractRuleParams &params, const QString &listName);
 
-class KeywordRule: public AbstractRule {
-public:
-    KeywordRule(const AbstractRuleParams& params,
-                const QString& listName);
+    void setKeywordParams(const QHash<QString, QStringList> &lists, bool caseSensitive,
+                          const QString &, QString &error) override;
 
-    void setKeywordParams(const QHash<QString, QStringList>& lists,
-                          bool caseSensitive,
-                          const QString&,
-                          QString& error) override;
+    QString name() const override { return "Keyword"; };
+    QString args() const override { return listName; };
 
-    QString name() const override {return "Keyword";};
-    QString args() const override {return listName;};
-
-private:
-    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 
     QString listName;
     QStringList items;
@@ -107,83 +94,74 @@ private:
     QString deliminators;
 };
 
+class DetectCharRule : public AbstractRule {
+  public:
+    DetectCharRule(const AbstractRuleParams &params, QChar value, int index);
 
-class DetectCharRule: public AbstractRule {
-public:
-    DetectCharRule(const AbstractRuleParams& params,
-                   QChar value,
-                   int index);
-
-    QString name() const override {return "DetectChar";};
+    QString name() const override { return "DetectChar"; };
     QString args() const override;
 
-private:
-    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 
     QChar value;
     int index;
 };
 
-
-class Detect2CharsRule: public AbstractStringRule {
+class Detect2CharsRule : public AbstractStringRule {
     using AbstractStringRule::AbstractStringRule;
-public:
 
-    QString name() const override {return "Detect2Chars";};
+  public:
+    QString name() const override { return "Detect2Chars"; };
 
-private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 };
 
-
-class AnyCharRule: public AbstractStringRule {
+class AnyCharRule : public AbstractStringRule {
     using AbstractStringRule::AbstractStringRule;
-public:
 
-    QString name() const override {return "AnyChar";};
+  public:
+    QString name() const override { return "AnyChar"; };
 
-private:
-    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 };
 
-
-class StringDetectRule: public AbstractStringRule {
+class StringDetectRule : public AbstractStringRule {
     using AbstractStringRule::AbstractStringRule;
-public:
-    QString name() const override {return "StringDetect";};
 
-private:
-    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  public:
+    QString name() const override { return "StringDetect"; };
+
+  private:
+    virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 };
 
-
-class WordDetectRule: public AbstractStringRule {
+class WordDetectRule : public AbstractStringRule {
     using AbstractStringRule::AbstractStringRule;
-public:
-    QString name() const override {return "WordDetect";};
-    void setKeywordParams(const QHash<QString, QStringList>& lists,
-                          bool caseSensitive,
-                          const QString&,
-                          QString& error) override;
 
-private:
-    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  public:
+    QString name() const override { return "WordDetect"; };
+    void setKeywordParams(const QHash<QString, QStringList> &lists, bool caseSensitive,
+                          const QString &, QString &error) override;
+
+  private:
+    virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
     QString mDeliminatorSet;
 };
 
-
-class RegExpRule: public AbstractRule {
-public:
-    RegExpRule(const AbstractRuleParams& params,
-               const QString& value, bool insensitive,
+class RegExpRule : public AbstractRule {
+  public:
+    RegExpRule(const AbstractRuleParams &params, const QString &value, bool insensitive,
                bool minimal, bool wordStart, bool lineStart);
 
-private:
-    QString name() const override {return "RegExpr";};
+  private:
+    QString name() const override { return "RegExpr"; };
     QString args() const override;
 
-    QRegularExpression compileRegExp(const QString& pattern) const;
-    virtual MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+    QRegularExpression compileRegExp(const QString &pattern) const;
+    virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 
     QString value;
     bool insensitive;
@@ -193,148 +171,138 @@ private:
     QRegularExpression regExp;
 };
 
+class AbstractNumberRule : public AbstractRule {
+  public:
+    AbstractNumberRule(const AbstractRuleParams &params, const QList<RulePtr> &childRules);
 
-class AbstractNumberRule: public AbstractRule {
-public:
-    AbstractNumberRule(const AbstractRuleParams& params,
-                       const QList<RulePtr>& childRules);
+    void printDescription(QTextStream &out) const override;
 
-    void printDescription(QTextStream& out) const override;
-protected:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
-    virtual int tryMatchText(const QStringView& text) const = 0;
-    int countDigits(const QStringView& text) const;
+  protected:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
+    virtual int tryMatchText(const QStringView &text) const = 0;
+    int countDigits(const QStringView &text) const;
 
     QList<RulePtr> childRules;
 };
 
-
-class IntRule: public AbstractNumberRule {
+class IntRule : public AbstractNumberRule {
     using AbstractNumberRule::AbstractNumberRule;
 
-public:
-    QString name() const override {return "Int";};
+  public:
+    QString name() const override { return "Int"; };
 
-private:
-    virtual int tryMatchText(const QStringView& text) const override;
+  private:
+    virtual int tryMatchText(const QStringView &text) const override;
 };
 
-
-class FloatRule: public AbstractNumberRule {
+class FloatRule : public AbstractNumberRule {
     using AbstractNumberRule::AbstractNumberRule;
 
-public:
-    QString name() const override {return "Float";};
+  public:
+    QString name() const override { return "Float"; };
 
-private:
-    int tryMatchText(const QStringView& text) const override;
+  private:
+    int tryMatchText(const QStringView &text) const override;
 };
 
-
-class HlCOctRule: public AbstractRule {
+class HlCOctRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
-public:
-    QString name() const override {return "HlCOct";};
+  public:
+    QString name() const override { return "HlCOct"; };
 
-private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 };
 
-
-class HlCHexRule: public AbstractRule {
+class HlCHexRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
-public:
-    QString name() const override {return "HlCHex";};
+  public:
+    QString name() const override { return "HlCHex"; };
 
-private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 };
 
-
-class HlCStringCharRule: public AbstractRule {
+class HlCStringCharRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
-public:
-    QString name() const override {return "HlCStringChar";};
+  public:
+    QString name() const override { return "HlCStringChar"; };
 
-private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 };
 
-
-class HlCCharRule: public AbstractRule {
+class HlCCharRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
-public:
-    QString name() const override {return "HlCChar";};
+  public:
+    QString name() const override { return "HlCChar"; };
 
-private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 };
 
-
-class RangeDetectRule: public AbstractRule {
-public:
-    RangeDetectRule(const AbstractRuleParams& params, const QString& char0, const QString& char1);
-    QString name() const override {return "RangeDetect";};
+class RangeDetectRule : public AbstractRule {
+  public:
+    RangeDetectRule(const AbstractRuleParams &params, const QString &char0, const QString &char1);
+    QString name() const override { return "RangeDetect"; };
     QString args() const override;
 
-private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 
     const QString char0;
     const QString char1;
 };
 
-
-class LineContinueRule: public AbstractRule {
+class LineContinueRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
-public:
-    QString name() const override {return "LineContinue";};
+  public:
+    QString name() const override { return "LineContinue"; };
 
-private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 };
 
+class IncludeRulesRule : public AbstractRule {
+  public:
+    IncludeRulesRule(const AbstractRuleParams &params, const QString &contextName);
 
-class IncludeRulesRule: public AbstractRule {
-public:
-    IncludeRulesRule(const AbstractRuleParams& params, const QString& contextName);
+    QString name() const override { return "IncludeRules"; };
+    QString args() const override { return contextName; };
 
-    QString name() const override {return "IncludeRules";};
-    QString args() const override {return contextName;};
+    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
+                                  QString &error) override;
 
-    void resolveContextReferences(const QHash<QString, ContextPtr>& contexts, QString& error) override;
-
-private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 
     QString contextName;
     ContextPtr context;
 };
 
-
-class DetectSpacesRule: public AbstractRule {
+class DetectSpacesRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
-public:
-    QString name() const override {return "DetectSpaces";};
+  public:
+    QString name() const override { return "DetectSpaces"; };
 
-private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 };
 
-class DetectIdentifierRule: public AbstractRule {
+class DetectIdentifierRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
-public:
-    QString name() const override {return "DetectIdentifier";};
+  public:
+    QString name() const override { return "DetectIdentifier"; };
 
-private:
-    MatchResult* tryMatchImpl(const TextToMatch& textToMatch) const override;
+  private:
+    MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 };
 
-}  // namespace Qutepart
+} // namespace Qutepart

@@ -4,11 +4,10 @@
 
 #include "qutepart.h"
 
-
-class Test: public QObject {
+class Test : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void MoveDownOneLine() {
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\nthree\nfour");
 
@@ -153,7 +152,7 @@ private slots:
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
     }
 
-    void DuplicateSelection() {  // TODO move from this file
+    void DuplicateSelection() { // TODO move from this file
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\nthree\nfour");
 
         QTextCursor cursor = qpart.textCursor();
@@ -296,7 +295,7 @@ private slots:
         qpart.goTo(2, 4);
         QTest::keyClick(&qpart, Qt::Key_Return, Qt::ShiftModifier | Qt::ControlModifier);
         QCOMPARE(qpart.toPlainText(), QString(" one\n  two\n  \n   three\n    four"));
-#if 0  // FIXME this fails. "x" gets undone with the rest of operations
+#if 0 // FIXME this fails. "x" gets undone with the rest of operations
         qDebug() << "type X" << qpart.toPlainText();
         QTest::keyClicks(&qpart, "x");
         qDebug() << "typed X" << qpart.toPlainText();
@@ -309,7 +308,6 @@ private slots:
         qpart.undo();
         QCOMPARE(qpart.toPlainText(), QString(" one\n  two\n   three\n    four"));
     }
-
 
     void InsertLineAboveFirst() {
         Qutepart::Qutepart qpart(nullptr, " one\n  two\n   three\n    four");
@@ -329,7 +327,7 @@ private slots:
         QTest::keyClick(&qpart, Qt::Key_Return, Qt::ControlModifier);
         QCOMPARE(qpart.toPlainText(), QString(" one\n  two\n   three\n   \n    four"));
 
-#if 0  // FIXME this fails. "x" gets undone with the rest of operations
+#if 0 // FIXME this fails. "x" gets undone with the rest of operations
         qDebug() << "type X" << qpart.toPlainText();
         QTest::keyClicks(&qpart, "x");
         qDebug() << "typed X" << qpart.toPlainText();
@@ -343,7 +341,6 @@ private slots:
         qpart.undo();
         QCOMPARE(qpart.toPlainText(), QString(" one\n  two\n   three\n    four"));
     }
-
 };
 
 QTEST_MAIN(Test)

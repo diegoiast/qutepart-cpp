@@ -1,37 +1,31 @@
 #include <QDebug>
 
+#include "loader.h"
 #include "match_result.h"
 #include "text_to_match.h"
-#include "loader.h"
 
 #include "rules.h"
 
 namespace Qutepart {
 
-AbstractRule::AbstractRule(const AbstractRuleParams& params):
-    lookAhead(params.lookAhead),
-    attribute(params.attribute),
-    context(params.context),
-    firstNonSpace(params.firstNonSpace),
-    column(params.column),
-    dynamic(params.dynamic)
-{}
+AbstractRule::AbstractRule(const AbstractRuleParams &params)
+    : lookAhead(params.lookAhead), attribute(params.attribute), context(params.context),
+      firstNonSpace(params.firstNonSpace), column(params.column), dynamic(params.dynamic) {}
 
-void AbstractRule::printDescription(QTextStream& out) const {
+void AbstractRule::printDescription(QTextStream &out) const {
     out << "\t\t" << description() << "\n";
 }
 
-QString AbstractRule::description() const {
-    return QString("%1(%2)").arg(name()).arg(args());
-}
+QString AbstractRule::description() const { return QString("%1(%2)").arg(name()).arg(args()); }
 
-void AbstractRule::resolveContextReferences(const QHash<QString, ContextPtr>& contexts, QString& error) {
+void AbstractRule::resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
+                                            QString &error) {
     context.resolveContextReferences(contexts, error);
 }
 
-void AbstractRule::setStyles(const QHash<QString, Style>& styles, QString& error) {
-    if ( ! attribute.isNull()) {
-        if ( ! styles.contains(attribute)) {
+void AbstractRule::setStyles(const QHash<QString, Style> &styles, QString &error) {
+    if (!attribute.isNull()) {
+        if (!styles.contains(attribute)) {
             error = QString("Not found rule %1 attribute %2").arg(description(), attribute);
             return;
         }
@@ -40,11 +34,10 @@ void AbstractRule::setStyles(const QHash<QString, Style>& styles, QString& error
     }
 }
 
-MatchResult* AbstractRule::makeMatchResult(
-        int length,
-        bool lineContinue,
-        const QStringList& data) const {
-    //qDebug() << "\t\trule matched" << description() << length << "lookAhead" << lookAhead;
+MatchResult *AbstractRule::makeMatchResult(int length, bool lineContinue,
+                                           const QStringList &data) const {
+    // qDebug() << "\t\trule matched" << description() << length << "lookAhead"
+    // << lookAhead;
     if (lookAhead) {
         length = 0;
     }
@@ -52,7 +45,7 @@ MatchResult* AbstractRule::makeMatchResult(
     return new MatchResult(length, data, lineContinue, context, style);
 }
 
-MatchResult* AbstractRule::tryMatch(const TextToMatch& textToMatch) const {
+MatchResult *AbstractRule::tryMatch(const TextToMatch &textToMatch) const {
     if (column != -1 && column != textToMatch.currentColumnIndex) {
         return nullptr;
     }
@@ -64,13 +57,9 @@ MatchResult* AbstractRule::tryMatch(const TextToMatch& textToMatch) const {
     return tryMatchImpl(textToMatch);
 }
 
-AbstractStringRule::AbstractStringRule(const AbstractRuleParams& params,
-                                       const QString& value,
-                                       bool insensitive):
-    AbstractRule(params),
-    value(value),
-    insensitive(insensitive)
-{}
+AbstractStringRule::AbstractStringRule(const AbstractRuleParams &params, const QString &value,
+                                       bool insensitive)
+    : AbstractRule(params), value(value), insensitive(insensitive) {}
 
 QString AbstractStringRule::args() const {
     QString result = value;
@@ -81,18 +70,17 @@ QString AbstractStringRule::args() const {
     return result;
 }
 
-
 namespace {
-    QString makeDynamicSubsctitutions(QString pattern, const QStringList& data) {
-        return pattern.replace("%0", QRegularExpression::escape(data.value(0)))\
-                      .replace("%1", QRegularExpression::escape(data.value(1)))\
-                      .replace("%2", QRegularExpression::escape(data.value(2)))\
-                      .replace("%3", QRegularExpression::escape(data.value(3)))\
-                      .replace("%4", QRegularExpression::escape(data.value(4)));
-    }
+QString makeDynamicSubsctitutions(QString pattern, const QStringList &data) {
+    return pattern.replace("%0", QRegularExpression::escape(data.value(0)))
+        .replace("%1", QRegularExpression::escape(data.value(1)))
+        .replace("%2", QRegularExpression::escape(data.value(2)))
+        .replace("%3", QRegularExpression::escape(data.value(3)))
+        .replace("%4", QRegularExpression::escape(data.value(4)));
 }
+} // namespace
 
-MatchResult* StringDetectRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *StringDetectRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     QString pattern = value;
     if (dynamic) {
         pattern = makeDynamicSubsctitutions(value, *textToMatch.contextData);
@@ -109,19 +97,12 @@ MatchResult* StringDetectRule::tryMatchImpl(const TextToMatch& textToMatch) cons
     return nullptr;
 }
 
+KeywordRule::KeywordRule(const AbstractRuleParams &params, const QString &listName)
+    : AbstractRule(params), listName(listName), caseSensitive(true) {}
 
-KeywordRule::KeywordRule(const AbstractRuleParams& params,
-                         const QString& listName):
-    AbstractRule(params),
-    listName(listName),
-    caseSensitive(true)
-{}
-
-void KeywordRule::setKeywordParams(const QHash<QString, QStringList>& lists,
-                                   bool caseSensitive,
-                                   const QString& deliminators,
-                                   QString& error) {
-    if ( ! lists.contains(listName)) {
+void KeywordRule::setKeywordParams(const QHash<QString, QStringList> &lists, bool caseSensitive,
+                                   const QString &deliminators, QString &error) {
+    if (!lists.contains(listName)) {
         error = QString("List '%1' not found").arg(error);
         return;
     }
@@ -129,14 +110,14 @@ void KeywordRule::setKeywordParams(const QHash<QString, QStringList>& lists,
     this->caseSensitive = caseSensitive;
     this->deliminators = deliminators;
 
-    if ( ! this->caseSensitive) {
+    if (!this->caseSensitive) {
         for (auto it = items.begin(); it != items.end(); it++) {
             *it = (*it).toLower();
         }
     }
 }
 
-MatchResult* KeywordRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *KeywordRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     QString word = textToMatch.word(deliminators);
 
     if (word.isEmpty()) {
@@ -157,13 +138,8 @@ MatchResult* KeywordRule::tryMatchImpl(const TextToMatch& textToMatch) const {
     }
 }
 
-DetectCharRule::DetectCharRule(const AbstractRuleParams& params,
-                               QChar value,
-                               int index):
-    AbstractRule(params),
-    value(value),
-    index(index)
-{}
+DetectCharRule::DetectCharRule(const AbstractRuleParams &params, QChar value, int index)
+    : AbstractRule(params), value(value), index(index) {}
 
 QString DetectCharRule::args() const {
     if (value == QChar('\0')) {
@@ -173,7 +149,7 @@ QString DetectCharRule::args() const {
     }
 }
 
-MatchResult* DetectCharRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *DetectCharRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     QChar pattern = value;
 
     if (dynamic) {
@@ -202,8 +178,7 @@ MatchResult* DetectCharRule::tryMatchImpl(const TextToMatch& textToMatch) const 
     }
 }
 
-
-MatchResult* Detect2CharsRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *Detect2CharsRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     if (textToMatch.text.startsWith(value)) {
         return makeMatchResult(2);
     }
@@ -211,8 +186,7 @@ MatchResult* Detect2CharsRule::tryMatchImpl(const TextToMatch& textToMatch) cons
     return nullptr;
 }
 
-
-MatchResult* AnyCharRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *AnyCharRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     if (value.contains(textToMatch.text.at(0))) {
         return makeMatchResult(1);
     }
@@ -220,8 +194,7 @@ MatchResult* AnyCharRule::tryMatchImpl(const TextToMatch& textToMatch) const {
     return nullptr;
 }
 
-
-MatchResult* WordDetectRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *WordDetectRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     QString word = textToMatch.word(mDeliminatorSet);
     if (word.isEmpty()) {
         return nullptr;
@@ -231,31 +204,23 @@ MatchResult* WordDetectRule::tryMatchImpl(const TextToMatch& textToMatch) const 
         word = word.toLower();
     }
 
-    if (word == value){
+    if (word == value) {
         return makeMatchResult(word.length());
     } else {
         return nullptr;
     }
 }
 
-void WordDetectRule::setKeywordParams(const QHash<QString, QStringList>&,
-                                      bool,
-                                      const QString& deliminatorSet,
-                                      QString&) {
+void WordDetectRule::setKeywordParams(const QHash<QString, QStringList> &, bool,
+                                      const QString &deliminatorSet, QString &) {
     mDeliminatorSet = deliminatorSet;
 }
 
-RegExpRule::RegExpRule(const AbstractRuleParams& params,
-                       const QString& value, bool insensitive,
-                       bool minimal, bool wordStart, bool lineStart):
-    AbstractRule(params),
-    value(value),
-    insensitive(insensitive),
-    minimal(minimal),
-    wordStart(wordStart),
-    lineStart(lineStart)
-{
-    if ( ! dynamic) {
+RegExpRule::RegExpRule(const AbstractRuleParams &params, const QString &value, bool insensitive,
+                       bool minimal, bool wordStart, bool lineStart)
+    : AbstractRule(params), value(value), insensitive(insensitive), minimal(minimal),
+      wordStart(wordStart), lineStart(lineStart) {
+    if (!dynamic) {
         regExp = compileRegExp(value);
     }
 }
@@ -278,8 +243,8 @@ QString RegExpRule::args() const {
     return result;
 }
 
-QRegularExpression RegExpRule::compileRegExp(const QString& pattern) const {
-   QRegularExpression::PatternOptions flags = QRegularExpression::NoPatternOption;
+QRegularExpression RegExpRule::compileRegExp(const QString &pattern) const {
+    QRegularExpression::PatternOptions flags = QRegularExpression::NoPatternOption;
 
     if (insensitive) {
         flags |= QRegularExpression::CaseInsensitiveOption;
@@ -295,35 +260,34 @@ QRegularExpression RegExpRule::compileRegExp(const QString& pattern) const {
     }
 
     QRegularExpression result(pattern, flags);
-    if ( ! result.isValid()) {
+    if (!result.isValid()) {
         qWarning() << "Invalid regular expression pattern" << pattern;
     }
 
     return result;
 }
 
-MatchResult* RegExpRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *RegExpRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     // Special case. if pattern starts with \b, we have to check it manually,
     // because string is passed to .match(..) without beginning
-    if (wordStart && ( ! textToMatch.isWordStart)) {
+    if (wordStart && (!textToMatch.isWordStart)) {
         return nullptr;
     }
 
-    //Special case. If pattern starts with ^ - check column number manually
+    // Special case. If pattern starts with ^ - check column number manually
     if (lineStart && textToMatch.currentColumnIndex > 0) {
         return nullptr;
     }
-
 
     QRegularExpressionMatch match;
     if (dynamic) {
         QString pattern = makeDynamicSubsctitutions(value, *textToMatch.contextData);
         QRegularExpression dynamicRegExp = compileRegExp(pattern);
-        match = dynamicRegExp.match(textToMatch.text,
-            0, QRegularExpression::NormalMatch, QRegularExpression::AnchorAtOffsetMatchOption);
+        match = dynamicRegExp.match(textToMatch.text, 0, QRegularExpression::NormalMatch,
+                                    QRegularExpression::AnchorAtOffsetMatchOption);
     } else {
-        match = regExp.match(textToMatch.text,
-            0, QRegularExpression::NormalMatch, QRegularExpression::AnchorAtOffsetMatchOption);
+        match = regExp.match(textToMatch.text, 0, QRegularExpression::NormalMatch,
+                             QRegularExpression::AnchorAtOffsetMatchOption);
     }
 
     if (match.hasMatch() && match.capturedLength() > 0) {
@@ -333,23 +297,22 @@ MatchResult* RegExpRule::tryMatchImpl(const TextToMatch& textToMatch) const {
     }
 }
 
-AbstractNumberRule::AbstractNumberRule(const AbstractRuleParams& params,
-                                       const QList<RulePtr>& childRules):
-    AbstractRule(params),
-    childRules(childRules)
-{}
+AbstractNumberRule::AbstractNumberRule(const AbstractRuleParams &params,
+                                       const QList<RulePtr> &childRules)
+    : AbstractRule(params), childRules(childRules) {}
 
-void AbstractNumberRule::printDescription(QTextStream& out) const {
+void AbstractNumberRule::printDescription(QTextStream &out) const {
     AbstractRule::printDescription(out);
 
-    foreach(RulePtr rule, childRules) {
+    foreach (RulePtr rule, childRules) {
         out << "\t\t\t" << rule->description() << "\n";
     }
 }
 
-MatchResult* AbstractNumberRule::tryMatchImpl(const TextToMatch& textToMatch) const {
-    // andreikop: This condition is not described in kate docs, and I haven't found it in the code
-    if ( ! textToMatch.isWordStart) {
+MatchResult *AbstractNumberRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+    // andreikop: This condition is not described in kate docs, and I haven't
+    // found it in the code
+    if (!textToMatch.isWordStart) {
         return nullptr;
     }
 
@@ -359,12 +322,12 @@ MatchResult* AbstractNumberRule::tryMatchImpl(const TextToMatch& textToMatch) co
         return nullptr;
     }
 
-    if (matchedLength < textToMatch.text.length()){
+    if (matchedLength < textToMatch.text.length()) {
         TextToMatch textToMatchCopy = textToMatch;
         textToMatchCopy.shift(matchedLength);
 
-        foreach(RulePtr rule, childRules) {
-            MatchResult* matchRes = rule->tryMatch(textToMatchCopy);
+        foreach (RulePtr rule, childRules) {
+            MatchResult *matchRes = rule->tryMatch(textToMatchCopy);
             if (matchRes != nullptr) {
                 matchedLength += matchRes->length;
                 delete matchRes;
@@ -377,23 +340,19 @@ MatchResult* AbstractNumberRule::tryMatchImpl(const TextToMatch& textToMatch) co
     return makeMatchResult(matchedLength);
 }
 
-int AbstractNumberRule::countDigits(const QStringView& text) const {
+int AbstractNumberRule::countDigits(const QStringView &text) const {
     int index = 0;
-    for(index = 0; index < text.length(); index++) {
-        if ( ! text.at(index).isDigit()) {
+    for (index = 0; index < text.length(); index++) {
+        if (!text.at(index).isDigit()) {
             break;
         }
     }
     return index;
 }
 
+int IntRule::tryMatchText(const QStringView &text) const { return countDigits(text); }
 
-int IntRule::tryMatchText(const QStringView& text) const {
-    return countDigits(text);
-}
-
-
-int FloatRule::tryMatchText(const QStringView& text) const {
+int FloatRule::tryMatchText(const QStringView &text) const {
     bool haveDigit = false;
     bool havePoint = false;
 
@@ -421,8 +380,7 @@ int FloatRule::tryMatchText(const QStringView& text) const {
         matchedLength++;
 
         if (text.length() > matchedLength &&
-            (text.at(matchedLength) == '+' ||
-             text.at(matchedLength) == '-')) {
+            (text.at(matchedLength) == '+' || text.at(matchedLength) == '-')) {
             matchedLength++;
         }
 
@@ -434,13 +392,13 @@ int FloatRule::tryMatchText(const QStringView& text) const {
             matchedLength += digitCount;
         }
 
-        if ( ! haveDigitInExponent) {
+        if (!haveDigitInExponent) {
             return -1;
         }
 
         return matchedLength;
     } else {
-        if ( ! havePoint) {
+        if (!havePoint) {
             return -1;
         }
     }
@@ -452,96 +410,81 @@ int FloatRule::tryMatchText(const QStringView& text) const {
     }
 }
 
-
 namespace { // HlC helpers
 
-    // For HlCOctRule and HlCHexRule
-    bool isNumberLengthSpecifier(QChar ch) {
-        return ch == 'l' ||
-               ch == 'L' ||
-               ch == 'u' ||
-               ch == 'U';
-    }
+// For HlCOctRule and HlCHexRule
+bool isNumberLengthSpecifier(QChar ch) { return ch == 'l' || ch == 'L' || ch == 'u' || ch == 'U'; }
 
-    bool isOctal(QChar ch) {
-        return ch >= '0' && ch <= '7';
-    }
+bool isOctal(QChar ch) { return ch >= '0' && ch <= '7'; }
 
-    bool isHex(QChar ch) {
-        return (ch >= '0' && ch <= '9') ||
-               (ch >= 'a' && ch <= 'f') ||
-               (ch >= 'A' && ch <= 'F');
-    }
-
-    const QString escapeChars = "abefnrtv'\"?\\";
-
-    int checkEscapedChar(QStringView text) {
-        int index = 0;
-        if(text.length() > 1 && text.at(0) == '\\') {
-            index = 1;
-
-            if (escapeChars.contains(text.at(index))) {
-                index++;
-            } else if (text.at(index) == 'x') {  // if it's like \xff, eat the x
-                index ++;
-                while (index < text.length() && isHex(text.at(index))) {
-                    index ++;
-                }
-                if (index == 2) {  // no hex digits
-                    return -1;
-                }
-            } else if (isOctal(text.at(index))) {
-                while (index < 4 && index < text.length() && isOctal(text.at(index))) {
-                    index ++;
-                }
-            } else {
-                return -1;
-            }
-
-            return index;
-        }
-
-        return -1;
-    }
+bool isHex(QChar ch) {
+    return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
 }
 
-MatchResult* HlCOctRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+const QString escapeChars = "abefnrtv'\"?\\";
+
+int checkEscapedChar(QStringView text) {
+    int index = 0;
+    if (text.length() > 1 && text.at(0) == '\\') {
+        index = 1;
+
+        if (escapeChars.contains(text.at(index))) {
+            index++;
+        } else if (text.at(index) == 'x') { // if it's like \xff, eat the x
+            index++;
+            while (index < text.length() && isHex(text.at(index))) {
+                index++;
+            }
+            if (index == 2) { // no hex digits
+                return -1;
+            }
+        } else if (isOctal(text.at(index))) {
+            while (index < 4 && index < text.length() && isOctal(text.at(index))) {
+                index++;
+            }
+        } else {
+            return -1;
+        }
+
+        return index;
+    }
+
+    return -1;
+}
+} // namespace
+
+MatchResult *HlCOctRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     if (textToMatch.text.at(0) != '0') {
         return nullptr;
     }
 
     int index = 1;
-    while (index < textToMatch.text.length() &&
-           isOctal(textToMatch.text.at(index))) {
-        index ++;
+    while (index < textToMatch.text.length() && isOctal(textToMatch.text.at(index))) {
+        index++;
     }
 
-    if (index == 1){
+    if (index == 1) {
         return nullptr;
     }
 
-    if(index < textToMatch.text.length() &&
-       isNumberLengthSpecifier(textToMatch.text.at(index))) {
+    if (index < textToMatch.text.length() && isNumberLengthSpecifier(textToMatch.text.at(index))) {
         index++;
     }
 
     return makeMatchResult(index);
 }
 
-
-MatchResult* HlCHexRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *HlCHexRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     if (textToMatch.text.length() < 3) {
         return nullptr;
     }
 
-    if (textToMatch.text.at(0) != '0' ||
-        textToMatch.text.at(1).toUpper() != 'X') {
+    if (textToMatch.text.at(0) != '0' || textToMatch.text.at(1).toUpper() != 'X') {
         return nullptr;
     }
 
     int index = 2;
-    while (index < textToMatch.text.length() &&
-           isHex(textToMatch.text.at(index))) {
+    while (index < textToMatch.text.length() && isHex(textToMatch.text.at(index))) {
         index++;
     }
 
@@ -549,16 +492,14 @@ MatchResult* HlCHexRule::tryMatchImpl(const TextToMatch& textToMatch) const {
         return nullptr;
     }
 
-    if(index < textToMatch.text.length() &&
-       isNumberLengthSpecifier(textToMatch.text.at(index))) {
+    if (index < textToMatch.text.length() && isNumberLengthSpecifier(textToMatch.text.at(index))) {
         index++;
     }
 
     return makeMatchResult(index);
 }
 
-
-MatchResult* HlCStringCharRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *HlCStringCharRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     int res = checkEscapedChar(textToMatch.text);
     if (res != -1) {
         return makeMatchResult(res);
@@ -567,21 +508,18 @@ MatchResult* HlCStringCharRule::tryMatchImpl(const TextToMatch& textToMatch) con
     }
 }
 
-
-MatchResult* HlCCharRule::tryMatchImpl(const TextToMatch& textToMatch) const {
-    if(textToMatch.text.length() > 2 &&
-       textToMatch.text.at(0) == '\'' &&
-       textToMatch.text.at(1) != '\'') {
+MatchResult *HlCCharRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+    if (textToMatch.text.length() > 2 && textToMatch.text.at(0) == '\'' &&
+        textToMatch.text.at(1) != '\'') {
         int index = 0;
         int result = checkEscapedChar(textToMatch.text.mid(1));
-        if(result != -1){
+        if (result != -1) {
             index = 1 + result;
-        } else {  // 1 not escaped character
+        } else { // 1 not escaped character
             index = 1 + 1;
         }
 
-        if(index < textToMatch.text.length() &&
-           textToMatch.text.at(index) == '\'') {
+        if (index < textToMatch.text.length() && textToMatch.text.at(index) == '\'') {
             return makeMatchResult(index + 1);
         }
     }
@@ -589,18 +527,13 @@ MatchResult* HlCCharRule::tryMatchImpl(const TextToMatch& textToMatch) const {
     return nullptr;
 }
 
+RangeDetectRule::RangeDetectRule(const AbstractRuleParams &params, const QString &char0,
+                                 const QString &char1)
+    : AbstractRule(params), char0(char0), char1(char1) {}
 
-RangeDetectRule::RangeDetectRule(const AbstractRuleParams& params, const QString& char0, const QString& char1):
-    AbstractRule(params),
-    char0(char0),
-    char1(char1)
-{}
+QString RangeDetectRule::args() const { return QString("%1 - %2").arg(char0, char1); }
 
-QString RangeDetectRule::args() const {
-    return QString("%1 - %2").arg(char0, char1);
-}
-
-MatchResult* RangeDetectRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *RangeDetectRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     if (textToMatch.text.startsWith(char0)) {
         int end = textToMatch.text.indexOf(char1, 1);
         if (end > 0) {
@@ -611,15 +544,13 @@ MatchResult* RangeDetectRule::tryMatchImpl(const TextToMatch& textToMatch) const
     return nullptr;
 }
 
+IncludeRulesRule::IncludeRulesRule(const AbstractRuleParams &params, const QString &contextName)
+    : AbstractRule(params), contextName(contextName) {}
 
-IncludeRulesRule::IncludeRulesRule(const AbstractRuleParams& params, const QString& contextName):
-    AbstractRule(params),
-    contextName(contextName)
-{}
-
-void IncludeRulesRule::resolveContextReferences(const QHash<QString, ContextPtr>& contexts, QString& error) {
+void IncludeRulesRule::resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
+                                                QString &error) {
     AbstractRule::resolveContextReferences(contexts, error);
-    if ( ! error.isNull()) {
+    if (!error.isNull()) {
         return;
     }
 
@@ -632,15 +563,16 @@ void IncludeRulesRule::resolveContextReferences(const QHash<QString, ContextPtr>
         return;
     }
 
-    if ( ! contexts.contains(contextName)) {
-        error = QString("Failed to include rules from context '%1' because not exists").arg(contextName);
+    if (!contexts.contains(contextName)) {
+        error = QString("Failed to include rules from context '%1' because not exists")
+                    .arg(contextName);
         return;
     }
 
     context = contexts[contextName];
 }
 
-MatchResult* IncludeRulesRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *IncludeRulesRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     if (context == nullptr) {
         qWarning() << "IncludeRules called for null context" << description();
         return nullptr;
@@ -649,8 +581,7 @@ MatchResult* IncludeRulesRule::tryMatchImpl(const TextToMatch& textToMatch) cons
     return context->tryMatch(textToMatch);
 }
 
-
-MatchResult* LineContinueRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *LineContinueRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     if (textToMatch.text == QLatin1String("\\")) {
         return makeMatchResult(1, true);
     }
@@ -658,11 +589,10 @@ MatchResult* LineContinueRule::tryMatchImpl(const TextToMatch& textToMatch) cons
     return nullptr;
 }
 
-
-MatchResult* DetectSpacesRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *DetectSpacesRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     int index = 0;
     while (index < textToMatch.text.length() && textToMatch.text.at(index).isSpace()) {
-        index ++;
+        index++;
     }
 
     if (index > 0) {
@@ -672,24 +602,22 @@ MatchResult* DetectSpacesRule::tryMatchImpl(const TextToMatch& textToMatch) cons
     }
 }
 
-
-MatchResult* DetectIdentifierRule::tryMatchImpl(const TextToMatch& textToMatch) const {
+MatchResult *DetectIdentifierRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     if (textToMatch.text.at(0).isLetter()) {
         int count = 1;
-        while(count < textToMatch.text.length()) {
+        while (count < textToMatch.text.length()) {
             QChar ch = textToMatch.text.at(count);
             if (ch.isLetterOrNumber() || ch == '_') {
-                count ++;
+                count++;
             } else {
                 break;
             }
         }
 
         return makeMatchResult(count);
-    }
-    else {
+    } else {
         return nullptr;
     }
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

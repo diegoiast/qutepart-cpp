@@ -1,38 +1,31 @@
 #include <QDebug>
 #include <QRegularExpression>
 
-#include "text_block_utils.h"
 #include "indent_funcs.h"
+#include "text_block_utils.h"
 
 #include "alg_xml.h"
 
-
 namespace Qutepart {
 
-const QString& IndentAlgXml::triggerCharacters() const {
+const QString &IndentAlgXml::triggerCharacters() const {
     static QString chars = "/>";
     return chars;
 }
 
 namespace {
 
-bool matches(const QString& pattern, const QString& text) {
+bool matches(const QString &pattern, const QString &text) {
     return QRegularExpression(pattern).match(text).capturedLength() > 0;
 }
 
-bool isDocumentHeader(const QString& line) {
-    return matches("^<(\\?xml|!DOCTYPE).*", line);
-}
+bool isDocumentHeader(const QString &line) { return matches("^<(\\?xml|!DOCTYPE).*", line); }
 
-bool isOpeningTag(const QString& line) {
-    return matches("<([^/!]|[^/!][^>]*[^/])>[^<>]*$", line);
-}
+bool isOpeningTag(const QString &line) { return matches("<([^/!]|[^/!][^>]*[^/])>[^<>]*$", line); }
 
-bool isGoingToCloseTag(const QString& line) {
-    return matches("^\\s*</", line);
-}
+bool isGoingToCloseTag(const QString &line) { return matches("^\\s*</", line); }
 
-}
+} // namespace
 
 QString IndentAlgXml::autoFormatLine(QTextBlock block) const {
     QString lineText = block.text();
@@ -43,15 +36,15 @@ QString IndentAlgXml::autoFormatLine(QTextBlock block) const {
 
     auto match = splitter.match(lineText);
 
-    if (match.capturedLength() > 0) {  // if having tags to split
+    if (match.capturedLength() > 0) { // if having tags to split
         QStringList newLines;
         while (match.capturedLength() > 0) {
-            QString newLine = lineText.left(match.capturedStart() + 1);  // +1 for >
-            lineText = lineText.mid(match.capturedEnd() - 1);  // -1 for <
+            QString newLine = lineText.left(match.capturedStart() + 1); // +1 for >
+            lineText = lineText.mid(match.capturedEnd() - 1);           // -1 for <
 
             // Indent new line
             QString indent = indentForLine(newLine, prevLineText);
-            newLine  = indent + stripLeftWhitespace(newLine);
+            newLine = indent + stripLeftWhitespace(newLine);
             newLines << newLine;
 
             prevLineText = newLine;
@@ -71,20 +64,18 @@ QString IndentAlgXml::computeSmartIndent(QTextBlock block, int /*cursorPos*/) co
     QString prevLineText = prevNonEmptyBlock(block).text();
 
     return indentForLine(lineText, prevLineText);
-
 }
 
-QString IndentAlgXml::indentForLine(
-        const QString& lineText,
-        const QString& prevLineText) const {
+QString IndentAlgXml::indentForLine(const QString &lineText, const QString &prevLineText) const {
     QString prevIndent = lineIndent(prevLineText);
     if (isDocumentHeader(prevLineText)) {
         return "";
     }
 
-    if (lineText.isEmpty()) {  // new line, use prev line to indent properly
+    if (lineText.isEmpty()) { // new line, use prev line to indent properly
         if (isOpeningTag(prevLineText)) {
-            // increase indent when prev line opened a tag (but not for comments)
+            // increase indent when prev line opened a tag (but not for
+            // comments)
             return increaseIndent(prevIndent, indentText());
         } else {
             return prevIndent;
@@ -92,8 +83,9 @@ QString IndentAlgXml::indentForLine(
     } else if (isDocumentHeader(lineText)) {
         return "";
     } else if (isGoingToCloseTag(lineText)) {
-        if ( ! isOpeningTag(prevLineText)) {
-            // decrease indent when we write </ and prior line did not start a tag
+        if (!isOpeningTag(prevLineText)) {
+            // decrease indent when we write </ and prior line did not start a
+            // tag
             return decreaseIndent(prevIndent, indentText());
         } else {
             return prevIndent;
@@ -107,4 +99,4 @@ QString IndentAlgXml::indentForLine(
     }
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

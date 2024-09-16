@@ -5,10 +5,10 @@
 #include "qutepart.h"
 #include "text_block_utils.h"
 
-class Test: public QObject {
+class Test : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void DataDrivenTest_data() {
         QTest::addColumn<QString>("text");
         QTest::addColumn<QChar>("bracket");
@@ -18,41 +18,15 @@ private slots:
         QTest::addColumn<int>("expectedBlock");
         QTest::addColumn<int>("expectedColumn");
 
-        QTest::newRow("Find forward")
-                << "func(param)"
-                << QChar('(')
-                << 0
-                << 4
-                << true
-                << 0
-                << 10;
+        QTest::newRow("Find forward") << "func(param)" << QChar('(') << 0 << 4 << true << 0 << 10;
 
         QTest::newRow("Find forward with nested")
-                << "func(pa( )ram)"
-                << QChar('(')
-                << 0
-                << 4
-                << true
-                << 0
-                << 13;
+            << "func(pa( )ram)" << QChar('(') << 0 << 4 << true << 0 << 13;
 
-        QTest::newRow("Find backward")
-                << "func(param)"
-                << QChar('(')
-                << 0
-                << 10
-                << false
-                << 0
-                << 4;
+        QTest::newRow("Find backward") << "func(param)" << QChar('(') << 0 << 10 << false << 0 << 4;
 
         QTest::newRow("Find backward with nested")
-                << "func(pa( )ram)"
-                << QChar('(')
-                << 0
-                << 13
-                << false
-                << 0
-                << 4;
+            << "func(pa( )ram)" << QChar('(') << 0 << 13 << false << 0 << 4;
     }
 
     void DataDrivenTest() {

@@ -13,9 +13,8 @@ const QString START_BRACKETS = "({[";
 const QString END_BRACKETS = ")}]";
 const QString ALL_BRACKETS = START_BRACKETS + END_BRACKETS;
 
-
 // Make matched or unmatched QTextEdit.ExtraSelection
-QTextEdit::ExtraSelection makeMatchSelection(const TextPosition& pos, bool matched) {
+QTextEdit::ExtraSelection makeMatchSelection(const TextPosition &pos, bool matched) {
     QTextEdit::ExtraSelection selection;
 
     if (matched) {
@@ -31,10 +30,10 @@ QTextEdit::ExtraSelection makeMatchSelection(const TextPosition& pos, bool match
     return selection;
 }
 
-}  // anonymous namespace
+} // anonymous namespace
 
-
-QList<QTextEdit::ExtraSelection> BracketHighlighter::highlightBracket(QChar bracket, const TextPosition& pos) {
+QList<QTextEdit::ExtraSelection> BracketHighlighter::highlightBracket(QChar bracket,
+                                                                      const TextPosition &pos) {
     TextPosition matchingPos;
 
     if (START_BRACKETS.contains(bracket)) {
@@ -43,7 +42,7 @@ QList<QTextEdit::ExtraSelection> BracketHighlighter::highlightBracket(QChar brac
         matchingPos = findOpeningBracketBackward(bracket, pos);
     }
 
-#if 0  // TODO timeout
+#if 0 // TODO timeout
     if ( ! matchingPos.isValid()) {
         return QList<QTextEdit::ExtraSelection>();
     }
@@ -63,16 +62,13 @@ QList<QTextEdit::ExtraSelection> BracketHighlighter::highlightBracket(QChar brac
     return result;
 }
 
-QList<QTextEdit::ExtraSelection> BracketHighlighter::extraSelections(
-        const TextPosition& pos) {
+QList<QTextEdit::ExtraSelection> BracketHighlighter::extraSelections(const TextPosition &pos) {
     QString blockText = pos.block.text();
 
-    if (pos.column < blockText.length() &&
-        ALL_BRACKETS.contains(blockText[pos.column]) &&
+    if (pos.column < blockText.length() && ALL_BRACKETS.contains(blockText[pos.column]) &&
         isCode(pos.block, pos.column)) {
         return highlightBracket(blockText[pos.column], pos);
-    } else if (pos.column > 0 &&
-               ALL_BRACKETS.contains(blockText[pos.column - 1]) &&
+    } else if (pos.column > 0 && ALL_BRACKETS.contains(blockText[pos.column - 1]) &&
                isCode(pos.block, pos.column - 1)) {
         TextPosition newPos = pos;
         newPos.column -= 1;
@@ -82,4 +78,4 @@ QList<QTextEdit::ExtraSelection> BracketHighlighter::extraSelections(
     }
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

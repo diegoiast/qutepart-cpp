@@ -4,11 +4,10 @@
 
 #include "qutepart.h"
 
-
-class Test: public QObject {
+class Test : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void SmartHome() {
         Qutepart::Qutepart qpart(nullptr, "one\n    two");
 
@@ -79,7 +78,8 @@ private slots:
         QTest::keyClick(&qpart, Qt::Key_J, Qt::ControlModifier);
         QCOMPARE(qpart.toPlainText(), QString("one two\n    three"));
 
-        // FIXME remove space from "ne ". Actually a bug, but will fix later (I hope)
+        // FIXME remove space from "ne ". Actually a bug, but will fix later (I
+        // hope)
         QCOMPARE(qpart.textCursor().selectedText(), QString("ne "));
     }
 

@@ -11,7 +11,6 @@ TODO support (module
 
 #include "alg_scheme.h"
 
-
 namespace Qutepart {
 
 namespace {
@@ -19,12 +18,10 @@ namespace {
 /* Move backward to the start of the word at the end of a string.
  * Return the word
  */
-QString lastWord(const QString& text) {
-    for(int i = text.length() - 1; i >= 0; i--) {
+QString lastWord(const QString &text) {
+    for (int i = text.length() - 1; i >= 0; i--) {
         QChar ch = text[i];
-        if (ch.isSpace() ||
-            ch == '(' ||
-            ch == ')') {
+        if (ch.isSpace() || ch == '(' || ch == ')') {
             return text.mid(i + 1);
         }
     }
@@ -58,14 +55,12 @@ TextPosition findExpressionStart(QTextBlock block) {
     }
 }
 
-}  // anonymous namespace
+} // anonymous namespace
 
-
-QString IndentAlgScheme::computeSmartIndent(
-        QTextBlock block, int /*cursorPos*/) const {
+QString IndentAlgScheme::computeSmartIndent(QTextBlock block, int /*cursorPos*/) const {
     TextPosition expStart = findExpressionStart(block.previous());
 
-    if (! expStart.isValid()) {
+    if (!expStart.isValid()) {
         return "";
     }
 
@@ -73,15 +68,15 @@ QString IndentAlgScheme::computeSmartIndent(
     QString expression = stripRightWhitespace(blockText.mid(expStart.column));
     QString beforeExpression = blockText.left(expStart.column).trimmed();
 
-    if (beforeExpression.startsWith("(module")) {  // special case
+    if (beforeExpression.startsWith("(module")) { // special case
         return "";
-    } else if (beforeExpression.endsWith("define")) {  // special case
+    } else if (beforeExpression.endsWith("define")) { // special case
         return QString().fill(' ', beforeExpression.length() - QString("define").length() + 1);
-    } else if (beforeExpression.endsWith("let")) {  // special case
+    } else if (beforeExpression.endsWith("let")) { // special case
         return QString().fill(' ', beforeExpression.length() - QString("let").length() + 1);
     } else {
         return QString().fill(' ', expStart.column);
     }
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

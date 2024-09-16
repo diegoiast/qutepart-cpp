@@ -2,49 +2,44 @@
 
 #include <QStringList>
 
-
 namespace Qutepart {
 
 class ContextSwitcher;
 
-
 class Context;
-
 
 struct ContextStackItem {
     ContextStackItem();
-    ContextStackItem(const Context* context, const QStringList& data=QStringList());
+    ContextStackItem(const Context *context, const QStringList &data = QStringList());
 
-    bool operator==(const ContextStackItem& other) const;
+    bool operator==(const ContextStackItem &other) const;
 
-    const Context* context;
+    const Context *context;
     QStringList data;
 };
 
-
 class ContextStack {
-public:
-    ContextStack(Context* context);
+  public:
+    ContextStack(Context *context);
 
-    bool operator==(const ContextStack& other) const;
+    bool operator==(const ContextStack &other) const;
 
-private:
-    ContextStack(const QVector<ContextStackItem>& items);
+  private:
+    ContextStack(const QVector<ContextStackItem> &items);
 
-public:
+  public:
     // Apply context switch operation and return new context
-    ContextStack switchContext(
-        const ContextSwitcher& operation,
-        const QStringList& data=QStringList()) const;
+    ContextStack switchContext(const ContextSwitcher &operation,
+                               const QStringList &data = QStringList()) const;
 
     // Get current context
-    const Context* currentContext() const;
+    const Context *currentContext() const;
 
     // Get current data
-    const QStringList& currentData() const;
+    const QStringList &currentData() const;
 
-private:
+  private:
     QVector<ContextStackItem> items;
 };
 
-}  // namespace Qutepart
+} // namespace Qutepart

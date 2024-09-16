@@ -5,19 +5,14 @@
 #include "context.h"
 #include "style.h"
 
-
 namespace Qutepart {
 
 class AbstractRule;
 
-
 class MatchResult {
-public:
-    MatchResult(int length,
-                const QStringList& data,
-                bool lineContinue,
-                const ContextSwitcher& context,
-                const Style& style);
+  public:
+    MatchResult(int length, const QStringList &data, bool lineContinue,
+                const ContextSwitcher &context, const Style &style);
     MatchResult();
 
     int length;
@@ -27,4 +22,4 @@ public:
     Style style;
 };
 
-}  // match result
+} // namespace Qutepart

@@ -5,12 +5,11 @@
 
 #include "indenter.h"
 
-
 namespace Qutepart {
 
-class IndentAlgScheme: public IndentAlgImpl {
-public:
+class IndentAlgScheme : public IndentAlgImpl {
+  public:
     QString computeSmartIndent(QTextBlock block, int cursorPos) const override;
 };
 
-}  // namespace Qutepart
+} // namespace Qutepart

@@ -2,42 +2,32 @@
 
 #include "base_indenter_test.h"
 
-
-class Test: public BaseTest
-{
+class Test : public BaseTest {
     Q_OBJECT
 
-private slots:
+  private slots:
     void lisp_data() {
         addColumns();
-        QTest::newRow("three semicolons")
-            <<  "      \n"
-                "   asdf"
-            << std::make_pair(0, 6)
-            << ";;;"
-            <<  ";;;\n"
-                "   asdf";
+        QTest::newRow("three semicolons") << "      \n"
+                                             "   asdf"
+                                          << std::make_pair(0, 6) << ";;;"
+                                          << ";;;\n"
+                                             "   asdf";
 
-        QTest::newRow("two semicolons")
-            <<  "      \n"
-                "   asdf"
-            <<  std::make_pair(0, 6)
-            <<  ";;"
-            <<  "   ;;\n"
-                "   asdf";
+        QTest::newRow("two semicolons") << "      \n"
+                                           "   asdf"
+                                        << std::make_pair(0, 6) << ";;"
+                                        << "   ;;\n"
+                                           "   asdf";
 
         QTest::newRow("find brace")
-            <<  "  (bla                   (x (y (z)))"
-            <<  std::make_pair(0, 36)
-            <<  "\n"
-            <<  "  (bla                   (x (y (z)))\n"
-                "    ";
+            << "  (bla                   (x (y (z)))" << std::make_pair(0, 36) << "\n"
+            << "  (bla                   (x (y (z)))\n"
+               "    ";
 
         QTest::newRow("not found brace")
-            <<  "  (bla                   (x (y (z))))"
-            <<  std::make_pair(0, 37)
-            <<  "\n"
-            <<  "  (bla                   (x (y (z))))\n";
+            << "  (bla                   (x (y (z))))" << std::make_pair(0, 37) << "\n"
+            << "  (bla                   (x (y (z))))\n";
     }
 
     void lisp() {
@@ -46,7 +36,6 @@ private slots:
         runDataDrivenTest();
     }
 };
-
 
 QTEST_MAIN(Test)
 #include "test_indenter_lisp.moc"

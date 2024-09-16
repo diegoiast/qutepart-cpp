@@ -6,13 +6,13 @@
 namespace Qutepart {
 
 class IndentAlgImpl {
-public:
+  public:
     virtual ~IndentAlgImpl();
 
     void setConfig(int width, bool useTabs);
-    void setLanguage(const QString& language);
+    void setLanguage(const QString &language);
 
-    virtual const QString& triggerCharacters() const;
+    virtual const QString &triggerCharacters() const;
 
     /* Compute line with proper indentation
      * and other formatting.
@@ -44,7 +44,7 @@ public:
      */
     virtual QString computeSmartIndent(QTextBlock block, int cursorPos) const;
 
-protected:
+  protected:
     int width_;
     bool useTabs_;
     QString language_;
@@ -52,4 +52,4 @@ protected:
     QString indentText() const;
 };
 
-}  // namespace Qutepart
+} // namespace Qutepart

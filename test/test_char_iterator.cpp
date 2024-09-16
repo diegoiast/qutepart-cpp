@@ -4,13 +4,13 @@
 #include <QObject>
 #include <QTest>
 
-#include "qutepart.h"
 #include "char_iterator.h"
+#include "qutepart.h"
 
-class Test: public QObject {
+class Test : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void DataDrivenTest_data() {
         QTest::addColumn<QString>("text");
         QTest::addColumn<int>("blockNumber");
@@ -19,46 +19,24 @@ private slots:
         QTest::addColumn<QString>("expected");
 
         QTest::newRow("forward from start")
-                <<  "one\ntwo\nthree\nfour"
-                <<  0
-                <<  0
-                <<  true
-                <<  "onetwothreefour";
+            << "one\ntwo\nthree\nfour" << 0 << 0 << true << "onetwothreefour";
 
         QTest::newRow("forward from middle")
-                <<  "one\ntwo\nthree\nfour"
-                <<  1
-                <<  2
-                <<  true
-                <<  "othreefour";
+            << "one\ntwo\nthree\nfour" << 1 << 2 << true << "othreefour";
 
         QTest::newRow("backward from end")
-                <<  "one\ntwo\nthree\nfour"
-                <<  3
-                <<  3
-                <<  false
-                <<  "ruofeerhtowteno";
+            << "one\ntwo\nthree\nfour" << 3 << 3 << false << "ruofeerhtowteno";
 
         QTest::newRow("backward from middle")
-                <<  "one\ntwo\nthree\nfour"
-                <<  2
-                <<  1
-                <<  false
-                <<  "htowteno";
+            << "one\ntwo\nthree\nfour" << 2 << 1 << false << "htowteno";
 
         QTest::newRow("with new lines")
-                <<  "{\n    new OpenFileList(mainWindow_, this);\n\n}"
-                <<  0
-                <<  0
-                <<  true
-                <<  "{    new OpenFileList(mainWindow_, this);}";
+            << "{\n    new OpenFileList(mainWindow_, this);\n\n}" << 0 << 0 << true
+            << "{    new OpenFileList(mainWindow_, this);}";
 
         QTest::newRow("with new lines backward")
-                <<  "{\n    new OpenFileList(mainWindow_, this);\n\n}"
-                <<  3
-                <<  0
-                <<  false
-                <<  "};)siht ,_wodniWniam(tsiLeliFnepO wen    {";
+            << "{\n    new OpenFileList(mainWindow_, this);\n\n}" << 3 << 0 << false
+            << "};)siht ,_wodniWniam(tsiLeliFnepO wen    {";
     }
 
     void DataDrivenTest() {
@@ -80,7 +58,7 @@ private slots:
 
         QString accumulatedText;
 
-        while ( ! it->atEnd()) {
+        while (!it->atEnd()) {
             accumulatedText += it->step();
         }
 

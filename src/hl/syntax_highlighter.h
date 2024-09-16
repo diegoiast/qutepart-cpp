@@ -3,22 +3,21 @@
 #include <QSyntaxHighlighter>
 #include <QTextDocument>
 
-#include "text_block_user_data.h"
 #include "language.h"
+#include "text_block_user_data.h"
 
 namespace Qutepart {
 
-
-class SyntaxHighlighter: public QSyntaxHighlighter {
+class SyntaxHighlighter : public QSyntaxHighlighter {
     Q_OBJECT
 
-public:
+  public:
     SyntaxHighlighter(QObject *parent, QSharedPointer<Language> language);
     SyntaxHighlighter(QTextDocument *parent, QSharedPointer<Language> language);
 
-protected:
+  protected:
     void highlightBlock(const QString &text) override;
     QSharedPointer<Language> language;
 };
 
-}
+} // namespace Qutepart

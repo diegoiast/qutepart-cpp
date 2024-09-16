@@ -2,19 +2,18 @@
 
 #include <memory>
 
+#include <QKeyEvent>
 #include <QObject>
 #include <QString>
 #include <QTextBlock>
-#include <QKeyEvent>
 
-#include "qutepart.h"
 #include "alg_impl.h"
-
+#include "qutepart.h"
 
 namespace Qutepart {
 
-class Indenter: public QObject {
-public:
+class Indenter : public QObject {
+  public:
     Indenter();
 
     void setAlgorithm(IndentAlg alg);
@@ -27,24 +26,24 @@ public:
     bool useTabs() const;
     void setUseTabs(bool);
 
-    void setLanguage(const QString& language);
+    void setLanguage(const QString &language);
 
-    bool shouldAutoIndentOnEvent(QKeyEvent* event) const;
-    bool shouldUnindentWithBackspace(const QTextCursor& cursor) const;
+    bool shouldAutoIndentOnEvent(QKeyEvent *event) const;
+    bool shouldUnindentWithBackspace(const QTextCursor &cursor) const;
 #if 0
     void autoIndentBlock(QTextBlock block, QChar typedKey) const;
 #endif
     void indentBlock(QTextBlock block, int column, QChar typedKey) const;
 
-public slots:
+  public slots:
     void onShortcutIndentAfterCursor(QTextCursor cursor) const;
-    void onShortcutUnindentWithBackspace(QTextCursor& cursor) const;
+    void onShortcutUnindentWithBackspace(QTextCursor &cursor) const;
 
-private:
+  private:
     std::unique_ptr<IndentAlgImpl> alg_;
     bool useTabs_;
     int width_;
     QString language_;
 };
 
-}  // namespace Qutepart
+} // namespace Qutepart

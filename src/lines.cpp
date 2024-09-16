@@ -4,21 +4,13 @@ The declarations (header) are in qutepart.h
 
 #include "qutepart.h"
 
-
 namespace Qutepart {
 
-Line::Line(const QTextBlock& block):
-    block_(block)
-{}
+Line::Line(const QTextBlock &block) : block_(block) {}
 
+QString Line::text() const { return block_.text(); }
 
-QString Line::text() const {
-	return block_.text();
-}
-
-int Line::length() const {
-    return block_.length() - 1;
-}
+int Line::length() const { return block_.length() - 1; }
 
 void Line::remove(int pos, int count) {
     int blockLen = block_.length();
@@ -37,12 +29,9 @@ void Line::remove(int pos, int count) {
     cursor.removeSelectedText();
 }
 
+LineIterator::LineIterator(const QTextBlock &block) : block_(block) {}
 
-LineIterator::LineIterator(const QTextBlock& block):
-    block_(block)
-{}
-
-bool LineIterator::operator!=(const LineIterator& other) {
+bool LineIterator::operator!=(const LineIterator &other) {
     if (block_.isValid()) {
         return block_ != other.block_;
     } else {
@@ -50,11 +39,11 @@ bool LineIterator::operator!=(const LineIterator& other) {
     }
 }
 
-bool LineIterator::operator==(const LineIterator& other) {
+bool LineIterator::operator==(const LineIterator &other) {
     if (block_.isValid()) {
         return block_ == other.block_;
     } else {
-        return ( ! other.block_.isValid());
+        return (!other.block_.isValid());
     }
 }
 
@@ -64,39 +53,25 @@ LineIterator LineIterator::operator++() {
     return retVal;
 }
 
-Line LineIterator::operator*() {
-    return Line(block_);
-}
+Line LineIterator::operator*() { return Line(block_); }
 
-Lines::Lines(QTextDocument* document):
-    document_(document)
-{}
+Lines::Lines(QTextDocument *document) : document_(document) {}
 
-int Lines::count() const {
-    return document_->blockCount();
-}
+int Lines::count() const { return document_->blockCount(); }
 
 Line Lines::at(int index) const { // Line count in the document
     return Line(document_->findBlockByNumber(index));
 }
 
-LineIterator Lines::begin() {
-    return LineIterator(document_->firstBlock());
-}
+LineIterator Lines::begin() { return LineIterator(document_->firstBlock()); }
 
-LineIterator Lines::end() {
-    return LineIterator(QTextBlock());
-}
+LineIterator Lines::end() { return LineIterator(QTextBlock()); }
 
-Line Lines::first() const {
-    return Line(document_->firstBlock());
-}
+Line Lines::first() const { return Line(document_->firstBlock()); }
 
-Line Lines::last() const {
-    return Line(document_->lastBlock());
-}
+Line Lines::last() const { return Line(document_->lastBlock()); }
 
-void Lines::append(const QString& lineText) {
+void Lines::append(const QString &lineText) {
     QTextCursor cursor(document_->lastBlock());
     cursor.movePosition(QTextCursor::End);
 
@@ -119,16 +94,16 @@ QString Lines::popAt(int lineNumber) {
     cursor.removeSelectedText();
 
     if (cursor.atStart()) {
-        cursor.deleteChar();  // remove \n after the line
+        cursor.deleteChar(); // remove \n after the line
     } else if (not removedEolAtStart) {
-        cursor.deletePreviousChar();  // remove \n before the line
+        cursor.deletePreviousChar(); // remove \n before the line
     }
     cursor.endEditBlock();
 
     return result;
 }
 
-void Lines::insertAt(int lineNumber, const QString& text) {
+void Lines::insertAt(int lineNumber, const QString &text) {
     if (lineNumber < document_->blockCount()) {
         QTextCursor cursor(document_->findBlockByNumber(lineNumber));
         cursor.beginEditBlock();
@@ -143,8 +118,9 @@ void Lines::insertAt(int lineNumber, const QString& text) {
         cursor.insertText(text);
         cursor.endEditBlock();
     } else {
-        qFatal("Wrong line number %d at Lines::insertAt(). Have only %d", lineNumber, document_->blockCount());
+        qFatal("Wrong line number %d at Lines::insertAt(). Have only %d", lineNumber,
+               document_->blockCount());
     }
 }
 
-}
+} // namespace Qutepart

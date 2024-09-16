@@ -1,8 +1,7 @@
 #include "base_indenter_test.h"
 
-#include <QtTest/QtTest>
 #include <QTextCursor>
-
+#include <QtTest/QtTest>
 
 void BaseTest::addColumns() {
     QTest::addColumn<QString>("origin");
@@ -17,21 +16,13 @@ void BaseTest::setCursorPosition(int line, int col) {
     qpart.setTextCursor(cursor);
 }
 
-void BaseTest::enter() {
-    QTest::keyClick(&qpart, Qt::Key_Enter);
-}
+void BaseTest::enter() { QTest::keyClick(&qpart, Qt::Key_Enter); }
 
-void BaseTest::tab() {
-    QTest::keyClick(&qpart, Qt::Key_Tab);
-}
+void BaseTest::tab() { QTest::keyClick(&qpart, Qt::Key_Tab); }
 
-void BaseTest::type(const QString& text) {
-    QTest::keyClicks(&qpart, text);
-}
+void BaseTest::type(const QString &text) { QTest::keyClicks(&qpart, text); }
 
-void BaseTest::verifyExpected(const QString& expected) {
-    QCOMPARE(qpart.toPlainText(), expected);
-}
+void BaseTest::verifyExpected(const QString &expected) { QCOMPARE(qpart.toPlainText(), expected); }
 
 void BaseTest::runDataDrivenTest() {
     QFETCH(QString, origin);
@@ -47,7 +38,7 @@ void BaseTest::runDataDrivenTest() {
         QString blockIndexStr = input.mid(QString("<<alignLine(").length(), 1);
         if (blockIndexStr == "*") {
             int initialBlockCount = qpart.document()->blockCount();
-            for(int i = 0; i < initialBlockCount; i++) {
+            for (int i = 0; i < initialBlockCount; i++) {
                 autoIndentBlock(qpart.document()->blockCount() - initialBlockCount + i);
             }
         } else {
@@ -68,13 +59,9 @@ void BaseTest::runDataDrivenTest() {
     verifyExpected(expected);
 }
 
-void BaseTest::initTestCase() {
-     Q_INIT_RESOURCE(qutepart_syntax_files);
-}
+void BaseTest::initTestCase() { Q_INIT_RESOURCE(qutepart_syntax_files); }
 
-void BaseTest::init() {
-    qpart.setPlainText("");
-}
+void BaseTest::init() { qpart.setPlainText(""); }
 
 void BaseTest::autoIndentBlock(int blockIndex) {
     QTextBlock block = qpart.document()->findBlockByNumber(blockIndex);

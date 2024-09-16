@@ -2,28 +2,20 @@
 
 #include "context_switcher.h"
 
-
 namespace Qutepart {
 
-ContextSwitcher::ContextSwitcher()
-  : _popsCount(0)
-{}
+ContextSwitcher::ContextSwitcher() : _popsCount(0) {}
 
-ContextSwitcher::ContextSwitcher(int popsCount, const QString& contextName, const QString& contextOperation)
-  : _popsCount(popsCount),
-    contextName(contextName),
-    contextOperation(contextOperation)
-{}
+ContextSwitcher::ContextSwitcher(int popsCount, const QString &contextName,
+                                 const QString &contextOperation)
+    : _popsCount(popsCount), contextName(contextName), contextOperation(contextOperation) {}
 
-QString ContextSwitcher::toString() const {
-    return contextOperation;
-}
+QString ContextSwitcher::toString() const { return contextOperation; }
 
-bool ContextSwitcher::isNull() const {
-    return contextOperation.isEmpty();
-}
+bool ContextSwitcher::isNull() const { return contextOperation.isEmpty(); }
 
-void ContextSwitcher::resolveContextReferences(const QHash<QString, ContextPtr>& contexts, QString& error) {
+void ContextSwitcher::resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
+                                               QString &error) {
     if (contextName.isEmpty()) {
         return;
     }
@@ -33,7 +25,7 @@ void ContextSwitcher::resolveContextReferences(const QHash<QString, ContextPtr>&
         return;
     }
 
-    if ( ! contexts.contains(contextName)) {
+    if (!contexts.contains(contextName)) {
         error = QString("Failed to get context '%1'").arg(contextName);
         return;
     }
@@ -41,4 +33,4 @@ void ContextSwitcher::resolveContextReferences(const QHash<QString, ContextPtr>&
     _context = contexts[contextName];
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

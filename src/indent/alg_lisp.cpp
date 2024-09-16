@@ -1,20 +1,18 @@
 #include <QDebug>
 
-#include "text_block_utils.h"
 #include "indent_funcs.h"
+#include "text_block_utils.h"
 
 #include "alg_lisp.h"
 
-
 namespace Qutepart {
 
-const QString& IndentAlgLisp::triggerCharacters() const {
+const QString &IndentAlgLisp::triggerCharacters() const {
     static QString ch(';');
     return ch;
 }
 
-QString IndentAlgLisp::computeSmartIndent(QTextBlock block, int /*cursorPos*/) const
-{
+QString IndentAlgLisp::computeSmartIndent(QTextBlock block, int /*cursorPos*/) const {
     /* special rules: ;;; -> indent 0
                       ;;  -> align with next line, if possible
                       ;   -> usually on the same line as code -> ignore
@@ -33,11 +31,11 @@ QString IndentAlgLisp::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
     }
 
     TextPosition pos = findOpeningBracketBackward('(', TextPosition(block, 0));
-    if ( ! pos.isValid()) {
+    if (!pos.isValid()) {
         return QString();
     }
 
     return blockIndent(pos.block) + indentText();
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <memory>
 #include <QObject>
 #include <QSet>
 #include <QTimer>
+#include <memory>
 
 namespace Qutepart {
 
@@ -12,37 +12,37 @@ class Qutepart;
 class CompletionList;
 class CompletionModel;
 
-class Completer: public QObject {
+class Completer : public QObject {
     Q_OBJECT
 
-public:
-    Completer(Qutepart* qpart);
+  public:
+    Completer(Qutepart *qpart);
     ~Completer();
 
-    void setKeywords(const QSet<QString>& keywords);
+    void setKeywords(const QSet<QString> &keywords);
 
     bool isVisible() const;
     bool invokeCompletionIfAvailable(bool requestedByUser);
 
-public slots:
+  public slots:
     void invokeCompletion();
 
-private slots:
+  private slots:
     void onTextChanged();
     void onModificationChanged(bool modified);
     void onCompletionListItemSelected(int index);
     void onCompletionListTabPressed();
 
-private:
-    void setCustomCompletions(const QSet<QString>& wordSet);
+  private:
+    void setCustomCompletions(const QSet<QString> &wordSet);
     void updateWordSet();
-    bool shouldShowModel(CompletionModel* model, bool forceShow);
-    void createWidget(CompletionModel* model);
+    bool shouldShowModel(CompletionModel *model, bool forceShow);
+    void createWidget(CompletionModel *model);
     void closeCompletion();
     QString getWordBeforeCursor() const;
     QString getWordAfterCursor() const;
 
-    Qutepart* qpart_;
+    Qutepart *qpart_;
     std::unique_ptr<CompletionList> widget_;
     bool completionOpenedManually_;
     QSet<QString> keywords_;
@@ -51,4 +51,4 @@ private:
     QTimer updateWordSetTimer_;
 };
 
-}  // namespace Qutepart
+} // namespace Qutepart

@@ -4,9 +4,7 @@
 
 #include "alg_python.h"
 
-
 namespace Qutepart {
-
 
 namespace {
 
@@ -14,28 +12,23 @@ const QStringList KEYWORDS = {"continue", "break", "pass", "raise", "return"};
 
 const QString CLOSING_BRACKETS = ")]}";
 
-QChar last(const QString& str) {
-    return str[str.length() - 1];
-}
+QChar last(const QString &str) { return str[str.length() - 1]; }
 
-}
+} // namespace
 
 // Compute smart indent for case when cursor is on pos
-QString IndentAlgPython::computeSmartIndent(
-        const TextPosition& pos) const {
-    QString lineStripped = pos.block.text().left(pos.column).trimmed();  // empty text from invalid block is ok
+QString IndentAlgPython::computeSmartIndent(const TextPosition &pos) const {
+    QString lineStripped =
+        pos.block.text().left(pos.column).trimmed(); // empty text from invalid block is ok
     int spaceLen = firstNonSpaceColumn(pos.block.text());
 
     /* Move initial search position to bracket start, if bracket was closed
     l = [1,
          2]|
     */
-    if ( ( ! lineStripped.isEmpty()) &&
-         CLOSING_BRACKETS.contains(last(lineStripped))) {
+    if ((!lineStripped.isEmpty()) && CLOSING_BRACKETS.contains(last(lineStripped))) {
         TextPosition foundPos = findOpeningBracketBackward(
-            last(lineStripped),
-            TextPosition(pos.block,
-                         spaceLen + lineStripped.length() - 1));
+            last(lineStripped), TextPosition(pos.block, spaceLen + lineStripped.length() - 1));
         if (foundPos.isValid()) {
             return computeSmartIndent(foundPos);
         }
@@ -48,8 +41,7 @@ QString IndentAlgPython::computeSmartIndent(
      */
     QChar secondLast = lineStripped[lineStripped.length() - 2];
 
-    if (lineStripped.length() > 1 &&
-        last(lineStripped) == ',' &&
+    if (lineStripped.length() > 1 && last(lineStripped) == ',' &&
         CLOSING_BRACKETS.contains(secondLast)) {
         TextPosition foundPos = findOpeningBracketBackward(
             secondLast,
@@ -70,14 +62,13 @@ QString IndentAlgPython::computeSmartIndent(
         z
     */
     TextPosition foundPos = findAnyOpeningBracketBackward(pos);
-        // indent this way only line, which contains 'y', not 'z'
+    // indent this way only line, which contains 'y', not 'z'
     if (foundPos.block.blockNumber() == pos.block.blockNumber()) {
         return makeIndentAsColumn(foundPos.block, foundPos.column + 1, width_, useTabs_);
     }
 
     // finally, a raise, pass, and continue should unindent
-    if (KEYWORDS.contains(lineStripped) ||
-        lineStripped.startsWith("raise ") ||
+    if (KEYWORDS.contains(lineStripped) || lineStripped.startsWith("raise ") ||
         lineStripped.startsWith("return ")) {
         return decreaseIndent(blockIndent(pos.block), indentText());
     }
@@ -114,5 +105,4 @@ QString IndentAlgPython::computeSmartIndent(QTextBlock block, int /*cursorPos*/)
     return computeSmartIndent(TextPosition(nonEmpty, column));
 }
 
-
-}  // namespace Qutepart
+} // namespace Qutepart

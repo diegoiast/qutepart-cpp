@@ -1,11 +1,10 @@
-#include <QRegularExpression>
 #include <QDebug>
+#include <QRegularExpression>
 
-#include "indent_funcs.h"
 #include "hl/text_type.h"
+#include "indent_funcs.h"
 
 #include "alg_ruby.h"
-
 
 namespace Qutepart {
 
@@ -15,20 +14,19 @@ namespace {
 const QRegularExpression rxUnindent("^\\s*((end|when|else|elsif|rescue|ensure)\\b|[\\]\\}])(.*)$");
 
 // Indent after lines that match this regexp
-const QRegularExpression rxIndent("^\\s*(def|if|unless|for|while|until|class|module|else|elsif|case|when|begin|rescue|ensure|catch)\\b");
+const QRegularExpression rxIndent("^\\s*(def|if|unless|for|while|until|class|module|else|elsif|"
+                                  "case|when|begin|rescue|ensure|catch)\\b");
 
 const QRegularExpression rxBlockEnd("\\s*end$");
 
-bool isBlockContinuing(QTextBlock block) {
-    return block.text().endsWith('\\');
-}
+bool isBlockContinuing(QTextBlock block) { return block.text().endsWith('\\'); }
 
 /* Returns the column with a non-whitespace characters
 starting at the given cursor position and searching forwards.
 */
 int nextNonSpaceColumn(QTextBlock block, int column) {
     QString textAfter = block.text().mid(column);
-    if ( ! textAfter.trimmed().isEmpty()) {
+    if (!textAfter.trimmed().isEmpty()) {
         int spaceLen = textAfter.length() - stripLeftWhitespace(textAfter).length();
         return column + spaceLen;
     } else {
@@ -36,13 +34,10 @@ int nextNonSpaceColumn(QTextBlock block, int column) {
     }
 }
 
-}  // anonymous namespace
+} // anonymous namespace
 
-
-RubyStatement::RubyStatement(QTextBlock startBlock, QTextBlock endBlock):
-        startBlock(startBlock),
-        endBlock(endBlock)
-{}
+RubyStatement::RubyStatement(QTextBlock startBlock, QTextBlock endBlock)
+    : startBlock(startBlock), endBlock(endBlock) {}
 
 QString RubyStatement::toString() const {
     return QString("{ %1, %2}").arg(startBlock.blockNumber()).arg(endBlock.blockNumber());
@@ -71,13 +66,11 @@ bool RubyStatement::isPosComment(int offset) const {
 }
 
 // Return the indent at the beginning of the statement
-QString RubyStatement::indent() const {
-    return blockIndent(startBlock);
-}
+QString RubyStatement::indent() const { return blockIndent(startBlock); }
 
 // Return the content of the statement from the document
 QString RubyStatement::content() const {
-    if ( ! contentCache_.isNull()) {
+    if (!contentCache_.isNull()) {
         return contentCache_;
     }
 
@@ -100,8 +93,7 @@ QString RubyStatement::content() const {
     return cnt;
 }
 
-
-const QString& IndentAlgRuby::triggerCharacters() const {
+const QString &IndentAlgRuby::triggerCharacters() const {
     static QString chars = "cdefhilnrsuw}]";
     return chars;
 }
@@ -143,8 +135,7 @@ bool IndentAlgRuby::isStmtContinuing(QTextBlock block) const {
     QRegularExpression rx("(\\+|\\-|\\*|\\/|\\=|&&|\\|\\||\\band\\b|\\bor\\b|,)\\s*$");
     QRegularExpressionMatch match = rx.match(text);
 
-    return match.hasMatch() &&
-           isCode(block, match.capturedStart());
+    return match.hasMatch() && isCode(block, match.capturedStart());
 }
 
 /* Return the first line that is not preceded by a "continuing" line.
@@ -152,14 +143,9 @@ Return currBlock if currBlock <= 0
 */
 QTextBlock IndentAlgRuby::findStmtStart(QTextBlock block) const {
     QTextBlock prevBlock = prevNonCommentBlock(block);
-    while ( prevBlock.isValid() &&
-            (
-                (   (prevBlock == block.previous()) &&
-                    isBlockContinuing(prevBlock)
-                ) ||
-                isStmtContinuing(prevBlock)
-            )
-           ) {
+    while (prevBlock.isValid() &&
+           (((prevBlock == block.previous()) && isBlockContinuing(prevBlock)) ||
+            isStmtContinuing(prevBlock))) {
         block = prevBlock;
         prevBlock = prevNonCommentBlock(block);
     }
@@ -170,7 +156,7 @@ QTextBlock IndentAlgRuby::findStmtStart(QTextBlock block) const {
 otherwise running the indenter might be annoying to the user
 */
 bool IndentAlgRuby::isValidTrigger(QTextBlock block) const {
-    if (block.text().isEmpty()) {  // new line
+    if (block.text().isEmpty()) { // new line
         return true;
     }
 
@@ -187,7 +173,7 @@ RubyStatement IndentAlgRuby::findPrevStmt(QTextBlock block) const {
     return RubyStatement(stmtStart, stmtEnd);
 }
 
-bool IndentAlgRuby::isBlockStart(const RubyStatement& stmt) const {
+bool IndentAlgRuby::isBlockStart(const RubyStatement &stmt) const {
     QString content = stmt.content();
     if (rxIndent.match(content).hasMatch()) {
         return true;
@@ -198,7 +184,7 @@ bool IndentAlgRuby::isBlockStart(const RubyStatement& stmt) const {
     return rx.match(content).hasMatch();
 }
 
-bool IndentAlgRuby::isBlockEnd(const RubyStatement& stmt) const {
+bool IndentAlgRuby::isBlockEnd(const RubyStatement &stmt) const {
     return rxUnindent.match(stmt.content()).hasMatch();
 }
 
@@ -206,7 +192,7 @@ RubyStatement IndentAlgRuby::findBlockStart(QTextBlock block) const {
     int nested = 0;
     RubyStatement stmt(block, block);
     while (true) {
-        if ( ! stmt.startBlock.isValid()) {
+        if (!stmt.startBlock.isValid()) {
             return stmt;
         }
 
@@ -226,20 +212,20 @@ RubyStatement IndentAlgRuby::findBlockStart(QTextBlock block) const {
 }
 
 QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) const {
-    if ( ! isValidTrigger(block)) {
+    if (!isValidTrigger(block)) {
         return QString();
     }
 
     RubyStatement prevStmt = findPrevStmt(block);
-    if ( ! prevStmt.endBlock.isValid() ) {
-        return QString();  // Can't indent the first line
+    if (!prevStmt.endBlock.isValid()) {
+        return QString(); // Can't indent the first line
     }
 
     QTextBlock prevBlock = prevNonEmptyBlock(block);
 
     // HACK Detect here documents
     if (isHereDoc(prevBlock, prevBlock.length() - 2)) {
-      return QString();
+        return QString();
     }
 
     // HACK Detect embedded comments
@@ -258,23 +244,25 @@ QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
         bool shouldIndent = (openingBracketPos.block == prevStmt.endBlock) ||
                             QRegularExpression(",\\s*$").match(prevStmtContent).hasMatch();
 
-        if (( ! isLastCodeColumn(openingBracketPos.block, openingBracketPos.column)) ||
-             findAnyOpeningBracketBackward(openingBracketPos).isValid()) {
-            // TODO This is alignment, should force using spaces instead of tabs:
+        if ((!isLastCodeColumn(openingBracketPos.block, openingBracketPos.column)) ||
+            findAnyOpeningBracketBackward(openingBracketPos).isValid()) {
+            // TODO This is alignment, should force using spaces instead of
+            // tabs:
             if (shouldIndent) {
                 openingBracketPos.column += 1;
                 int nextCol = nextNonSpaceColumn(openingBracketPos.block, openingBracketPos.column);
-                if (nextCol > 0 &&
-                    ( ! isComment(openingBracketPos.block, nextCol))) {
+                if (nextCol > 0 && (!isComment(openingBracketPos.block, nextCol))) {
                     openingBracketPos.column = nextCol;
                 }
             }
 
-            // Keep indent of previous statement, while aligning to the anchor column
+            // Keep indent of previous statement, while aligning to the anchor
+            // column
             if (prevStmtIndent.length() > openingBracketPos.column) {
                 return prevStmtIndent;
             } else {
-                return makeIndentAsColumn(openingBracketPos.block, openingBracketPos.column, width_, useTabs_);
+                return makeIndentAsColumn(openingBracketPos.block, openingBracketPos.column, width_,
+                                          useTabs_);
             }
         } else {
             QString indent = blockIndent(openingBracketPos.block);
@@ -286,8 +274,7 @@ QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
     }
 
     // Handle indenting of multiline statements.
-    if ((prevStmt.endBlock == block.previous() &&
-         isBlockContinuing(prevStmt.endBlock)) ||
+    if ((prevStmt.endBlock == block.previous() && isBlockContinuing(prevStmt.endBlock)) ||
         isStmtContinuing(prevStmt.endBlock)) {
         if (prevStmt.startBlock == prevStmt.endBlock) {
             if (blockIndent(block).length() > blockIndent(prevStmt.endBlock).length()) {
@@ -309,8 +296,7 @@ QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
         }
     }
 
-    if (isBlockStart(prevStmt) &&
-        ( ! rxBlockEnd.match(prevStmt.content()).hasMatch())) {
+    if (isBlockStart(prevStmt) && (!rxBlockEnd.match(prevStmt.content()).hasMatch())) {
         return increaseIndent(prevStmtIndent, indentText());
     } else if (QRegularExpression("[\\[\\{]\\s*$").match(prevStmtContent).hasMatch()) {
         return increaseIndent(prevStmtIndent, indentText());
@@ -320,4 +306,4 @@ QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
     return prevStmtIndent;
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

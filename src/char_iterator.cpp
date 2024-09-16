@@ -2,9 +2,7 @@
 
 namespace Qutepart {
 
-CharIterator::CharIterator(const TextPosition& position):
-        position_(position)
-{}
+CharIterator::CharIterator(const TextPosition &position) : position_(position) {}
 
 QChar CharIterator::step() {
     if (!atEnd()) {
@@ -22,17 +20,11 @@ QChar CharIterator::step() {
     }
 }
 
-TextPosition CharIterator::currentPosition() const {
-    return position_;
-}
+TextPosition CharIterator::currentPosition() const { return position_; }
 
-TextPosition CharIterator::previousPosition() const {
-    return previousPosition_;
-}
+TextPosition CharIterator::previousPosition() const { return previousPosition_; }
 
-bool CharIterator::atEnd() const {
-    return ( ! position_.block.isValid());
-}
+bool CharIterator::atEnd() const { return (!position_.block.isValid()); }
 
 void ForwardCharIterator::movePosition() {
     int blockLength = position_.block.text().length();
@@ -44,11 +36,11 @@ void ForwardCharIterator::movePosition() {
         } else {
             position_.block = position_.block.next();
 
-            while(position_.block.isValid() && position_.block.text().isEmpty()) {
+            while (position_.block.isValid() && position_.block.text().isEmpty()) {
                 position_.block = position_.block.next();
             }
 
-            if ( ! position_.block.isValid()) {
+            if (!position_.block.isValid()) {
                 break;
             }
 
@@ -68,7 +60,7 @@ void BackwardCharIterator::movePosition() {
             break;
         } else {
             position_.block = position_.block.previous();
-            if ( ! position_.block.isValid()) {
+            if (!position_.block.isValid()) {
                 break;
             }
 
@@ -81,4 +73,4 @@ void BackwardCharIterator::movePosition() {
     }
 }
 
-}  // namespace Qutepart
+} // namespace Qutepart

@@ -4,11 +4,10 @@
 
 #include "qutepart.h"
 
-
-class Test: public QObject {
+class Test : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void TextCursorPosition() {
         Qutepart::Qutepart qutepart;
         qutepart.setPlainText("one\ntwo\nthree\nfour");

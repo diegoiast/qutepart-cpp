@@ -1,8 +1,6 @@
 #pragma once
 
-
 #include <QString>
-
 
 namespace Qutepart {
 
@@ -10,15 +8,15 @@ namespace Qutepart {
  * Contains pre-calculated and pre-checked data for performance optimization
  */
 class TextToMatch {
-public:
-    TextToMatch(const QString& text, const QStringList& contextData);
+  public:
+    TextToMatch(const QString &text, const QStringList &contextData);
 
     void shiftOnce();
     void shift(int count);
 
     bool isEmpty() const;
 
-    QString word(const QString& deliminators) const;
+    QString word(const QString &deliminators) const;
 
     int currentColumnIndex;
     QString wholeLineText;
@@ -26,7 +24,7 @@ public:
     int textLength;
     bool firstNonSpace;
     bool isWordStart;
-    const QStringList* contextData;
+    const QStringList *contextData;
 };
 
-}  // namespace Qutepart
+} // namespace Qutepart
