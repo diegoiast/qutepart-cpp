@@ -1,8 +1,8 @@
 [![Documentation build](https://readthedocs.org/projects/qutepart-cpp/badge/?version=latest)](https://qutepart-cpp.readthedocs.io/en/latest/)
 
-# Code editor widget for C++/Qt5
+# Code editor widget for C++/Qt6
 
-Written in pure C++/Qt5. No any dependencies.
+Written in pure C++/Qt6. No any dependencies.
 
 Component has been created for [Enki editor](http://enki-editor.org)
 
@@ -29,7 +29,7 @@ All features are configurable
     * And many others
 * Line numbers
 * Bracket highlighting
-* Visible witespaces
+* Visible whitespaces
 * Marker for too long lines
 * Bookmarks
 * Current line highlighting
@@ -40,31 +40,41 @@ All features are configurable
     - Copy-paste current or selected lines
 
 ## Build dependencies
-* C++ compiler
-* CMake or qmake
-* Qt5 headers
+* C++17 compiler (tested under MSVC 2022, GCC 13, Clang17)
+* CMake
+* Qt6
 
 ## Building and installation
-CMake and qmake is supported. CMake is recommented.
+CMake is suppoorted.
 
 ```
-mkdir build
-cd build
-cmake ..
-make
-make install  # might require sudo
+cmake -S . -B build
+cmake --build build --parallel
 ```
 
-## Documentation
+If you want to integrate into your project, the recommended way is using  [CPM](https://github.com/cpm-cmake/CPM.cmake)
+
+Add this to your CMakeLists.txt
+
+```CMake
+CPMAddPackage("gh:diegoiast/qutepart-cpp#main")
+add_executable(app ...)
+target_link_libraries(app PUBLIC ... qutepart ...)
+
+```
+
+
+## Documentation - not maintained yet
 To build the docs see [docs](docs/)
 
-Online documetation is available [here](https://qutepart-cpp.readthedocs.io/en/latest/)
+Online documentation is available [here](https://qutepart-cpp.readthedocs.io/en/latest/)
 
-## Author
+## Authors
 Andrei Kopats
+Diego Iastrubni
 
 ## Bug reports, patches
-[Github page](https://github.com/andreikop/qutepart-cpp)
+[Github page](https://github.com/diegoiast/qutepart-cpp)
 
 ## Qutepart and Katepart
 [Kate](http://kate-editor.org/) and Katepart (an editor component) is really cool software. The Kate authors and community have created, probably, the biggest set of highlighters and indenters for programming languages.
@@ -74,6 +84,9 @@ Andrei Kopats
 * Qutepart doesn't contain Katepart code.
 
 Nothing is wrong with Katepart. Qutepart has been created to enable reusing highlighters and indenters in projects where a KDE dependency is not acceptable.
+
+Why not using the syntax highlighter from kate? Because alternatives are better. Now Kate has another implementation. This project's goal
+is to make a full blown editor component, not only a syntax highlighter.
 
 ## License
 LGPL v2
