@@ -15,9 +15,7 @@
 #include <QSharedPointer>
 #include <QSyntaxHighlighter>
 
-
 namespace Qutepart {
-
 
 /**
  * \enum IndentAlg
@@ -31,7 +29,8 @@ enum IndentAlg {
     INDENT_ALG_NONE = 0,
     /// Insert to new lines indentation equal to previous line.
     INDENT_ALG_NORMAL,
-    /// Algorithm for C-style languages where curly brackets are used to mark code blocks. C, C++, PHP, Java, JS, ...
+    /// Algorithm for C-style languages where curly brackets are used to mark code blocks. C, C++,
+    /// PHP, Java, JS, ...
     INDENT_ALG_CSTYLE,
     /// Lisp indentation.
     INDENT_ALG_LISP,
@@ -45,26 +44,20 @@ enum IndentAlg {
     INDENT_ALG_RUBY,
 };
 
-
 /**
  * Programming language ID and related information.
  *
  * This structure is returned by ::chooseLanguage()
  */
 struct LangInfo {
-public:
+  public:
     LangInfo() = default;
 
-    inline LangInfo(const QString& id, const QStringList& names, IndentAlg indentAlg):
-        id(id),
-        names(names),
-        indentAlg(indentAlg)
-    {};
+    inline LangInfo(const QString &id, const QStringList &names, IndentAlg indentAlg)
+        : id(id), names(names), indentAlg(indentAlg){};
 
     /// Check if the struct is valid (filled with meaningfull info)
-    inline bool isValid() const {
-        return ! id.isEmpty();
-    }
+    inline bool isValid() const { return !id.isEmpty(); }
 
     /// Internal unique language ID. Pass to ::Qutepart::Qutepart::setHighlighter()
     QString id;
@@ -74,7 +67,6 @@ public:
 
     /// Indenter algorithm for the language. Pass to ::Qutepart::Qutepart::setIndentAlgorithm()
     IndentAlg indentAlg;
-
 };
 
 /**
@@ -85,15 +77,15 @@ public:
  * Fill as much parameters as you can. Set `QString()` for unknown parameters.
  *
  * \param mimeType The file MIME type. i.e. ``text/html``
- * \param languageName The language name as written in the <a href="https://github.com/andreikop/qutepart-cpp/blob/master/src/hl/language_db_generated.cpp">language DB</a>
- * \param sourceFilePath The path to the file which is edited.
- * \param firstLine Contents of the first line of the file which is going to be edited.
+ * \param languageName The language name as written in the <a
+ * href="https://github.com/andreikop/qutepart-cpp/blob/master/src/hl/language_db_generated.cpp">language
+ * DB</a> \param sourceFilePath The path to the file which is edited. \param firstLine Contents of
+ * the first line of the file which is going to be edited.
  */
-LangInfo chooseLanguage(
-    const QString& mimeType=QString(),
-    const QString& languageName=QString(),
-    const QString& sourceFilePath=QString(),
-    const QString& firstLine=QString());
+LangInfo chooseLanguage(const QString &mimeType = QString(),
+                        const QString &languageName = QString(),
+                        const QString &sourceFilePath = QString(),
+                        const QString &firstLine = QString());
 
 class Indenter;
 class BracketHighlighter;
@@ -107,8 +99,8 @@ class Completer;
  * A convenience class to programmatically edit the document
  */
 class Line {
-public:
-    Line(const QTextBlock& block);
+  public:
+    Line(const QTextBlock &block);
 
     /// Get line text
     QString text() const;
@@ -119,7 +111,7 @@ public:
     /// Remove the line from the document
     void remove(int pos, int count);
 
-private:
+  private:
     QTextBlock block_;
 };
 
@@ -128,15 +120,15 @@ private:
  * Returns ::Qutepart::Line objects
  */
 class LineIterator {
-public:
-    LineIterator(const QTextBlock& block);
+  public:
+    LineIterator(const QTextBlock &block);
 
-    bool operator!=(const LineIterator& other);
-    bool operator==(const LineIterator& other);
+    bool operator!=(const LineIterator &other);
+    bool operator==(const LineIterator &other);
     LineIterator operator++();
     Line operator*();
 
-private:
+  private:
     QTextBlock block_;
 };
 
@@ -146,12 +138,14 @@ private:
  * Returned by ::Qutepart::Qutepart::lines()
  *
  * `Lines` is a performance-effective document representation.
- * Getting whole text of document with `QPlainTextEdit::toPlainText()`` requires a lot of memory allocations and copying. This class accesses the text line by line without copying whole document.
-*/
+ * Getting whole text of document with `QPlainTextEdit::toPlainText()`` requires a lot of memory
+ * allocations and copying. This class accesses the text line by line without copying whole
+ * document.
+ */
 
 class Lines {
-public:
-    Lines(QTextDocument* document);
+  public:
+    Lines(QTextDocument *document);
 
     /// Line count in the document
     int count() const;
@@ -172,18 +166,18 @@ public:
     Line last() const;
 
     /// Append line to the end of the document.
-    void append(const QString& lineText);
+    void append(const QString &lineText);
 
     // Remove and return line at number. Return the text wo \n
     QString popAt(int lineNumber);
 
     // Insert at given line number one or more lines.
     // The text shoud be \n-separated. \n at end is interpreted as empty line.
-    void insertAt(int lineNumber, const QString& text);
-private:
-    QTextDocument* document_;
-};
+    void insertAt(int lineNumber, const QString &text);
 
+  private:
+    QTextDocument *document_;
+};
 
 /** Cursor position
  *
@@ -192,12 +186,9 @@ private:
  * Returned by ::Qutepart::Qutepart::textCursorPosition()
  */
 struct TextCursorPosition {
-    TextCursorPosition(int line_, int column_):
-        line(line_),
-        column(column_)
-    {}
+    TextCursorPosition(int line_, int column_) : line(line_), column(column_) {}
 
-    friend bool operator== (const TextCursorPosition& a, const TextCursorPosition& b) {
+    friend bool operator==(const TextCursorPosition &a, const TextCursorPosition &b) {
         return a.line == b.line && a.column == b.column;
     }
 
@@ -208,21 +199,20 @@ struct TextCursorPosition {
     int column;
 };
 
-
 /**
   Code editor widget
 */
-class Qutepart: public QPlainTextEdit {
+class Qutepart : public QPlainTextEdit {
     Q_OBJECT
 
-public:
+  public:
     Qutepart(QWidget *parent = nullptr, const QString &text = QString());
 
     // Not copyable or movable
-    Qutepart(const Qutepart&) = delete;
-    Qutepart& operator=(const Qutepart&) = delete;
-    Qutepart(Qutepart&&) = delete;
-    Qutepart& operator=(Qutepart&&) = delete;
+    Qutepart(const Qutepart &) = delete;
+    Qutepart &operator=(const Qutepart &) = delete;
+    Qutepart(Qutepart &&) = delete;
+    Qutepart &operator=(Qutepart &&) = delete;
 
     virtual ~Qutepart();
 
@@ -234,7 +224,7 @@ public:
      *
      * \param languageId Language name. See Qutepart::LangInfo::id.
      */
-    void setHighlighter(const QString& languageId);
+    void setHighlighter(const QString &languageId);
 
     /**
      * Set indenter algorithm. Use `Qutepart::chooseLanguage()` to choose the algorithm.
@@ -247,9 +237,9 @@ public:
     TextCursorPosition textCursorPosition() const;
 
     /// Go to specified line and column. First line and first column have index 0
-    void goTo(int line, int column=0);
+    void goTo(int line, int column = 0);
     /// Go to text position specified by ::Qutepart::TextCursorPosition
-    void goTo(const TextCursorPosition& pos);
+    void goTo(const TextCursorPosition &pos);
 
     /// Indent current line using current smart indentation algorithm
     void autoIndentCurrentLine();
@@ -304,7 +294,7 @@ public:
 
     bool lineNumbersVisible() const;
     void setLineNumbersVisible(bool value);
-    
+
     /// To to logical, or phisical end/start of line.
     bool getSmartHomeEnd() const;
     /// To to logical, or phisical end/start of line.
@@ -318,74 +308,73 @@ public:
     int completionThreshold() const;
 
     // Actions
-    QAction* increaseIndentAction() const;
-    QAction* decreaseIndentAction() const;
+    QAction *increaseIndentAction() const;
+    QAction *decreaseIndentAction() const;
 
-    QAction* toggleBookmarkAction() const;
-    QAction* prevBookmarkAction() const;
-    QAction* nextBookmarkAction() const;
+    QAction *toggleBookmarkAction() const;
+    QAction *prevBookmarkAction() const;
+    QAction *nextBookmarkAction() const;
 
-    QAction* invokeCompletionAction() const;
+    QAction *invokeCompletionAction() const;
 
-    QAction* scrollDownAction() const;
-    QAction* scrollUpAction() const;
+    QAction *scrollDownAction() const;
+    QAction *scrollUpAction() const;
 
-    QAction* duplicateSelectionAction() const;
+    QAction *duplicateSelectionAction() const;
 
-    QAction* moveLineUpAction() const;
-    QAction* moveLineDownAction() const;
+    QAction *moveLineUpAction() const;
+    QAction *moveLineDownAction() const;
 
-    QAction* deleteLineAction() const;
+    QAction *deleteLineAction() const;
 
-    QAction* cutLineAction() const;
-    QAction* copyLineAction() const;
-    QAction* pasteLineAction() const;
+    QAction *cutLineAction() const;
+    QAction *copyLineAction() const;
+    QAction *pasteLineAction() const;
 
-    QAction* insertLineAboveAction() const;
-    QAction* insertLineBelowAction() const;
+    QAction *insertLineAboveAction() const;
+    QAction *insertLineBelowAction() const;
 
-    QAction* joinLinesAction() const;
+    QAction *joinLinesAction() const;
 
     /// Zoom In the document by scaling fonts
-    QAction* zoomInAction() const;
+    QAction *zoomInAction() const;
     /// Zoom Out the document by scaling fonts
-    QAction* zoomOutAction() const;
+    QAction *zoomOutAction() const;
 
     // Convenience functions
     void resetSelection();
 
-protected:
+  protected:
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void changeEvent(QEvent *event) override;
 
-private:
+  private:
     void initActions();
-    QAction* createAction(const QString& text, QKeySequence shortcut,
-                          const QString& iconFileName,
-                          std::function<void()> const& handler);
+    QAction *createAction(const QString &text, QKeySequence shortcut, const QString &iconFileName,
+                          std::function<void()> const &handler);
 
     // whitespace and edge drawing
-    void drawIndentMarkersAndEdge(const QRect& rect);
-    void drawIndentMarker(QPainter* painter, QTextBlock block, int column);
-    void drawEdgeLine(QPainter* painter, QTextBlock block, int edgePos);
-    void drawWhiteSpace(QPainter* painter, QTextBlock block, int column, QChar ch);
-    int effectiveEdgePos(const QString& text);
-    void chooseVisibleWhitespace(const QString& text, QVector<bool>* result);
+    void drawIndentMarkersAndEdge(const QRect &rect);
+    void drawIndentMarker(QPainter *painter, QTextBlock block, int column);
+    void drawEdgeLine(QPainter *painter, QTextBlock block, int edgePos);
+    void drawWhiteSpace(QPainter *painter, QTextBlock block, int column, QChar ch);
+    int effectiveEdgePos(const QString &text);
+    void chooseVisibleWhitespace(const QString &text, QVector<bool> *result);
 
     QTextEdit::ExtraSelection currentLineExtraSelection() const;
 
     void setSolidEdgeGeometry();
-    void resizeEvent(QResizeEvent* event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
     void updateTabStopWidth();
 
     QRect cursorRect(QTextBlock block, int column, int offset) const;
-    void gotoBlock(const QTextBlock& block);
+    void gotoBlock(const QTextBlock &block);
 
-    void indentBlock(const QTextBlock& block, bool withSpace) const;
-    void unIndentBlock(const QTextBlock& block, bool withSpace) const;
+    void indentBlock(const QTextBlock &block, bool withSpace) const;
+    void unIndentBlock(const QTextBlock &block, bool withSpace) const;
     void changeSelectedBlocksIndent(bool increase, bool withSpace);
 
     void scrollByOffset(int offset);
@@ -402,7 +391,7 @@ private:
     void insertLineAbove();
     void insertLineBelow();
 
-private slots:
+  private slots:
     void updateViewport();
     void updateExtraSelections();
 
@@ -413,10 +402,10 @@ private slots:
     void onShortcutPrevBookmark();
     void onShortcutNextBookmark();
 
-    void joinNextLine(QTextCursor& cursor);
+    void joinNextLine(QTextCursor &cursor);
     void onShortcutJoinLines();
 
-private:
+  private:
     QSharedPointer<QSyntaxHighlighter> highlighter_;
     std::unique_ptr<Indenter> indenter_;
     std::unique_ptr<BracketHighlighter> bracketHighlighter_;
@@ -429,7 +418,7 @@ private:
     bool drawIncorrectIndentation_;
     bool drawSolidEdge_;
     bool enableSmartHomeEnd_;
-    
+
     int lineLengthEdge_;
     QColor lineLengthEdgeColor_;
     QColor currentLineColor_;
@@ -439,44 +428,44 @@ private:
     bool completionEnabled_;
     int completionThreshold_;
 
-    QWidget* solidEdgeLine_;
+    QWidget *solidEdgeLine_;
     int totalMarginWidth_;
 
     // private, not API
-    QAction* homeAction_;
-    QAction* homeSelectAction_;
-    QAction* endAction_;
-    QAction* endSelectAction_;
+    QAction *homeAction_;
+    QAction *homeSelectAction_;
+    QAction *endAction_;
+    QAction *endSelectAction_;
 
-    QAction* increaseIndentAction_;
-    QAction* decreaseIndentAction_;
+    QAction *increaseIndentAction_;
+    QAction *decreaseIndentAction_;
 
-    QAction* toggleBookmarkAction_;
-    QAction* prevBookmarkAction_;
-    QAction* nextBookmarkAction_;
+    QAction *toggleBookmarkAction_;
+    QAction *prevBookmarkAction_;
+    QAction *nextBookmarkAction_;
 
-    QAction* invokeCompletionAction_;
+    QAction *invokeCompletionAction_;
 
-    QAction* scrollDownAction_;
-    QAction* scrollUpAction_;
+    QAction *scrollDownAction_;
+    QAction *scrollUpAction_;
 
-    QAction* duplicateSelectionAction_;
+    QAction *duplicateSelectionAction_;
 
-    QAction* moveLineUpAction_;
-    QAction* moveLineDownAction_;
-    QAction* deleteLineAction_;
+    QAction *moveLineUpAction_;
+    QAction *moveLineDownAction_;
+    QAction *deleteLineAction_;
 
-    QAction* cutLineAction_;
-    QAction* copyLineAction_;
-    QAction* pasteLineAction_;
+    QAction *cutLineAction_;
+    QAction *copyLineAction_;
+    QAction *pasteLineAction_;
 
-    QAction* insertLineAboveAction_;
-    QAction* insertLineBelowAction_;
+    QAction *insertLineAboveAction_;
+    QAction *insertLineBelowAction_;
 
-    QAction* joinLinesAction_;
+    QAction *joinLinesAction_;
 
-    QAction* zoomInAction_;
-    QAction* zoomOutAction_;
+    QAction *zoomInAction_;
+    QAction *zoomOutAction_;
 
     friend class LineNumberArea;
     friend class MarkArea;
@@ -494,13 +483,12 @@ Example:
     }
  */
 class AtomicEditOperation {
-public:
-    AtomicEditOperation(Qutepart* qutepart);
+  public:
+    AtomicEditOperation(Qutepart *qutepart);
     ~AtomicEditOperation();
 
-private:
-    Qutepart* qutepart_;
+  private:
+    Qutepart *qutepart_;
 };
-
 
 } // namespace Qutepart

@@ -1,24 +1,22 @@
 #include <stdio.h>
 
 #include <QApplication>
+#include <QByteArray>
+#include <QDebug>
+#include <QDir>
+#include <QFile>
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
-#include <QXmlStreamReader>
-#include <QFile>
-#include <QDebug>
-#include <QDir>
 #include <QString>
-#include <QByteArray>
+#include <QXmlStreamReader>
 
 #include "qutepart.h"
 
-
-bool openFile(const QString& filePath, Qutepart::Qutepart* qutepart) {
+bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart) {
     QFile file(filePath);
     if (file.exists()) {
-        Qutepart::LangInfo langInfo = Qutepart::chooseLanguage(
-            QString(), QString(), filePath);
+        Qutepart::LangInfo langInfo = Qutepart::chooseLanguage(QString(), QString(), filePath);
         if (langInfo.isValid()) {
             qutepart->setHighlighter(langInfo.id);
             qutepart->setIndentAlgorithm(langInfo.indentAlg);
@@ -36,16 +34,16 @@ bool openFile(const QString& filePath, Qutepart::Qutepart* qutepart) {
     return true;
 }
 
-void initMenuBar(QMenuBar* menuBar, Qutepart::Qutepart* qutepart) {
-    QMenu* editMenu = menuBar->addMenu("Edit");
+void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
+    QMenu *editMenu = menuBar->addMenu("Edit");
     editMenu->addAction(qutepart->increaseIndentAction());
     editMenu->addAction(qutepart->decreaseIndentAction());
 
-    QMenu* viewMenu = menuBar->addMenu("View");
+    QMenu *viewMenu = menuBar->addMenu("View");
     viewMenu->addAction(qutepart->zoomInAction());
     viewMenu->addAction(qutepart->zoomOutAction());
 
-    QMenu* navMenu = menuBar->addMenu("Navigation");
+    QMenu *navMenu = menuBar->addMenu("Navigation");
     navMenu->addAction(qutepart->toggleBookmarkAction());
     navMenu->addAction(qutepart->prevBookmarkAction());
     navMenu->addAction(qutepart->nextBookmarkAction());
@@ -54,7 +52,7 @@ void initMenuBar(QMenuBar* menuBar, Qutepart::Qutepart* qutepart) {
     navMenu->addAction(qutepart->scrollDownAction());
     navMenu->addAction(qutepart->scrollUpAction());
 
-    QMenu* linesMenu = menuBar->addMenu("Lines");
+    QMenu *linesMenu = menuBar->addMenu("Lines");
 
     linesMenu->addAction(qutepart->duplicateSelectionAction());
     linesMenu->addSeparator();
@@ -74,19 +72,19 @@ void initMenuBar(QMenuBar* menuBar, Qutepart::Qutepart* qutepart) {
     linesMenu->addAction(qutepart->joinLinesAction());
 }
 
-QMainWindow* createMainWindow(Qutepart::Qutepart* qutepart) {
-    QMainWindow* window = new QMainWindow();
+QMainWindow *createMainWindow(Qutepart::Qutepart *qutepart) {
+    QMainWindow *window = new QMainWindow();
     window->resize(800, 600);
 
     window->setCentralWidget(qutepart);
 
-    QMenuBar* menuBar = window->menuBar();
+    QMenuBar *menuBar = window->menuBar();
     initMenuBar(menuBar, qutepart);
 
     return window;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     Q_INIT_RESOURCE(qutepart_syntax_files);
     QApplication app(argc, argv);
 
@@ -99,12 +97,12 @@ int main(int argc, char** argv) {
 
     if (argc > 1) {
         QString filePath = argv[1];
-        if ( ! openFile(filePath, &qutepart)) {
+        if (!openFile(filePath, &qutepart)) {
             return -1;
         }
     }
 
-    QMainWindow* window = createMainWindow(&qutepart);
+    QMainWindow *window = createMainWindow(&qutepart);
     window->show();
 
     return app.exec();
