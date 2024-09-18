@@ -227,6 +227,11 @@ class Qutepart : public QPlainTextEdit {
     void setHighlighter(const QString &languageId);
 
     /**
+     * Removes the current syntax highlighter, all text will be drawen using default colors.
+     */
+    void removeHighlighter();
+
+    /**
      * Set indenter algorithm. Use `Qutepart::chooseLanguage()` to choose the algorithm.
      *
      * \param indentAlg Algorithm name. See Qutepart::LangInfo::indentAlg.

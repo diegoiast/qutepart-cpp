@@ -72,7 +72,17 @@ Lines Qutepart::lines() const { return Lines(document()); }
 void Qutepart::setHighlighter(const QString &languageId) {
     highlighter_ = QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), languageId));
     indenter_->setLanguage(languageId);
-    completer_->setKeywords(loadLanguage(languageId)->allLanguageKeywords());
+
+    if (highlighter_) {
+        completer_->setKeywords(loadLanguage(languageId)->allLanguageKeywords());
+    } else {
+        completer_->setKeywords({});
+    }
+}
+
+void Qutepart::removeHighlighter() {
+    highlighter_ = QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), ""));
+    completer_->setKeywords({});
 }
 
 void Qutepart::setIndentAlgorithm(IndentAlg indentAlg) { indenter_->setAlgorithm(indentAlg); }
