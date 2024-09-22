@@ -773,6 +773,10 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
 }
 
 QSharedPointer<Language> loadLanguage(const QString &xmlFileName) {
+    if (xmlFileName.isEmpty()) {
+        return {};
+    }
+
     {
         QMutexLocker locker(&loadedLanguageCacheLock);
         if (loadedLanguageCache.contains(xmlFileName)) {
