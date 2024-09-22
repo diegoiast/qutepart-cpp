@@ -65,9 +65,9 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
     return *((int *)contextStack.currentContext());
 }
 
-ContextPtr Language::getContext(const QString &name) const {
+ContextPtr Language::getContext(const QString &contextName) const {
     foreach (ContextPtr ctx, contexts) {
-        if (ctx->name() == name) {
+        if (ctx->name() == contextName) {
             return ctx;
         }
     }

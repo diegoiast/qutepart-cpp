@@ -100,15 +100,15 @@ MatchResult *StringDetectRule::tryMatchImpl(const TextToMatch &textToMatch) cons
 KeywordRule::KeywordRule(const AbstractRuleParams &params, const QString &listName)
     : AbstractRule(params), listName(listName), caseSensitive(true) {}
 
-void KeywordRule::setKeywordParams(const QHash<QString, QStringList> &lists, bool caseSensitive,
-                                   const QString &deliminators, QString &error) {
+void KeywordRule::setKeywordParams(const QHash<QString, QStringList> &lists, bool newCaseSensitive,
+                                   const QString &newDeliminators, QString &error) {
     if (!lists.contains(listName)) {
         error = QString("List '%1' not found").arg(error);
         return;
     }
     items = lists[listName];
-    this->caseSensitive = caseSensitive;
-    this->deliminators = deliminators;
+    this->caseSensitive = newCaseSensitive;
+    this->deliminators = newDeliminators;
 
     if (!this->caseSensitive) {
         for (auto it = items.begin(); it != items.end(); it++) {
@@ -153,22 +153,22 @@ MatchResult *DetectCharRule::tryMatchImpl(const TextToMatch &textToMatch) const 
     QChar pattern = value;
 
     if (dynamic) {
-        int index = this->index - 1;
+        int matchIndex = this->index - 1;
         if (textToMatch.contextData == nullptr) {
             qWarning() << "Dynamic DetectCharRule but no data";
         }
 
-        if (index >= textToMatch.contextData->length()) {
-            qWarning() << "Invalid DetectChar index" << index;
+        if (matchIndex >= textToMatch.contextData->length()) {
+            qWarning() << "Invalid DetectChar index" << matchIndex;
             return nullptr;
         }
 
-        if (textToMatch.contextData->at(index).length() != 1) {
+        if (textToMatch.contextData->at(matchIndex).length() != 1) {
             qWarning() << "Too long DetectChar string " << *textToMatch.contextData;
             return nullptr;
         }
 
-        pattern = textToMatch.contextData->at(index)[0];
+        pattern = textToMatch.contextData->at(matchIndex)[0];
     }
 
     if (textToMatch.text.at(0) == pattern) {

@@ -25,7 +25,7 @@ class Language {
     int highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats);
 
     ContextPtr defaultContext() const { return contexts.first(); };
-    ContextPtr getContext(const QString &name) const;
+    ContextPtr getContext(const QString &contextName) const;
 
     QSet<QString> allLanguageKeywords() const;
 

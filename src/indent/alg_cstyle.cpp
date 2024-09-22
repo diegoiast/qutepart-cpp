@@ -132,7 +132,7 @@ class definition. Try to find a previous private/protected/private... or
 class and return its indentation or null if not found.
 */
 QString IndentAlgCstyle::tryAccessModifiers(const QTextBlock &block) const {
-    if (CFG_ACCESS_MODIFIERS < 0) {
+    if constexpr (CFG_ACCESS_MODIFIERS < 0) {
         return QString();
     }
 
@@ -189,23 +189,23 @@ QString IndentAlgCstyle::tryCComment(const QTextBlock &block) const {
     QString prevBlockTextStripped = prevNonEmptyBlockText.trimmed();
 
     if (prevBlockTextStripped.startsWith("/*") && (!prevBlockTextStripped.contains("*/"))) {
-        QString indentation = blockIndent(prevNonEmptyBlock);
+        QString indentationMark = blockIndent(prevNonEmptyBlock);
         if (CFG_AUTO_INSERT_STAR) {
             // only add '*', if there is none yet.
-            indentation += " ";
+            indentationMark += " ";
             if (!blockTextStripped.endsWith("*")) {
-                indentation += '*';
+                indentationMark += '*';
             }
 
             bool secondCharIsSpace =
                 blockTextStripped.length() > 1 && blockTextStripped[1].isSpace();
             if (!secondCharIsSpace && !blockTextStripped.endsWith("*/")) {
-                indentation += " ";
+                indentationMark += " ";
             }
         }
 
         dbg(QString("tryCComment: success (2) in line %1").arg(block.blockNumber()));
-        return indentation;
+        return indentationMark;
     } else if (prevBlockTextStripped.startsWith('*') &&
                (prevBlockTextStripped.length() == 1 || prevBlockTextStripped[1].isSpace())) {
         // in theory, we could search for opening /*, and use its indentation
@@ -315,7 +315,7 @@ QString IndentAlgCstyle::tryBrace(const QTextBlock &block) const {
             indentation = increaseIndent(blockIndent(foundPos.block), indentText());
         } else {
             indentation = blockIndent(currentBlock);
-            if (CFG_INDENT_NAMESPACE || (!isNamespace(block))) {
+            if constexpr (CFG_INDENT_NAMESPACE || (!isNamespace(block))) {
                 // take its indentation and add one indentation level
                 indentation = increaseIndent(indentation, indentText());
             }
@@ -402,8 +402,8 @@ QString IndentAlgCstyle::tryCondition(const QTextBlock &block) const {
 
     // found non-empty line
     QString currentText = currentBlock.text();
-    static const QRegularExpression rx("^\\s*(if\\b|[}]?\\s*else|do\\b|while\\b|for)");
-    if (stripRightWhitespace(currentText).endsWith(';') && (!rx.match(currentText).hasMatch())) {
+    static const QRegularExpression rx1("^\\s*(if\\b|[}]?\\s*else|do\\b|while\\b|for)");
+    if (stripRightWhitespace(currentText).endsWith(';') && (!rx1.match(currentText).hasMatch())) {
         // idea: we had something like:
         //   if/while/for (expression)
         //       statement();  <-- we catch this trailing ';'
@@ -420,9 +420,9 @@ QString IndentAlgCstyle::tryCondition(const QTextBlock &block) const {
                 QString indentation = blockIndent(currentBlock);
 
                 if (indentation.length() < currentIndentation.length()) {
-                    static const QRegularExpression rx(
+                    static const QRegularExpression rx2(
                         "^\\s*(if\\b|[}]?\\s*else|do\\b|while\\b|for)[^{]*$");
-                    if (rx.match(currentBlock.text()).hasMatch()) {
+                    if (rx2.match(currentBlock.text()).hasMatch()) {
                         dbg(QString("tryCondition: success in line %1")
                                 .arg(currentBlock.blockNumber()));
                         return indentation;
@@ -484,8 +484,8 @@ QString IndentAlgCstyle::tryStatement(const QTextBlock &block) const {
                         (i == 0 || currentBlockText[i - 1] != '\\')) {
                         // also make sure that this is not a line like '#include
                         // "..."' <-- we don't want to indent here
-                        static const QRegularExpression rx("^#include");
-                        if (rx.match(currentBlockText).hasMatch()) {
+                        static const QRegularExpression rx1("^#include");
+                        if (rx1.match(currentBlockText).hasMatch()) {
                             dbg(QString("tryStatement: success 2 in line %1")
                                     .arg(block.blockNumber()));
                             return indentation;

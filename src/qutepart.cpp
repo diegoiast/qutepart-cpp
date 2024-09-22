@@ -46,11 +46,11 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
       totalMarginWidth_(0) {
     QPalette palette = style()->standardPalette();
     currentLineColor_ = palette.color(QPalette::Highlight);
-    currentLineColor_.setAlphaF(0.2);
+    currentLineColor_.setAlphaF(0.2f);
     whitespaceColor_ = palette.color(QPalette::Text);
-    whitespaceColor_.setAlphaF(0.2);
+    whitespaceColor_.setAlphaF(0.2f);
     lineLengthEdgeColor_ = palette.color(QPalette::Accent);
-    lineLengthEdgeColor_.setAlphaF(0.5);
+    lineLengthEdgeColor_.setAlphaF(0.5f);
 
     indentColor_ = QColor(Qt::blue).lighter();
     initActions();
