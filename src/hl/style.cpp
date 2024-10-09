@@ -1,4 +1,5 @@
 #include "style.h"
+#include "theme.h"
 
 namespace Qutepart {
 
@@ -171,21 +172,90 @@ char detectTextType(const QString &attribute, const QString &defStyleName) {
     return ' ';
 }
 
-Style makeStyle(const QString &defStyleName, const QString &color, const QString &selColor,
-                const QHash<QString, bool> &flags, QString &error) {
+auto applyProperties(QSharedPointer<QTextCharFormat> format, QStringHash &styleProperties,
+                     QString _name) -> void {
+    Q_UNUSED(_name);
+
+    qDebug() << "** Updating context" << _name << (void *)(format.get()) << styleProperties;
+    for (auto it = styleProperties.constBegin(); it != styleProperties.constEnd(); ++it) {
+        const QString &key = it.key();
+        const QString &value = it.value();
+
+        if (key == "text-color") {
+            auto val = QColor(value);
+            // val = QColor(0x00ff00);
+            format->setForeground(val);
+        } else if (key == "selected-text-color") {
+            // TODO
+        } else if (key == "background-color") {
+            auto val = QColor(value);
+            format->setBackground(val);
+        } else if (key == "bold") {
+            auto val = value.toLower() == "true";
+            format->setFontWeight(val ? QFont::Bold : QFont::Normal);
+        } else if (key == "italic") {
+            auto val = value.toLower() == "true";
+            format->setFontItalic(val);
+        } else if (key == "underline") {
+            auto val = value.toLower() == "true";
+            format->setFontUnderline(val);
+        } else if (key == "strike-through") {
+            auto val = value.toLower() == "true";
+            format->setFontStrikeOut(val);
+        } else if (key == "font-family") {
+            format->setFontFamilies({value});
+        } else if (key == "font-size") {
+            bool ok;
+            int fontSize = value.toInt(&ok);
+            if (ok) {
+                format->setFontPointSize(fontSize);
+            }
+        }
+        // Add more properties as needed
+    }
+};
+
+Style makeStyle(const QString &name, const QString &defStyleName, const QString &color,
+                const QString &selColor, const QHash<QString, bool> &flags, QString &error,
+                const Theme *theme) {
     QSharedPointer<QTextCharFormat> format =
         makeFormat(defStyleName, color, selColor, flags, error);
     if (!error.isNull()) {
         return Style();
     }
 
-    return Style(defStyleName, format);
+    if (theme) {
+        // TODO
+        if (theme->textStyles.contains(name)) {
+            QStringHash styleProperties = theme->textStyles[name];
+            applyProperties(format, styleProperties, name);
+        } else {
+            qDebug() << "** Context" << name << "not in theme" << theme->metaData.name;
+            if (theme->textStyles.contains(name)) {
+                QStringHash styleProperties = theme->textStyles[name];
+                applyProperties(format, styleProperties, name);
+            }
+        }
+
+        // TODO: get customs styles for language
+        // if (theme->customStyles.contains(langName)) {
+        //     auto custom = theme.customStyles[langName];
+        //     // if (custom.contains(contextName))
+        //     {
+        //         auto styleProperties = custom[contextName];
+        //         applyProperties(format, styleProperties);
+        //     }
+        // }
+    }
+
+    return Style(name, defStyleName, format);
 }
 
 Style::Style() : _textType(' ') {}
 
-Style::Style(const QString &defStyleName, QSharedPointer<QTextCharFormat> format)
-    : _format(format), _textType(detectTextType(QString(), defStyleName)),
+Style::Style(const QString &name, const QString &defStyleName,
+             QSharedPointer<QTextCharFormat> format)
+    : name(name), _format(format), _textType(detectTextType(QString(), defStyleName)),
       defStyleName(defStyleName) {}
 
 void Style::updateTextType(const QString &attribute) {

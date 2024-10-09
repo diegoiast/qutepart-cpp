@@ -4,6 +4,8 @@
 
 namespace Qutepart {
 
+class Theme;
+
 /**
  * Choose and load a highlighter.
  *
@@ -11,8 +13,9 @@ namespace Qutepart {
  *
  * See QSyntaxHighlighter::QSyntaxHighlighter(..) documentation.
  */
-QSyntaxHighlighter *makeHighlighter(QObject *parent, const QString &languageId);
+QSyntaxHighlighter *makeHighlighter(QObject *parent, const QString &languageId, const Theme *theme);
 
-QSyntaxHighlighter *makeHighlighter(QTextDocument *parent, const QString &langugeId);
+QSyntaxHighlighter *makeHighlighter(QTextDocument *parent, const QString &langugeId,
+                                    const Theme *theme);
 
 } // namespace Qutepart

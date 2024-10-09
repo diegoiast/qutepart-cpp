@@ -493,7 +493,7 @@ QHash<QString, QStringList> loadKeywordLists(QXmlStreamReader &xmlReader, QStrin
     return lists;
 }
 
-QHash<QString, Style> loadStyles(QXmlStreamReader &xmlReader, QString &error) {
+QHash<QString, Style> loadStyles(QXmlStreamReader &xmlReader, QString &error, const Theme *theme) {
     xmlReader.readNextStartElement();
 
     if (xmlReader.name() != QLatin1String("itemDatas")) {
@@ -542,25 +542,22 @@ QHash<QString, Style> loadStyles(QXmlStreamReader &xmlReader, QString &error) {
             }
         }
 
-        Style style = makeStyle(defStyleNum, color, selColor, flags, error);
+        Style style = makeStyle(name, defStyleNum, color, selColor, flags, error, theme);
         if (!error.isNull()) {
             return QHash<QString, Style>();
         }
 
         styles[name.toLower()] = style;
-
         xmlReader.readNextStartElement();
     }
 
     // HACK not documented, but 'normal' attribute is used by some parsers
     // without declaration
     if (!styles.contains("normal")) {
-        styles["normal"] =
-            makeStyle("dsNormal", QString(), QString(), QHash<QString, bool>(), error);
+        styles["normal"] = makeStyle("Normal", "dsNormal", {}, {}, {}, error, theme);
     }
     if (!styles.contains("string")) {
-        styles["string"] =
-            makeStyle("dsString", QString(), QString(), QHash<QString, bool>(), error);
+        auto s = styles["string"] = makeStyle("String", "dsString", {}, {}, {}, error, theme);
     }
 
     return styles;
@@ -619,7 +616,7 @@ void makeKeywordsLowerCase(QHash<QString, QStringList> &keywordLists) {
 // Load keyword lists, contexts, attributes
 QList<ContextPtr> loadLanguageSytnax(QXmlStreamReader &xmlReader, QString &keywordDeliminators,
                                      QString &indenter, QSet<QString> &allLanguageKeywords,
-                                     QString &error) {
+                                     QString &error, const Theme *theme) {
     QHash<QString, QStringList> keywordLists = loadKeywordLists(xmlReader, error);
     if (!error.isNull()) {
         return QList<ContextPtr>();
@@ -630,7 +627,7 @@ QList<ContextPtr> loadLanguageSytnax(QXmlStreamReader &xmlReader, QString &keywo
         return QList<ContextPtr>();
     }
 
-    QHash<QString, Style> styles = loadStyles(xmlReader, error);
+    QHash<QString, Style> styles = loadStyles(xmlReader, error, theme);
     if (!error.isNull()) {
         return QList<ContextPtr>();
     }
@@ -681,7 +678,7 @@ QList<ContextPtr> loadLanguageSytnax(QXmlStreamReader &xmlReader, QString &keywo
 }
 
 QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamReader &xmlReader,
-                                      QString &error) {
+                                      QString &error, const Theme *theme) {
     if (!xmlReader.readNextStartElement()) {
         error = "Failed to read start element";
         return QSharedPointer<Language>();
@@ -734,8 +731,9 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
 
     QString keywordDeliminators;
     QSet<QString> allLanguageKeywords;
-    QList<ContextPtr> contexts =
-        loadLanguageSytnax(xmlReader, keywordDeliminators, indenter, allLanguageKeywords, error);
+    QList<ContextPtr> contexts = loadLanguageSytnax(xmlReader, keywordDeliminators, indenter,
+                                                    allLanguageKeywords, error, theme);
+
     if (!error.isNull()) {
         return QSharedPointer<Language>();
     }
@@ -759,7 +757,7 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
     }
 
     foreach (ContextPtr ctx, contexts) {
-        ctx->resolveContextReferences(contextMap, error);
+        ctx->resolveContextReferences(contextMap, error, theme);
         if (!error.isNull()) {
             {
                 QMutexLocker locker(&loadedLanguageCacheLock);
@@ -772,7 +770,7 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
     return languagePtr;
 }
 
-QSharedPointer<Language> loadLanguage(const QString &xmlFileName) {
+QSharedPointer<Language> loadLanguage(const QString &xmlFileName, const Theme *theme) {
     if (xmlFileName.isEmpty()) {
         return {};
     }
@@ -795,7 +793,7 @@ QSharedPointer<Language> loadLanguage(const QString &xmlFileName) {
     QXmlStreamReader xmlReader(&syntaxFile);
 
     QString error;
-    QSharedPointer<Language> language = parseXmlFile(xmlFileName, xmlReader, error);
+    QSharedPointer<Language> language = parseXmlFile(xmlFileName, xmlReader, error, theme);
     if (language.isNull()) {
         qCritical() << "Failed to parse XML file '" << xmlFilePath << "': " << error;
         return QSharedPointer<Language>();
@@ -804,7 +802,7 @@ QSharedPointer<Language> loadLanguage(const QString &xmlFileName) {
     return language;
 }
 
-ContextPtr loadExternalContext(const QString &externalCtxName) {
+ContextPtr loadExternalContext(const QString &externalCtxName, const Theme *theme) {
     QString langName, contextName;
 
     if (externalCtxName.startsWith("##")) {
@@ -827,7 +825,7 @@ ContextPtr loadExternalContext(const QString &externalCtxName) {
         return ContextPtr();
     }
 
-    QSharedPointer<Language> language = loadLanguage(langInfo.id);
+    QSharedPointer<Language> language = loadLanguage(langInfo.id, theme);
     if (language.isNull()) {
         qWarning() << "Failed to load context" << externalCtxName;
         return ContextPtr();

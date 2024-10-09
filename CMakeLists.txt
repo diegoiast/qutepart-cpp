@@ -55,6 +55,7 @@ set(qutepart_SRCS
     src/bracket_highlighter.cpp
     src/side_areas.cpp
     src/completer.cpp
+    src/theme.cpp
     src/html_delegate.cpp
     src/hl_factory.cpp
     src/hl/context.cpp

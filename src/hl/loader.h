@@ -7,8 +7,10 @@
 
 namespace Qutepart {
 
-QSharedPointer<Language> loadLanguage(const QString &xmlFileName);
+class Theme;
 
-ContextPtr loadExternalContext(const QString &contextName);
+QSharedPointer<Language> loadLanguage(const QString &xmlFileName, const Theme *theme);
+
+ContextPtr loadExternalContext(const QString &contextName, const Theme *theme);
 
 } // namespace Qutepart

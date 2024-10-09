@@ -5,10 +5,12 @@
 
 namespace Qutepart {
 
+class Theme;
+
 class Style {
   public:
     Style();
-    Style(const QString &defStyleName, QSharedPointer<QTextCharFormat> format);
+    Style(const QString &name, const QString &defStyleName, QSharedPointer<QTextCharFormat> format);
 
     /* Called by some clients.
        If the style knows attribute it can better detect textType
@@ -18,6 +20,11 @@ class Style {
     inline char textType() const { return _textType; };
     inline const QSharedPointer<QTextCharFormat> format() const { return _format; }
 
+    inline const QStringView getDefStyle() const { return defStyleName; }
+    inline const QStringView getName() const { return name; }
+
+    QString name;
+
   private:
     QSharedPointer<QTextCharFormat> _format;
     char _textType;
@@ -25,7 +32,8 @@ class Style {
     QString defStyleName;
 };
 
-Style makeStyle(const QString &defStyleName, const QString &color, const QString & /*selColor*/,
-                const QHash<QString, bool> &flags, QString &error);
+Style makeStyle(const QString &name, const QString &defStyleName, const QString &color,
+                const QString & /*selColor*/, const QHash<QString, bool> &flags, QString &error,
+                const Theme *theme);
 
 } // namespace Qutepart

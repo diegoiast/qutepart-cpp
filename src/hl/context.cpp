@@ -5,6 +5,7 @@
 #include "match_result.h"
 #include "rules.h"
 #include "text_to_match.h"
+#include "theme.h"
 
 namespace Qutepart {
 
@@ -42,29 +43,30 @@ void Context::printDescription(QTextStream &out) const {
 
 QString Context::name() const { return _name; }
 
-void Context::resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error) {
-    _lineEndContext.resolveContextReferences(contexts, error);
+void Context::resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error,
+                                       const Theme *theme) {
+    _lineEndContext.resolveContextReferences(contexts, error, theme);
     if (!error.isNull()) {
         return;
     }
 
-    _lineBeginContext.resolveContextReferences(contexts, error);
+    _lineBeginContext.resolveContextReferences(contexts, error, theme);
     if (!error.isNull()) {
         return;
     }
 
-    _lineEmptyContext.resolveContextReferences(contexts, error);
+    _lineEmptyContext.resolveContextReferences(contexts, error, theme);
     if (!error.isNull()) {
         return;
     }
 
-    fallthroughContext.resolveContextReferences(contexts, error);
+    fallthroughContext.resolveContextReferences(contexts, error, theme);
     if (!error.isNull()) {
         return;
     }
 
     foreach (RulePtr rule, rules) {
-        rule->resolveContextReferences(contexts, error);
+        rule->resolveContextReferences(contexts, error, theme);
         if (!error.isNull()) {
             return;
         }
@@ -99,6 +101,65 @@ void Context::setStyles(const QHash<QString, Style> &styles, QString &error) {
     }
 }
 
+void Context::setTheme(const Theme *theme) {
+    if (theme == this->theme) {
+        return;
+    }
+    this->theme = theme;
+#if 0
+    auto ts = theme->textStyles;
+    auto n = _name;
+
+    qDebug() << "Context " << n << " setting theme";
+    if (theme) {
+        if (theme->textStyles.contains(n)) {
+            QStringHash styleProperties = theme->textStyles[n];
+            applyProperties(style.format(), styleProperties, n);
+            // } else {
+            // qDebug() << "** Context" << n << "not in theme";
+        }
+
+        // TODO: get customs styles for language
+        // if (theme->customStyles.contains(langName)) {
+        //     auto custom = theme.customStyles[langName];
+        //     // if (custom.contains(contextName))
+        //     {
+        //         auto styleProperties = custom[contextName];
+        //         applyProperties(format, styleProperties);
+        //     }
+        // }
+
+        for (auto rule : rules) {
+            // auto ts = theme->textStyles;
+            auto n = rule->style.name;
+            if (theme->textStyles.contains(n)) {
+                QStringHash styleProperties = theme->textStyles[n];
+                applyProperties(rule->style.format(), styleProperties, n);
+                // } else {
+                // qDebug() << "** Context" << n << "not in theme";
+            }
+
+            if (rule->context.context()) {
+                rule->context.context()->setTheme(theme);
+            }
+        }
+    }
+
+    if (_lineEndContext.context()) {
+        _lineEndContext.context()->setTheme(theme);
+    }
+    if (_lineBeginContext.context()) {
+        _lineBeginContext.context()->setTheme(theme);
+    }
+    if (_lineEmptyContext.context()) {
+        _lineEmptyContext.context()->setTheme(theme);
+    }
+    if (fallthroughContext.context()) {
+        fallthroughContext.context()->setTheme(theme);
+    }
+#endif
+}
+
 void appendFormat(QVector<QTextLayout::FormatRange> &formats, int start, int length,
                   const QTextCharFormat &format) {
 
@@ -131,6 +192,24 @@ void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult
 
     if (!format.isNull()) {
         appendFormat(formats, textToMatch.currentColumnIndex, matchRes->length, *format);
+
+#if 1
+        // TODO - remove debug code
+        // Extract the text that was matched
+        auto matchedText = textToMatch.text.mid(textToMatch.currentColumnIndex, matchRes->length);
+
+        // Get the color of the format
+        QColor color = format->foreground().color();
+
+        // // Print debug information
+        auto n = context->name();
+        n = matchRes->style.name;
+        qDebug() << QString("context: %1 (0x%2), color %3 - %4")
+                        .arg(n)
+                        .arg(reinterpret_cast<quintptr>(context), 0, 16)
+                        .arg(color.name(QColor::HexRgb))
+                        .arg(matchedText);
+#endif
     }
 
     QChar textType = matchRes->style.textType();
