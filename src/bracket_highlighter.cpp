@@ -1,9 +1,10 @@
 #include <QDebug>
+#include <qutepart.h>
 
 #include "text_block_utils.h"
-
 #include "bracket_highlighter.h"
 #include "hl/text_type.h"
+#include "theme.h"
 
 namespace Qutepart {
 
@@ -13,24 +14,9 @@ const QString START_BRACKETS = "({[";
 const QString END_BRACKETS = ")}]";
 const QString ALL_BRACKETS = START_BRACKETS + END_BRACKETS;
 
-// Make matched or unmatched QTextEdit.ExtraSelection
-QTextEdit::ExtraSelection makeMatchSelection(const TextPosition &pos, bool matched) {
-    QTextEdit::ExtraSelection selection;
-
-    if (matched) {
-        selection.format.setBackground(Qt::green);
-    } else {
-        selection.format.setBackground(Qt::red);
-    }
-
-    selection.cursor = QTextCursor(pos.block);
-    selection.cursor.setPosition(pos.block.position() + pos.column);
-    selection.cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
-
-    return selection;
-}
-
 } // anonymous namespace
+
+BracketHighlighter::BracketHighlighter(Qutepart *q) { qpart = q; }
 
 QList<QTextEdit::ExtraSelection> BracketHighlighter::highlightBracket(QChar bracket,
                                                                       const TextPosition &pos) {
@@ -76,6 +62,35 @@ QList<QTextEdit::ExtraSelection> BracketHighlighter::extraSelections(const TextP
     } else {
         return QList<QTextEdit::ExtraSelection>();
     }
+}
+
+// Make matched or unmatched QTextEdit.ExtraSelection
+QTextEdit::ExtraSelection BracketHighlighter::makeMatchSelection(const TextPosition &pos,
+                                                                 bool matched) {
+    QColor matchedColor = Qt::green;
+    QColor nonMatchedColor = Qt::red;
+    QTextEdit::ExtraSelection selection;
+
+    if (qpart) {
+        if (auto theme = qpart->getTheme()) {
+            if (theme->editorColors.contains(Theme::Colors::BracketMatching)) {
+                matchedColor = theme->editorColors[Theme::Colors::BracketMatching];
+                matchedColor = theme->editorColors[Theme::Colors::BracketMatching];
+            }
+        }
+    }
+
+    if (matched) {
+        selection.format.setBackground(matchedColor);
+    } else {
+        selection.format.setBackground(nonMatchedColor);
+    }
+
+    selection.cursor = QTextCursor(pos.block);
+    selection.cursor.setPosition(pos.block.position() + pos.column);
+    selection.cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
+
+    return selection;
 }
 
 } // namespace Qutepart

@@ -92,6 +92,7 @@ class BracketHighlighter;
 class LineNumberArea;
 class MarkArea;
 class Completer;
+class Theme;
 
 /**
  * Document line.
@@ -224,7 +225,7 @@ class Qutepart : public QPlainTextEdit {
      *
      * \param languageId Language name. See Qutepart::LangInfo::id.
      */
-    void setHighlighter(const QString &languageId);
+    void setHighlighter(const QString &languageId, const Theme *theme);
 
     /**
      * Removes the current syntax highlighter, all text will be drawen using default colors.
@@ -237,6 +238,9 @@ class Qutepart : public QPlainTextEdit {
      * \param indentAlg Algorithm name. See Qutepart::LangInfo::indentAlg.
      */
     void setIndentAlgorithm(IndentAlg indentAlg);
+
+    void setTheme(const Theme *newTheme);
+    const Theme *getTheme() const { return theme; }
 
     /// Convenience method to get text cursor position.
     TextCursorPosition textCursorPosition() const;
@@ -411,6 +415,8 @@ class Qutepart : public QPlainTextEdit {
     void onShortcutJoinLines();
 
   private:
+    const Theme *theme = nullptr;
+
     QSharedPointer<QSyntaxHighlighter> highlighter_;
     std::unique_ptr<Indenter> indenter_;
     std::unique_ptr<BracketHighlighter> bracketHighlighter_;
@@ -425,6 +431,8 @@ class Qutepart : public QPlainTextEdit {
     bool enableSmartHomeEnd_;
 
     int lineLengthEdge_;
+    QColor lineNumberColor;
+    QColor currentLineNumberColor;
     QColor lineLengthEdgeColor_;
     QColor currentLineColor_;
     QColor indentColor_;

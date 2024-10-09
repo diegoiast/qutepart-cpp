@@ -19,6 +19,7 @@ typedef QSharedPointer<AbstractRule> RulePtr;
 
 class TextToMatch;
 class MatchResult;
+class Theme;
 
 class Context {
   public:
@@ -30,10 +31,12 @@ class Context {
 
     QString name() const;
 
-    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error);
+    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error,
+                                  const Theme *theme);
     void setKeywordParams(const QHash<QString, QStringList> &lists, const QString &deliminators,
                           bool caseSensitive, QString &error);
     void setStyles(const QHash<QString, Style> &styles, QString &error);
+    void setTheme(const Theme *theme);
 
     bool dynamic() const { return _dynamic; };
     ContextSwitcher lineBeginContext() const { return _lineBeginContext; };
@@ -60,7 +63,7 @@ class Context {
     bool _dynamic;
 
     QList<RulePtr> rules;
-
+    const Theme *theme = nullptr;
     Style style;
 };
 

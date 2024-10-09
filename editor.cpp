@@ -12,13 +12,14 @@
 #include <QXmlStreamReader>
 
 #include "qutepart.h"
+#include "theme.h"
 
-bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart) {
+bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart, const Qutepart::Theme *theme) {
     QFile file(filePath);
     if (file.exists()) {
         Qutepart::LangInfo langInfo = Qutepart::chooseLanguage(QString(), QString(), filePath);
         if (langInfo.isValid()) {
-            qutepart->setHighlighter(langInfo.id);
+            qutepart->setHighlighter(langInfo.id, theme);
             qutepart->setIndentAlgorithm(langInfo.indentAlg);
         }
 
@@ -88,7 +89,11 @@ int main(int argc, char **argv) {
     Q_INIT_RESOURCE(qutepart_syntax_files);
     QApplication app(argc, argv);
 
+    Qutepart::Theme *theme = new Qutepart::Theme;
     Qutepart::Qutepart qutepart;
+
+    theme->loadTheme("themes/github-light.theme");
+    qutepart.setTheme(theme);
 
     QFont font = qutepart.font();
     font.setPointSize(12);
@@ -97,7 +102,10 @@ int main(int argc, char **argv) {
 
     if (argc > 1) {
         QString filePath = argv[1];
-        if (!openFile(filePath, &qutepart)) {
+        filePath = "editor.cpp";
+        // filePath = "/etc/fstab";
+        // filePath = ":/qutepart/syntax/c.xml";
+        if (!openFile(filePath, &qutepart, theme)) {
             return -1;
         }
     }

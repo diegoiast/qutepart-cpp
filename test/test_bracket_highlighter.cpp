@@ -13,7 +13,7 @@ class Test : public QObject {
         Qutepart::Qutepart qpart;
         qpart.setPlainText("{\n    new OpenFileList(mainWindow_, this);\n\n}");
         Qutepart::TextPosition pos(qpart.document()->firstBlock(), 0);
-        Qutepart::BracketHighlighter bh;
+        Qutepart::BracketHighlighter bh(nullptr);
         QList<QTextEdit::ExtraSelection> selections = bh.extraSelections(pos);
 
         QCOMPARE(selections.size(), 2); // if not empty - managed to find a pair

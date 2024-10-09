@@ -7,6 +7,7 @@
 
 #include "qutepart.h"
 #include "text_block_flags.h"
+#include "theme.h"
 
 #include "side_areas.h"
 
@@ -67,6 +68,19 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
     auto background = palette.color(QPalette::AlternateBase);
     auto foreground = palette.color(QPalette::Text);
     auto wrapColor = palette.color(QPalette::Dark);
+
+    if (qpart_) {
+        if (auto theme = qpart_->getTheme()) {
+            if (theme->editorColors.contains(Theme::Colors::IconBorder)) {
+                background = theme->editorColors[Theme::Colors::IconBorder];
+                wrapColor = background;
+            }
+            if (theme->editorColors.contains(Theme::Colors::LineNumbers)) {
+                foreground = theme->editorColors[Theme::Colors::LineNumbers];
+            }
+        }
+    }
+
     QPainter painter(this);
     painter.fillRect(event->rect(), background);
     painter.setPen(foreground);
@@ -85,13 +99,20 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
         if (block.isVisible() && bottom >= event->rect().top()) {
             QString number = QString("%1").arg(blockNumber + 1);
             QFont font = painter.font();
-            font.setBold(block.fragmentIndex() == currentBlock);
+
+            if (block.fragmentIndex() == currentBlock) {
+                painter.setPen(qpart_->currentLineNumberColor);
+                font.setBold(block.fragmentIndex() == currentBlock);
+            }
             painter.setFont(font);
             painter.drawText(LEFT_LINE_NUM_MARGIN, top, availableWidth, availableHeight,
                              Qt::AlignRight, number);
             if (boundingRect.height() >= singleBlockHeight * 2) { // wrapped block
                 painter.fillRect(1, top + singleBlockHeight, width() - 2,
                                  boundingRect.height() - singleBlockHeight - 2, wrapColor);
+            }
+            if (block.fragmentIndex() == currentBlock) {
+                painter.setPen(foreground);
             }
         }
 
@@ -135,7 +156,14 @@ int MarkArea::widthHint() const { return MARK_MARGIN + bookmarkPixmap_.width() +
 
 void MarkArea::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
-    painter.fillRect(event->rect(), palette().color(QPalette::AlternateBase));
+    auto backgruoundColor = palette().color(QPalette::AlternateBase);
+    if (auto theme = qpart_->getTheme()) {
+        if (theme->editorColors.contains(Theme::Colors::IconBorder)) {
+            backgruoundColor = theme->editorColors[Theme::Colors::IconBorder];
+        }
+    }
+
+    painter.fillRect(event->rect(), backgruoundColor);
 
     QTextBlock block = qpart_->firstVisibleBlock();
     QRectF blockBoundingGeometry =

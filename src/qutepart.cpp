@@ -8,17 +8,16 @@
 
 #include "bracket_highlighter.h"
 #include "completer.h"
-#include "hl_factory.h"
-#include "indent/indenter.h"
 #include "qutepart.h"
 #include "side_areas.h"
-
-#include "hl/loader.h"
-#include "hl/syntax_highlighter.h"
-
-#include "indent/indent_funcs.h"
 #include "text_block_flags.h"
 #include "text_block_utils.h"
+
+#include "hl/syntax_highlighter.h"
+#include "hl_factory.h"
+#include "indent/indent_funcs.h"
+#include "indent/indenter.h"
+#include "theme.h"
 
 namespace Qutepart {
 
@@ -51,6 +50,8 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     whitespaceColor_.setAlphaF(0.2f);
     lineLengthEdgeColor_ = palette.color(QPalette::Accent);
     lineLengthEdgeColor_.setAlphaF(0.5f);
+    lineNumberColor = palette.color(QPalette::Text);
+    currentLineNumberColor = palette.color(QPalette::BrightText);
 
     indentColor_ = QColor(Qt::blue).lighter();
     initActions();
@@ -69,23 +70,43 @@ Qutepart::~Qutepart() {}
 
 Lines Qutepart::lines() const { return Lines(document()); }
 
-void Qutepart::setHighlighter(const QString &languageId) {
-    highlighter_ = QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), languageId));
+void Qutepart::setHighlighter(const QString &languageId, const Theme *theme) {
+    highlighter_ =
+        QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), languageId, theme));
     indenter_->setLanguage(languageId);
 
-    if (highlighter_) {
-        completer_->setKeywords(loadLanguage(languageId)->allLanguageKeywords());
+    if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
+        auto lang = hl->getLanguage();
+        completer_->setKeywords(lang->allLanguageKeywords());
     } else {
         completer_->setKeywords({});
     }
 }
 
 void Qutepart::removeHighlighter() {
-    highlighter_ = QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), ""));
+    highlighter_.clear();
     completer_->setKeywords({});
 }
 
 void Qutepart::setIndentAlgorithm(IndentAlg indentAlg) { indenter_->setAlgorithm(indentAlg); }
+
+void Qutepart::setTheme(const Theme *newTheme) {
+    theme = newTheme;
+    lineNumberColor = theme->editorColors[Theme::Colors::LineNumbers];
+    currentLineNumberColor = theme->editorColors[Theme::Colors::CurrentLineNumber];
+
+    lineLengthEdgeColor_ = theme->editorColors[Theme::Colors::WordWrapMarker];
+    currentLineColor_ = theme->editorColors[Theme::Colors::CurrentLine];
+    indentColor_ = theme->editorColors[Theme::Colors::IndentationLine];
+
+    if (theme->editorColors.contains(Theme::Colors::BackgroundColor) &&
+        theme->editorColors[Theme::Colors::BackgroundColor].isValid()) {
+        QPalette p(palette());
+        p.setColor(QPalette::Base, theme->editorColors[Theme::Colors::BackgroundColor]);
+        p.setColor(QPalette::Text, theme->textStyles["Normal"]["text-color"]);
+        setPalette(p);
+    }
+}
 
 TextCursorPosition Qutepart::textCursorPosition() const {
     QTextCursor cursor = textCursor();
@@ -164,7 +185,7 @@ bool Qutepart::bracketHighlightingEnabled() const { return bool(bracketHighlight
 
 void Qutepart::setBracketHighlightingEnabled(bool value) {
     if (value && (!bracketHighlighter_)) {
-        bracketHighlighter_ = std::make_unique<BracketHighlighter>();
+        bracketHighlighter_ = std::make_unique<BracketHighlighter>(this);
     } else if ((!value) && bool(bracketHighlighter_)) {
         bracketHighlighter_.reset();
     }

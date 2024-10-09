@@ -15,6 +15,8 @@ class SyntaxHighlighter : public QSyntaxHighlighter {
     SyntaxHighlighter(QObject *parent, QSharedPointer<Language> language);
     SyntaxHighlighter(QTextDocument *parent, QSharedPointer<Language> language);
 
+    inline QSharedPointer<Language> getLanguage() const { return language; }
+
   protected:
     void highlightBlock(const QString &text) override;
     QSharedPointer<Language> language;
