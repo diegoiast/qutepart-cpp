@@ -172,11 +172,7 @@ char detectTextType(const QString &attribute, const QString &defStyleName) {
     return ' ';
 }
 
-auto applyProperties(QSharedPointer<QTextCharFormat> format, QStringHash &styleProperties,
-                     QString _name) -> void {
-    Q_UNUSED(_name);
-
-    qDebug() << "** Updating context" << _name << (void *)(format.get()) << styleProperties;
+auto applyProperties(QSharedPointer<QTextCharFormat> format, QStringHash &styleProperties) -> void {
     for (auto it = styleProperties.constBegin(); it != styleProperties.constEnd(); ++it) {
         const QString &key = it.key();
         const QString &value = it.value();
@@ -225,15 +221,14 @@ Style makeStyle(const QString &name, const QString &defStyleName, const QString 
     }
 
     if (theme) {
-        // TODO
-        if (theme->textStyles.contains(name)) {
-            QStringHash styleProperties = theme->textStyles[name];
-            applyProperties(format, styleProperties, name);
+        auto fixedName = defStyleName.mid(2);
+        if (theme->textStyles.contains(fixedName)) {
+            QStringHash styleProperties = theme->textStyles[fixedName];
+            applyProperties(format, styleProperties);
         } else {
-            qDebug() << "** Context" << name << "not in theme" << theme->metaData.name;
             if (theme->textStyles.contains(name)) {
                 QStringHash styleProperties = theme->textStyles[name];
-                applyProperties(format, styleProperties, name);
+                applyProperties(format, styleProperties);
             }
         }
 
