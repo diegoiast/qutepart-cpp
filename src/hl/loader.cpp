@@ -557,7 +557,7 @@ QHash<QString, Style> loadStyles(QXmlStreamReader &xmlReader, QString &error, co
         styles["normal"] = makeStyle("Normal", "dsNormal", {}, {}, {}, error, theme);
     }
     if (!styles.contains("string")) {
-        auto s = styles["string"] = makeStyle("String", "dsString", {}, {}, {}, error, theme);
+        styles["string"] = makeStyle("String", "dsString", {}, {}, {}, error, theme);
     }
 
     return styles;

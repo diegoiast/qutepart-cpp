@@ -36,7 +36,6 @@ class Context {
     void setKeywordParams(const QHash<QString, QStringList> &lists, const QString &deliminators,
                           bool caseSensitive, QString &error);
     void setStyles(const QHash<QString, Style> &styles, QString &error);
-    void setTheme(const Theme *theme);
 
     bool dynamic() const { return _dynamic; };
     ContextSwitcher lineBeginContext() const { return _lineBeginContext; };
@@ -61,9 +60,7 @@ class Context {
     ContextSwitcher _lineEmptyContext;
     ContextSwitcher fallthroughContext;
     bool _dynamic;
-
     QList<RulePtr> rules;
-    const Theme *theme = nullptr;
     Style style;
 };
 

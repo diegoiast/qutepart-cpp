@@ -25,7 +25,6 @@ class Language {
     if state changed between runs but not to extract any other data
     */
     int highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats);
-    void setTheme(const Theme *theme);
 
     ContextPtr defaultContext() const { return contexts.first(); };
     ContextPtr getContext(const QString &contextName) const;
@@ -33,7 +32,6 @@ class Language {
     QSet<QString> allLanguageKeywords() const;
 
   protected:
-    const Theme *theme = nullptr;
     QString name;
     QStringList extensions;
     QStringList mimetypes;

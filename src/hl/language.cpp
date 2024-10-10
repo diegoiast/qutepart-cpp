@@ -1,10 +1,8 @@
 #include <QDebug>
-#include <qlogging.h>
 
 #include "context_switcher.h"
 #include "text_block_user_data.h"
 #include "text_to_match.h"
-#include "theme.h"
 
 #include "language.h"
 
@@ -52,6 +50,7 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
         // qDebug() << "\tIn context " << contextStack.currentContext()->name();
 
         const Context *context = contextStack.currentContext();
+
         contextStack =
             context->parseBlock(contextStack, textToMatch, formats, textTypeMap, lineContinue);
     } while (!textToMatch.isEmpty());
@@ -64,13 +63,6 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
 
     // Assume that last 32 bits of context address can be used as context ID
     return *((int *)contextStack.currentContext());
-}
-
-void Language::setTheme(const Theme *theme) {
-    this->theme = theme;
-    for (auto &ctx : contexts) {
-        ctx->setTheme(theme);
-    }
 }
 
 ContextPtr Language::getContext(const QString &contextName) const {

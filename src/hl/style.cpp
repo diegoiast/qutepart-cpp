@@ -174,12 +174,11 @@ char detectTextType(const QString &attribute, const QString &defStyleName) {
 
 auto applyProperties(QSharedPointer<QTextCharFormat> format, QStringHash &styleProperties) -> void {
     for (auto it = styleProperties.constBegin(); it != styleProperties.constEnd(); ++it) {
-        const QString &key = it.key();
-        const QString &value = it.value();
+        auto &key = it.key();
+        auto &value = it.value();
 
         if (key == "text-color") {
             auto val = QColor(value);
-            // val = QColor(0x00ff00);
             format->setForeground(val);
         } else if (key == "selected-text-color") {
             // TODO
@@ -223,11 +222,11 @@ Style makeStyle(const QString &name, const QString &defStyleName, const QString 
     if (theme) {
         auto fixedName = defStyleName.mid(2);
         if (theme->textStyles.contains(fixedName)) {
-            QStringHash styleProperties = theme->textStyles[fixedName];
+            auto styleProperties = theme->textStyles[fixedName];
             applyProperties(format, styleProperties);
         } else {
             if (theme->textStyles.contains(name)) {
-                QStringHash styleProperties = theme->textStyles[name];
+                auto styleProperties = theme->textStyles[name];
                 applyProperties(format, styleProperties);
             }
         }
@@ -243,14 +242,13 @@ Style makeStyle(const QString &name, const QString &defStyleName, const QString 
         // }
     }
 
-    return Style(name, defStyleName, format);
+    return Style(defStyleName, format);
 }
 
 Style::Style() : _textType(' ') {}
 
-Style::Style(const QString &name, const QString &defStyleName,
-             QSharedPointer<QTextCharFormat> format)
-    : name(name), _format(format), _textType(detectTextType(QString(), defStyleName)),
+Style::Style(const QString &defStyleName, QSharedPointer<QTextCharFormat> format)
+    : _format(format), _textType(detectTextType(QString(), defStyleName)),
       defStyleName(defStyleName) {}
 
 void Style::updateTextType(const QString &attribute) {

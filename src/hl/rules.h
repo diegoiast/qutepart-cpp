@@ -62,8 +62,6 @@ class AbstractRule {
     bool firstNonSpace;
     int column; // -1 if not set
     bool dynamic;
-
-  public:
     Style style;
 };
 

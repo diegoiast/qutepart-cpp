@@ -57,8 +57,6 @@ class Theme {
     auto getEditorColors() const -> const QHash<QString, QColor> &;
     auto getMetaData() const -> const ThemeMetaData &;
 
-    // auto applyTo(Qutepart *editor) -> void;
-
     // private:
     QHash<QString, QHash<QString, QStringHash>> customStyles;
     QHash<QString, QColor> editorColors;
