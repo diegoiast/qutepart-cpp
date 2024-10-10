@@ -75,7 +75,7 @@ QTextEdit::ExtraSelection BracketHighlighter::makeMatchSelection(const TextPosit
         if (auto theme = qpart->getTheme()) {
             if (theme->editorColors.contains(Theme::Colors::BracketMatching)) {
                 matchedColor = theme->editorColors[Theme::Colors::BracketMatching];
-                matchedColor = theme->editorColors[Theme::Colors::BracketMatching];
+                nonMatchedColor = theme->editorColors[Theme::Colors::MarkError];
             }
         }
     }
