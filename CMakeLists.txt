@@ -47,6 +47,7 @@ find_package(Qt6 COMPONENTS Core Widgets Test)
 # Populate a CMake variable with the sources
 set(qutepart_SRCS
     qutepart-syntax-files.qrc
+    qutepart-theme-data.qrc
     src/qutepart.cpp
     src/lines.cpp
     src/char_iterator.cpp

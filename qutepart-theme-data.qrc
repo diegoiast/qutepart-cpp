@@ -1,0 +1,34 @@
+<RCC>
+    <qresource prefix="/qutepart">
+        <file>themes/atom-one-dark.theme</file>
+        <file>themes/atom-one-light.theme</file>
+        <file>themes/ayu-dark.theme</file>
+        <file>themes/ayu-light.theme</file>
+        <file>themes/ayu-mirage.theme</file>
+        <file>themes/breeze-dark.theme</file>
+        <file>themes/breeze-light.theme</file>
+        <file>themes/catppuccin-frappe.theme</file>
+        <file>themes/catppuccin-latte.theme</file>
+        <file>themes/catppuccin-macchiato.theme</file>
+        <file>themes/catppuccin-mocha.theme</file>
+        <file>themes/dracula.theme</file>
+        <file>themes/falcon.theme</file>
+        <file>themes/github-dark.theme</file>
+        <file>themes/github-light.theme</file>
+        <file>themes/gruvbox-dark.theme</file>
+        <file>themes/gruvbox-light.theme</file>
+        <file>themes/homunculus.theme</file>
+        <file>themes/monokai.theme</file>
+        <file>themes/nord.theme</file>
+        <file>themes/oblivion.theme</file>
+        <file>themes/printing.theme</file>
+        <file>themes/radical.theme</file>
+        <file>themes/solarized-dark.theme</file>
+        <file>themes/solarized-light.theme</file>
+        <file>themes/tokyo-night-light.theme</file>
+        <file>themes/tokyo-night-storm.theme</file>
+        <file>themes/tokyo-night.theme</file>
+        <file>themes/vim-dark.theme</file>
+        <file>themes/vscodium-dark.theme</file>
+    </qresource>
+</RCC>

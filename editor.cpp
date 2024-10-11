@@ -87,12 +87,13 @@ QMainWindow *createMainWindow(Qutepart::Qutepart *qutepart) {
 
 int main(int argc, char **argv) {
     Q_INIT_RESOURCE(qutepart_syntax_files);
+    Q_INIT_RESOURCE(qutepart_theme_data);
     QApplication app(argc, argv);
 
     Qutepart::Theme *theme = new Qutepart::Theme;
     Qutepart::Qutepart qutepart;
 
-    theme->loadTheme("themes/github-light.theme");
+    theme->loadTheme(":/qutepart/themes/github-light.theme");
     qutepart.setTheme(theme);
 
     QFont font = qutepart.font();
@@ -103,7 +104,6 @@ int main(int argc, char **argv) {
     if (argc > 1) {
         QString filePath = argv[1];
         filePath = "editor.cpp";
-        // filePath = "/etc/fstab";
         // filePath = ":/qutepart/syntax/c.xml";
         if (!openFile(filePath, &qutepart, theme)) {
             return -1;
