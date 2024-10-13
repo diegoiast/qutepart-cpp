@@ -775,12 +775,18 @@ QSharedPointer<Language> loadLanguage(const QString &xmlFileName, const Theme *t
         return {};
     }
 
+    // TODO: the syntax should be part of the highlighter and not language. This will reduce some
+    //       memory consumption, as many files can share the same lanaguge. Otherwise - we cannot
+    //       load the same syntax with two different highlighters, nor  change the theme
+    //       of languages.
+#if 0
     {
         QMutexLocker locker(&loadedLanguageCacheLock);
         if (loadedLanguageCache.contains(xmlFileName)) {
             return loadedLanguageCache[xmlFileName];
         }
     }
+#endif
 
     QString xmlFilePath = ":/qutepart/syntax/" + xmlFileName;
 
