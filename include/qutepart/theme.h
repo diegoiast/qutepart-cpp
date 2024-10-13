@@ -1,9 +1,9 @@
 #pragma once
 
+#include <QColor>
 #include <QHash>
 #include <QJsonObject>
 #include <QString>
-#include <hl/style.h>
 
 class QSyntaxHighlighter;
 namespace Qutepart {
