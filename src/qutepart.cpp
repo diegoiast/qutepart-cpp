@@ -90,7 +90,7 @@ void Qutepart::setDefaultColors() {
     lineLengthEdgeColor_ = palette.color(QPalette::Accent);
     lineLengthEdgeColor_.setAlphaF(0.5f);
     lineNumberColor = palette.color(QPalette::Text);
-    currentLineNumberColor = palette.color(QPalette::BrightText);
+    currentLineNumberColor = palette.color(QPalette::ButtonText);
     indentColor_ = lineNumberColor.lighter();
 }
 

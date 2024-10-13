@@ -113,6 +113,8 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
             }
             if (block.fragmentIndex() == currentBlock) {
                 painter.setPen(foreground);
+                font.setBold(false);
+                painter.setFont(font);
             }
         }
 
