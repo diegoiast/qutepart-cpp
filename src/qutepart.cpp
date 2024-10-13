@@ -43,17 +43,8 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
       drawSolidEdge_(true), enableSmartHomeEnd_(true), lineLengthEdge_(80),
       completionEnabled_(true), completionThreshold_(3), solidEdgeLine_(new EdgeLine(this)),
       totalMarginWidth_(0) {
-    QPalette palette = style()->standardPalette();
-    currentLineColor_ = palette.color(QPalette::Highlight);
-    currentLineColor_.setAlphaF(0.2f);
-    whitespaceColor_ = palette.color(QPalette::Text);
-    whitespaceColor_.setAlphaF(0.2f);
-    lineLengthEdgeColor_ = palette.color(QPalette::Accent);
-    lineLengthEdgeColor_.setAlphaF(0.5f);
-    lineNumberColor = palette.color(QPalette::Text);
-    currentLineNumberColor = palette.color(QPalette::BrightText);
 
-    indentColor_ = QColor(Qt::blue).lighter();
+    setDefaultColors();
     initActions();
     setAttribute(Qt::WA_KeyCompression,
                  false); // vim can't process compressed keys
@@ -90,8 +81,28 @@ void Qutepart::removeHighlighter() {
 
 void Qutepart::setIndentAlgorithm(IndentAlg indentAlg) { indenter_->setAlgorithm(indentAlg); }
 
+void Qutepart::setDefaultColors() {
+    QPalette palette = style()->standardPalette();
+    currentLineColor_ = palette.color(QPalette::Highlight);
+    currentLineColor_.setAlphaF(0.2f);
+    whitespaceColor_ = palette.color(QPalette::Text);
+    whitespaceColor_.setAlphaF(0.2f);
+    lineLengthEdgeColor_ = palette.color(QPalette::Accent);
+    lineLengthEdgeColor_.setAlphaF(0.5f);
+    lineNumberColor = palette.color(QPalette::Text);
+    currentLineNumberColor = palette.color(QPalette::BrightText);
+    indentColor_ = lineNumberColor.lighter();
+}
+
 void Qutepart::setTheme(const Theme *newTheme) {
     theme = newTheme;
+    if (!newTheme) {
+        setPalette(style()->standardPalette());
+        setDefaultColors();
+        update();
+        return;
+    }
+
     lineNumberColor = theme->editorColors[Theme::Colors::LineNumbers];
     currentLineNumberColor = theme->editorColors[Theme::Colors::CurrentLineNumber];
 

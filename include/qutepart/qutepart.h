@@ -54,7 +54,7 @@ struct LangInfo {
     LangInfo() = default;
 
     inline LangInfo(const QString &id, const QStringList &names, IndentAlg indentAlg)
-        : id(id), names(names), indentAlg(indentAlg){};
+        : id(id), names(names), indentAlg(indentAlg) {}
 
     /// Check if the struct is valid (filled with meaningfull info)
     inline bool isValid() const { return !id.isEmpty(); }
@@ -239,6 +239,7 @@ class Qutepart : public QPlainTextEdit {
      */
     void setIndentAlgorithm(IndentAlg indentAlg);
 
+    void setDefaultColors();
     void setTheme(const Theme *newTheme);
     const Theme *getTheme() const { return theme; }
 
