@@ -85,6 +85,7 @@
         <file>./syntax/pig.xml</file>
         <file>./syntax/gpr.xml</file>
         <file>./syntax/elixir.xml</file>
+        <file>./syntax/tlaplus.xml</file>
         <file>./syntax/viper.xml</file>
         <file>./syntax/pure.xml</file>
         <file>./syntax/mib.xml</file>

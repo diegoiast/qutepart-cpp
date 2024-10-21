@@ -20,6 +20,7 @@
         <file>./syntax/4dos.xml</file>
         <file>./syntax/cisco.xml</file>
         <file>./syntax/logcat.xml</file>
+        <file>./syntax/logfile.xml</file>
         <file>./syntax/valgrind-suppression.xml</file>
         <file>./syntax/yaml.xml</file>
         <file>./syntax/coffee.xml</file>

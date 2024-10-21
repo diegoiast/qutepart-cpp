@@ -91,6 +91,7 @@ QMap<QString,QString> create_languageNameToXmlFileName() {
 	languageNameToXmlFileName["Pig"] = "pig.xml";
 	languageNameToXmlFileName["GPRBuild"] = "gpr.xml";
 	languageNameToXmlFileName["Elixir"] = "elixir.xml";
+	languageNameToXmlFileName["TLA+"] = "tlaplus.xml";
 	languageNameToXmlFileName["Viper"] = "viper.xml";
 	languageNameToXmlFileName["Pure"] = "pure.xml";
 	languageNameToXmlFileName["MIB"] = "mib.xml";
@@ -467,6 +468,7 @@ QMap<QString,QString> create_mimeTypeToXmlFileName() {
 	mimeTypeToXmlFileName["text/x-pig"] = "pig.xml";
 	mimeTypeToXmlFileName["text/x-adasrc"] = "gpr.xml";
 	mimeTypeToXmlFileName["text/x-elixir"] = "elixir.xml";
+	mimeTypeToXmlFileName["text/x-tlaplus"] = "tlaplus.xml";
 	mimeTypeToXmlFileName["text/x-vpr"] = "viper.xml";
 	mimeTypeToXmlFileName["text/x-protobuf"] = "protobuf.xml";
 	mimeTypeToXmlFileName["text/x-gherkin"] = "gherkin.xml";
@@ -826,6 +828,7 @@ QMap<QString,QString> create_extensionToXmlFileName() {
 	extensionToXmlFileName["*.xml.eex"] = "elixir.xml";
 	extensionToXmlFileName["*.js.eex"] = "elixir.xml";
 	extensionToXmlFileName["*.heex"] = "elixir.xml";
+	extensionToXmlFileName["*.tla"] = "tlaplus.xml";
 	extensionToXmlFileName["*.vpr"] = "viper.xml";
 	extensionToXmlFileName["*.pure"] = "pure.xml";
 	extensionToXmlFileName["*.mib"] = "mib.xml";
