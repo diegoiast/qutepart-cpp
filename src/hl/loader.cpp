@@ -456,9 +456,14 @@ QList<ContextPtr> loadContexts(QXmlStreamReader &xmlReader, QString &error) {
 QStringList loadKeywordList(QXmlStreamReader &xmlReader, QString &error) {
     QStringList list;
     while (xmlReader.readNextStartElement()) {
+        if (xmlReader.name() == QLatin1String("include")) {
+            // TODO includes in list is not supported yet
+            xmlReader.readElementText();
+            continue;
+        }
         if (xmlReader.name() != QLatin1String("item")) {
-            error =
-                QString("Not expected tag <%1> when loading list").arg(xmlReader.name().toString());
+            auto n = xmlReader.name().toString();
+            error = QString("Not expected tag <%1> when loading list").arg(n);
             return QStringList();
         }
         list << xmlReader.readElementText();
