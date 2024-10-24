@@ -51,10 +51,44 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
 
     setDrawSolidEdge(drawSolidEdge_);
     updateTabStopWidth();
-    connect(this, &Qutepart::cursorPositionChanged, this, &Qutepart::updateExtraSelections);
+    connect(this, &Qutepart::cursorPositionChanged, this, [this]() {
+        m_lastWordUnderCursor.clear();
+        updateExtraSelections();
+    });
 
     setBracketHighlightingEnabled(true);
     setLineNumbersVisible(true);
+    setSelectCurrentWord(true);
+}
+
+QList<QTextEdit::ExtraSelection> Qutepart::highlightWord(const QString &word) {
+    auto cursor = QTextCursor(document());
+    auto pattern = QString("\\b%1\\b").arg(QRegularExpression::escape(word));
+    auto regex = QRegularExpression(pattern);
+
+    QList<QTextEdit::ExtraSelection> extraSelections;
+    QTextCharFormat format;
+    auto palette = style()->standardPalette();
+    auto color = palette.color(QPalette::Highlight);
+    color.setAlphaF(0.1f);
+
+    if (theme) {
+        color = theme->getEditorColors()[Theme::Colors::SearchHighlight];
+    }
+    format.setBackground(color);
+    while (!cursor.isNull() && !cursor.atEnd()) {
+        cursor = document()->find(regex, cursor);
+        if (!cursor.isNull()) {
+            QTextEdit::ExtraSelection extra;
+            extra.format = format;
+            extra.cursor = cursor;
+            extraSelections.append(extra);
+        }
+    }
+    if (extraSelections.length() < 2) {
+        return {};
+    }
+    return extraSelections;
 }
 
 Qutepart::~Qutepart() {}
@@ -219,6 +253,43 @@ void Qutepart::setLineNumbersVisible(bool value) {
 bool Qutepart::getSmartHomeEnd() const { return enableSmartHomeEnd_; }
 
 void Qutepart::setSmartHomeEnd(bool value) { enableSmartHomeEnd_ = value; }
+
+void Qutepart::setSelectCurrentWord(bool enable) {
+    if (!enable) {
+        delete m_debounceTimer;
+        m_debounceTimer = nullptr;
+        m_lastWordUnderCursor.clear();
+        // return;
+    }
+
+    m_debounceTimer = new QTimer(this);
+    m_debounceTimer->setSingleShot(true);
+    m_debounceTimer->setInterval(500);
+
+    connect(m_debounceTimer, &QTimer::timeout, m_debounceTimer, [this]() {
+        if (m_lastWordUnderCursor.length() > 2) {
+            // highlightWord(m_lastWordUnderCursor);
+            updateExtraSelections();
+        }
+    });
+
+    connect(this, &QPlainTextEdit::cursorPositionChanged, m_debounceTimer, [this]() {
+        auto cursor = textCursor();
+        cursor.select(QTextCursor::WordUnderCursor);
+        auto wordUnderCursor = cursor.selectedText();
+
+        m_lastWordUnderCursor.clear();
+        m_debounceTimer->stop();
+        updateExtraSelections();
+        if (wordUnderCursor.isEmpty() || wordUnderCursor.length() <= 2) {
+            return;
+        }
+        m_lastWordUnderCursor = wordUnderCursor;
+        m_debounceTimer->start();
+    });
+}
+
+bool Qutepart::getSelectCurrentWord() { return m_debounceTimer != nullptr; }
 
 bool Qutepart::completionEnabled() const { return completionEnabled_; }
 
@@ -998,6 +1069,13 @@ void Qutepart::updateExtraSelections() {
     if (bracketHighlighter_) {
         selections += bracketHighlighter_->extraSelections(
             TextPosition(textCursor().block(), cursor.positionInBlock()));
+    }
+
+    if (m_lastWordUnderCursor.length() > 2) {
+        selections += highlightWord(m_lastWordUnderCursor);
+#if 0
+        qDebug() << "Seacrching for word" << m_lastWordUnderCursor << "Found " << selections.size();
+#endif
     }
 
     setExtraSelections(selections);

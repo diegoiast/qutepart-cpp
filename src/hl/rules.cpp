@@ -283,11 +283,11 @@ MatchResult *RegExpRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     if (dynamic) {
         QString pattern = makeDynamicSubsctitutions(value, *textToMatch.contextData);
         QRegularExpression dynamicRegExp = compileRegExp(pattern);
-        match = dynamicRegExp.match(textToMatch.text, 0, QRegularExpression::NormalMatch,
-                                    QRegularExpression::AnchorAtOffsetMatchOption);
+        match = dynamicRegExp.matchView(textToMatch.text, 0, QRegularExpression::NormalMatch,
+                                        QRegularExpression::AnchorAtOffsetMatchOption);
     } else {
-        match = regExp.match(textToMatch.text, 0, QRegularExpression::NormalMatch,
-                             QRegularExpression::AnchorAtOffsetMatchOption);
+        match = regExp.matchView(textToMatch.text, 0, QRegularExpression::NormalMatch,
+                                 QRegularExpression::AnchorAtOffsetMatchOption);
     }
 
     if (match.hasMatch() && match.capturedLength() > 0) {
