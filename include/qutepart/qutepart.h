@@ -310,6 +310,10 @@ class Qutepart : public QPlainTextEdit {
     /// To to logical, or phisical end/start of line.
     void setSmartHomeEnd(bool value);
 
+    /// When cursor moves, select the current word under cursor in all the document
+    void setMarkCurrentWord(bool enable);
+    bool getMarkCurrentWord();
+
     // Autocompletion
     void setCompletionEnabled(bool);
     bool completionEnabled() const;
@@ -365,6 +369,7 @@ class Qutepart : public QPlainTextEdit {
     QAction *createAction(const QString &text, QKeySequence shortcut, const QString &iconFileName,
                           std::function<void()> const &handler);
 
+    QList<QTextEdit::ExtraSelection> highlightWord(const QString &word);
     // whitespace and edge drawing
     void drawIndentMarkersAndEdge(const QRect &rect);
     void drawIndentMarker(QPainter *painter, QTextBlock block, int column);
@@ -417,6 +422,9 @@ class Qutepart : public QPlainTextEdit {
 
   private:
     const Theme *theme = nullptr;
+
+    QTimer *currentWordTimer;
+    QString lastWordUnderCursor;
 
     QSharedPointer<QSyntaxHighlighter> highlighter_;
     std::unique_ptr<Indenter> indenter_;

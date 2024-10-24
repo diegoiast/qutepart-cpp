@@ -51,10 +51,48 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
 
     setDrawSolidEdge(drawSolidEdge_);
     updateTabStopWidth();
-    connect(this, &Qutepart::cursorPositionChanged, this, &Qutepart::updateExtraSelections);
+    connect(this, &Qutepart::cursorPositionChanged, this, [this]() {
+        lastWordUnderCursor.clear();
+        updateExtraSelections();
+    });
 
     setBracketHighlightingEnabled(true);
     setLineNumbersVisible(true);
+    setMarkCurrentWord(true);
+}
+
+QList<QTextEdit::ExtraSelection> Qutepart::highlightWord(const QString &word) {
+    if (blockCount() > 10000) {
+        return {};
+    }
+
+    auto cursor = QTextCursor(document());
+    auto pattern = QString("\\b%1\\b").arg(QRegularExpression::escape(word));
+    auto regex = QRegularExpression(pattern);
+
+    QList<QTextEdit::ExtraSelection> extraSelections;
+    QTextCharFormat format;
+    auto palette = style()->standardPalette();
+    auto color = palette.color(QPalette::Highlight);
+    color.setAlphaF(0.1f);
+
+    if (theme) {
+        color = theme->getEditorColors()[Theme::Colors::SearchHighlight];
+    }
+    format.setBackground(color);
+    while (!cursor.isNull() && !cursor.atEnd()) {
+        cursor = document()->find(regex, cursor);
+        if (!cursor.isNull()) {
+            QTextEdit::ExtraSelection extra;
+            extra.format = format;
+            extra.cursor = cursor;
+            extraSelections.append(extra);
+        }
+    }
+    if (extraSelections.length() < 2) {
+        return {};
+    }
+    return extraSelections;
 }
 
 Qutepart::~Qutepart() {}
@@ -100,6 +138,7 @@ void Qutepart::setTheme(const Theme *newTheme) {
         setPalette(style()->standardPalette());
         setDefaultColors();
         update();
+        updateExtraSelections();
         return;
     }
 
@@ -117,6 +156,7 @@ void Qutepart::setTheme(const Theme *newTheme) {
         p.setColor(QPalette::Text, theme->textStyles["Normal"]["text-color"]);
         setPalette(p);
     }
+    updateExtraSelections();
 }
 
 TextCursorPosition Qutepart::textCursorPosition() const {
@@ -219,6 +259,55 @@ void Qutepart::setLineNumbersVisible(bool value) {
 bool Qutepart::getSmartHomeEnd() const { return enableSmartHomeEnd_; }
 
 void Qutepart::setSmartHomeEnd(bool value) { enableSmartHomeEnd_ = value; }
+
+void Qutepart::setMarkCurrentWord(bool enable) {
+    if (!enable) {
+        delete currentWordTimer;
+        currentWordTimer = nullptr;
+        lastWordUnderCursor.clear();
+        updateExtraSelections();
+        return;
+    }
+
+    currentWordTimer = new QTimer(this);
+    currentWordTimer->setSingleShot(true);
+    currentWordTimer->setInterval(500);
+
+    connect(currentWordTimer, &QTimer::timeout, currentWordTimer, [this]() {
+        if (lastWordUnderCursor.length() > 2) {
+            updateExtraSelections();
+        }
+    });
+
+    connect(this, &QPlainTextEdit::cursorPositionChanged, currentWordTimer, [this]() {
+        auto cursor = textCursor();
+        cursor.select(QTextCursor::WordUnderCursor);
+        auto wordUnderCursor = cursor.selectedText();
+
+        lastWordUnderCursor.clear();
+        if (currentWordTimer) {
+            currentWordTimer->stop();
+        }
+        updateExtraSelections();
+        if (wordUnderCursor.isEmpty() || wordUnderCursor.length() <= 2) {
+            return;
+        }
+        lastWordUnderCursor = wordUnderCursor;
+        if (currentWordTimer) {
+            currentWordTimer->start();
+        }
+
+    });
+
+    auto cursor = textCursor();
+    cursor.select(QTextCursor::WordUnderCursor);
+    auto wordUnderCursor = cursor.selectedText();
+    lastWordUnderCursor = wordUnderCursor;
+
+    updateExtraSelections();
+}
+
+bool Qutepart::getMarkCurrentWord() { return currentWordTimer != nullptr; }
 
 bool Qutepart::completionEnabled() const { return completionEnabled_; }
 
@@ -998,6 +1087,13 @@ void Qutepart::updateExtraSelections() {
     if (bracketHighlighter_) {
         selections += bracketHighlighter_->extraSelections(
             TextPosition(textCursor().block(), cursor.positionInBlock()));
+    }
+
+    if (lastWordUnderCursor.length() > 2) {
+        selections += highlightWord(lastWordUnderCursor);
+#if 0
+        qDebug() << "Seacrching for word" << m_lastWordUnderCursor << "Found " << selections.size();
+#endif
     }
 
     setExtraSelections(selections);
