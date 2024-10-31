@@ -225,7 +225,7 @@ class Qutepart : public QPlainTextEdit {
      *
      * \param languageId Language name. See Qutepart::LangInfo::id.
      */
-    void setHighlighter(const QString &languageId, const Theme *theme);
+    void setHighlighter(const QString &languageId);
 
     /**
      * Removes the current syntax highlighter, all text will be drawen using default colors.

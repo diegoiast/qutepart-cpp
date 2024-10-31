@@ -14,12 +14,12 @@
 #include "qutepart.h"
 #include "theme.h"
 
-bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart, const Qutepart::Theme *theme) {
+bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart) {
     QFile file(filePath);
     if (file.exists()) {
         Qutepart::LangInfo langInfo = Qutepart::chooseLanguage(QString(), QString(), filePath);
         if (langInfo.isValid()) {
-            qutepart->setHighlighter(langInfo.id, theme);
+            qutepart->setHighlighter(langInfo.id);
             qutepart->setIndentAlgorithm(langInfo.indentAlg);
         }
 
@@ -101,13 +101,12 @@ int main(int argc, char **argv) {
     font.setFamily("Monospace");
     qutepart.setFont(font);
 
+    auto filePath = QString(":/qutepart/syntax/c.xml");
     if (argc > 1) {
-        QString filePath = argv[1];
-        filePath = "editor.cpp";
-        // filePath = ":/qutepart/syntax/c.xml";
-        if (!openFile(filePath, &qutepart, theme)) {
-            return -1;
-        }
+        filePath = argv[1];
+    }
+    if (!openFile(filePath, &qutepart)) {
+        return -1;
     }
 
     QMainWindow *window = createMainWindow(&qutepart);

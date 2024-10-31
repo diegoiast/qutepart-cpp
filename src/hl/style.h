@@ -5,8 +5,6 @@
 
 namespace Qutepart {
 
-class Theme;
-
 class Style {
   public:
     Style();
@@ -29,8 +27,7 @@ class Style {
     QString defStyleName;
 };
 
-Style makeStyle(const QString &name, const QString &defStyleName, const QString &color,
-                const QString & /*selColor*/, const QHash<QString, bool> &flags, QString &error,
-                const Theme *theme);
+Style makeStyle(const QString &defStyleName, const QString &color,
+                const QString & /*selColor*/, const QHash<QString, bool> &flags, QString &error);
 
 } // namespace Qutepart

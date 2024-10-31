@@ -15,13 +15,13 @@ QString ContextSwitcher::toString() const { return contextOperation; }
 bool ContextSwitcher::isNull() const { return contextOperation.isEmpty(); }
 
 void ContextSwitcher::resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
-                                               QString &error, const Theme *theme) {
+                                               QString &error) {
     if (contextName.isEmpty()) {
         return;
     }
 
     if (contextName.contains('#')) {
-        _context = loadExternalContext(contextName, theme);
+        _context = loadExternalContext(contextName);
         return;
     }
 

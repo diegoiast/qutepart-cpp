@@ -19,8 +19,8 @@ void AbstractRule::printDescription(QTextStream &out) const {
 QString AbstractRule::description() const { return QString("%1(%2)").arg(name()).arg(args()); }
 
 void AbstractRule::resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
-                                            QString &error, const Theme *theme) {
-    context.resolveContextReferences(contexts, error, theme);
+                                            QString &error) {
+    context.resolveContextReferences(contexts, error);
 }
 
 void AbstractRule::setStyles(const QHash<QString, Style> &styles, QString &error) {
@@ -548,14 +548,14 @@ IncludeRulesRule::IncludeRulesRule(const AbstractRuleParams &params, const QStri
     : AbstractRule(params), contextName(contextName) {}
 
 void IncludeRulesRule::resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
-                                                QString &error, const Theme *theme) {
-    AbstractRule::resolveContextReferences(contexts, error, theme);
+                                                QString &error) {
+    AbstractRule::resolveContextReferences(contexts, error);
     if (!error.isNull()) {
         return;
     }
 
     if (contextName.contains("#")) {
-        context = loadExternalContext(contextName, theme);
+        context = loadExternalContext(contextName);
         if (context.isNull()) {
             error = QString("Failed to include rules from external context '%1'").arg(contextName);
             return;

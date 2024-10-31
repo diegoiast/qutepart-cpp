@@ -172,74 +172,13 @@ char detectTextType(const QString &attribute, const QString &defStyleName) {
     return ' ';
 }
 
-auto applyProperties(QSharedPointer<QTextCharFormat> format, QStringHash &styleProperties) -> void {
-    for (auto it = styleProperties.constBegin(); it != styleProperties.constEnd(); ++it) {
-        auto &key = it.key();
-        auto &value = it.value();
 
-        if (key == "text-color") {
-            auto val = QColor(value);
-            format->setForeground(val);
-        } else if (key == "selected-text-color") {
-            // TODO
-        } else if (key == "background-color") {
-            auto val = QColor(value);
-            format->setBackground(val);
-        } else if (key == "bold") {
-            auto val = value.toLower() == "true";
-            format->setFontWeight(val ? QFont::Bold : QFont::Normal);
-        } else if (key == "italic") {
-            auto val = value.toLower() == "true";
-            format->setFontItalic(val);
-        } else if (key == "underline") {
-            auto val = value.toLower() == "true";
-            format->setFontUnderline(val);
-        } else if (key == "strike-through") {
-            auto val = value.toLower() == "true";
-            format->setFontStrikeOut(val);
-        } else if (key == "font-family") {
-            format->setFontFamilies({value});
-        } else if (key == "font-size") {
-            bool ok;
-            int fontSize = value.toInt(&ok);
-            if (ok) {
-                format->setFontPointSize(fontSize);
-            }
-        }
-        // Add more properties as needed
-    }
-};
-
-Style makeStyle(const QString &name, const QString &defStyleName, const QString &color,
-                const QString &selColor, const QHash<QString, bool> &flags, QString &error,
-                const Theme *theme) {
+Style makeStyle(const QString &defStyleName, const QString &color,
+                const QString &selColor, const QHash<QString, bool> &flags, QString &error) {
     QSharedPointer<QTextCharFormat> format =
         makeFormat(defStyleName, color, selColor, flags, error);
     if (!error.isNull()) {
         return Style();
-    }
-
-    if (theme) {
-        auto fixedName = defStyleName.mid(2);
-        if (theme->textStyles.contains(fixedName)) {
-            auto styleProperties = theme->textStyles[fixedName];
-            applyProperties(format, styleProperties);
-        } else {
-            if (theme->textStyles.contains(name)) {
-                auto styleProperties = theme->textStyles[name];
-                applyProperties(format, styleProperties);
-            }
-        }
-
-        // TODO: get customs styles for language
-        // if (theme->customStyles.contains(langName)) {
-        //     auto custom = theme.customStyles[langName];
-        //     // if (custom.contains(contextName))
-        //     {
-        //         auto styleProperties = custom[contextName];
-        //         applyProperties(format, styleProperties);
-        //     }
-        // }
     }
 
     return Style(defStyleName, format);

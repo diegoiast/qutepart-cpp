@@ -8,9 +8,8 @@ namespace Qutepart {
 
 class Theme;
 
-QSyntaxHighlighter *makeHighlighter(QObject *parent, const QString &languageId,
-                                    const Theme *theme) {
-    QSharedPointer<Language> language = loadLanguage(languageId, theme);
+QSyntaxHighlighter *makeHighlighter(QObject *parent, const QString &languageId) {
+    QSharedPointer<Language> language = loadLanguage(languageId);
     if (!language.isNull()) {
         return new SyntaxHighlighter(parent, language);
     }
@@ -18,9 +17,8 @@ QSyntaxHighlighter *makeHighlighter(QObject *parent, const QString &languageId,
     return nullptr;
 }
 
-QSyntaxHighlighter *makeHighlighter(QTextDocument *parent, const QString &languageId,
-                                    const Theme *theme) {
-    QSharedPointer<Language> language = loadLanguage(languageId, theme);
+QSyntaxHighlighter *makeHighlighter(QTextDocument *parent, const QString &languageId) {
+    QSharedPointer<Language> language = loadLanguage(languageId);
     if (!language.isNull()) {
         return new SyntaxHighlighter(parent, language);
     }

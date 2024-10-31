@@ -4,6 +4,7 @@
 #include <QSharedPointer>
 #include <QTextLayout>
 #include <QTextStream>
+#include <optional>
 
 #include "context_stack.h"
 #include "context_switcher.h"
@@ -31,19 +32,18 @@ class Context {
 
     QString name() const;
 
-    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error,
-                                  const Theme *theme);
+    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error);
     void setKeywordParams(const QHash<QString, QStringList> &lists, const QString &deliminators,
                           bool caseSensitive, QString &error);
     void setStyles(const QHash<QString, Style> &styles, QString &error);
 
-    bool dynamic() const { return _dynamic; };
-    ContextSwitcher lineBeginContext() const { return _lineBeginContext; };
-    ContextSwitcher lineEndContext() const { return _lineEndContext; };
+    inline bool dynamic() const { return _dynamic; }
+    inline ContextSwitcher lineBeginContext() const { return _lineBeginContext; }
+    inline ContextSwitcher lineEndContext() const { return _lineEndContext; }
 
     const ContextStack parseBlock(const ContextStack &contextStack, TextToMatch &textToMatch,
                                   QVector<QTextLayout::FormatRange> &formats, QString &textTypeMap,
-                                  bool &lineContinue) const;
+                                  bool &lineContinue, const Theme *theme) const;
 
     // Try to match textToMatch with nested rules
     MatchResult *tryMatch(const TextToMatch &textToMatch) const;
@@ -51,7 +51,7 @@ class Context {
   protected:
     void applyMatchResult(const TextToMatch &textToMatch, const MatchResult *matchRes,
                           const Context *context, QVector<QTextLayout::FormatRange> &formats,
-                          QString &textTypeMap) const;
+                          QString &textTypeMap, const Theme *theme) const;
 
     QString _name;
     QString attribute;

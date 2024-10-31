@@ -9,7 +9,6 @@
 
 namespace Qutepart {
 
-class Theme;
 class Context;
 typedef QSharedPointer<Context> ContextPtr;
 class TextToMatch;
@@ -32,7 +31,7 @@ class AbstractRule {
     virtual QString description() const;
 
     virtual void resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
-                                          QString &error, const Theme *theme);
+                                          QString &error);
     virtual void setKeywordParams(const QHash<QString, QStringList> &, bool, const QString &,
                                   QString &){};
     void setStyles(const QHash<QString, Style> &styles, QString &error);
@@ -276,8 +275,7 @@ class IncludeRulesRule : public AbstractRule {
     QString name() const override { return "IncludeRules"; };
     QString args() const override { return contextName; };
 
-    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error,
-                                  const Theme *theme) override;
+    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error) override;
 
   private:
     MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;

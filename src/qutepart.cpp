@@ -99,14 +99,15 @@ Qutepart::~Qutepart() {}
 
 Lines Qutepart::lines() const { return Lines(document()); }
 
-void Qutepart::setHighlighter(const QString &languageId, const Theme *theme) {
+void Qutepart::setHighlighter(const QString &languageId) {
     highlighter_ =
-        QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), languageId, theme));
+        QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), languageId));
     indenter_->setLanguage(languageId);
 
     if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
         auto lang = hl->getLanguage();
         completer_->setKeywords(lang->allLanguageKeywords());
+        hl->setTheme(theme);
     } else {
         completer_->setKeywords({});
     }
@@ -134,6 +135,13 @@ void Qutepart::setDefaultColors() {
 
 void Qutepart::setTheme(const Theme *newTheme) {
     theme = newTheme;
+    if (highlighter_) {
+        if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
+            hl->setTheme(theme);
+        }
+        highlighter_->rehighlight();
+    }
+
     if (!newTheme) {
         setPalette(style()->standardPalette());
         setDefaultColors();
@@ -296,7 +304,6 @@ void Qutepart::setMarkCurrentWord(bool enable) {
         if (currentWordTimer) {
             currentWordTimer->start();
         }
-
     });
 
     auto cursor = textCursor();

@@ -20,7 +20,7 @@ QChar getTextType(const QTextBlock &block, int column) {
     if (data == nullptr) {
         return ' ';
     } else {
-        return data->textTypeMap()[column];
+        return data->textTypeMap[column];
     }
 }
 
@@ -32,7 +32,7 @@ QString textTypeMap(const QTextBlock &block) {
         return QString().fill(' ', block.text().length());
     }
 
-    return data->textTypeMap();
+    return data->textTypeMap;
 }
 
 bool isCode(const QTextBlock &block, int column) { return getTextType(block, column) == ' '; }

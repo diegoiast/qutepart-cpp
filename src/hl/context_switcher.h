@@ -6,7 +6,6 @@
 
 namespace Qutepart {
 
-class Theme;
 class Context;
 typedef QSharedPointer<Context> ContextPtr;
 
@@ -18,8 +17,7 @@ class ContextSwitcher {
     QString toString() const;
     bool isNull() const;
 
-    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error,
-                                  const Theme *theme);
+    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error);
 
     int popsCount() const { return _popsCount; };
     ContextPtr context() const { return _context; };

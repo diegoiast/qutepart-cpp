@@ -1,6 +1,7 @@
 #include <QTextLayout>
 #include <Qt>
 
+#include "theme.h"
 #include "language.h"
 #include "syntax_highlighter.h"
 
@@ -15,7 +16,7 @@ SyntaxHighlighter::SyntaxHighlighter(QObject *parent, QSharedPointer<Language> l
 void SyntaxHighlighter::highlightBlock(const QString &) {
     QVector<QTextLayout::FormatRange> formats;
 
-    int state = language->highlightBlock(currentBlock(), formats);
+    int state = language->highlightBlock(currentBlock(), formats, theme);
 
     foreach (QTextLayout::FormatRange range, formats) {
         setFormat(range.start, range.length, range.format);

@@ -13,9 +13,8 @@ class Theme;
  *
  * See QSyntaxHighlighter::QSyntaxHighlighter(..) documentation.
  */
-QSyntaxHighlighter *makeHighlighter(QObject *parent, const QString &languageId, const Theme *theme);
+QSyntaxHighlighter *makeHighlighter(QObject *parent, const QString &languageId);
 
-QSyntaxHighlighter *makeHighlighter(QTextDocument *parent, const QString &langugeId,
-                                    const Theme *theme);
+QSyntaxHighlighter *makeHighlighter(QTextDocument *parent, const QString &langugeId);
 
 } // namespace Qutepart

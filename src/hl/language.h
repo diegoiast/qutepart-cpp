@@ -24,9 +24,9 @@ class Language {
     State is a pointer to current context. It can be used to check
     if state changed between runs but not to extract any other data
     */
-    int highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats);
+    int highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats, const Theme *theme);
 
-    ContextPtr defaultContext() const { return contexts.first(); };
+    ContextPtr defaultContext() const { return contexts.first(); }
     ContextPtr getContext(const QString &contextName) const;
 
     QSet<QString> allLanguageKeywords() const;

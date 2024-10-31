@@ -9,12 +9,9 @@ namespace Qutepart {
 class TextBlockUserData : public QTextBlockUserData {
   public:
     TextBlockUserData(const QString &textTypeMap, const ContextStack &contexts);
-    const QString &textTypeMap() const { return _textTypeMap; };
-    const ContextStack &contexts() const { return _contexts; };
-
-  private:
-    QString _textTypeMap;
-    ContextStack _contexts;
+    QString textTypeMap;
+    ContextStack contexts;
+    QString lineEnding;
 };
 
 } // namespace Qutepart

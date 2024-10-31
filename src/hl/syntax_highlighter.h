@@ -8,6 +8,8 @@
 
 namespace Qutepart {
 
+class Theme;
+
 class SyntaxHighlighter : public QSyntaxHighlighter {
     Q_OBJECT
 
@@ -16,10 +18,15 @@ class SyntaxHighlighter : public QSyntaxHighlighter {
     SyntaxHighlighter(QTextDocument *parent, QSharedPointer<Language> language);
 
     inline QSharedPointer<Language> getLanguage() const { return language; }
+    inline void setTheme(const Theme *t) {
+        this->theme = t;
+        rehighlight();
+    }
 
   protected:
     void highlightBlock(const QString &text) override;
     QSharedPointer<Language> language;
+    const Theme *theme = nullptr;
 };
 
 } // namespace Qutepart

@@ -3,6 +3,6 @@
 namespace Qutepart {
 
 TextBlockUserData::TextBlockUserData(const QString &textTypeMap, const ContextStack &contexts)
-    : _textTypeMap(textTypeMap), _contexts(contexts) {}
+    : textTypeMap(textTypeMap), contexts(contexts) {}
 
 } // namespace Qutepart

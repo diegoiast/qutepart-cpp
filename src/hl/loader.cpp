@@ -498,7 +498,7 @@ QHash<QString, QStringList> loadKeywordLists(QXmlStreamReader &xmlReader, QStrin
     return lists;
 }
 
-QHash<QString, Style> loadStyles(QXmlStreamReader &xmlReader, QString &error, const Theme *theme) {
+QHash<QString, Style> loadStyles(QXmlStreamReader &xmlReader, QString &error) {
     xmlReader.readNextStartElement();
 
     if (xmlReader.name() != QLatin1String("itemDatas")) {
@@ -547,7 +547,7 @@ QHash<QString, Style> loadStyles(QXmlStreamReader &xmlReader, QString &error, co
             }
         }
 
-        Style style = makeStyle(name, defStyleNum, color, selColor, flags, error, theme);
+        Style style = makeStyle(defStyleNum, color, selColor, flags, error);
         if (!error.isNull()) {
             return QHash<QString, Style>();
         }
@@ -559,10 +559,10 @@ QHash<QString, Style> loadStyles(QXmlStreamReader &xmlReader, QString &error, co
     // HACK not documented, but 'normal' attribute is used by some parsers
     // without declaration
     if (!styles.contains("normal")) {
-        styles["normal"] = makeStyle("Normal", "dsNormal", {}, {}, {}, error, theme);
+        styles["normal"] = makeStyle("dsNormal", {}, {}, {}, error);
     }
     if (!styles.contains("string")) {
-        styles["string"] = makeStyle("String", "dsString", {}, {}, {}, error, theme);
+        styles["string"] = makeStyle("dsString", {}, {}, {}, error);
     }
 
     return styles;
@@ -621,7 +621,7 @@ void makeKeywordsLowerCase(QHash<QString, QStringList> &keywordLists) {
 // Load keyword lists, contexts, attributes
 QList<ContextPtr> loadLanguageSytnax(QXmlStreamReader &xmlReader, QString &keywordDeliminators,
                                      QString &indenter, QSet<QString> &allLanguageKeywords,
-                                     QString &error, const Theme *theme) {
+                                     QString &error) {
     QHash<QString, QStringList> keywordLists = loadKeywordLists(xmlReader, error);
     if (!error.isNull()) {
         return QList<ContextPtr>();
@@ -632,7 +632,7 @@ QList<ContextPtr> loadLanguageSytnax(QXmlStreamReader &xmlReader, QString &keywo
         return QList<ContextPtr>();
     }
 
-    QHash<QString, Style> styles = loadStyles(xmlReader, error, theme);
+    QHash<QString, Style> styles = loadStyles(xmlReader, error);
     if (!error.isNull()) {
         return QList<ContextPtr>();
     }
@@ -683,7 +683,7 @@ QList<ContextPtr> loadLanguageSytnax(QXmlStreamReader &xmlReader, QString &keywo
 }
 
 QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamReader &xmlReader,
-                                      QString &error, const Theme *theme) {
+                                      QString &error) {
     if (!xmlReader.readNextStartElement()) {
         error = "Failed to read start element";
         return QSharedPointer<Language>();
@@ -737,7 +737,7 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
     QString keywordDeliminators;
     QSet<QString> allLanguageKeywords;
     QList<ContextPtr> contexts = loadLanguageSytnax(xmlReader, keywordDeliminators, indenter,
-                                                    allLanguageKeywords, error, theme);
+                                                    allLanguageKeywords, error);
 
     if (!error.isNull()) {
         return QSharedPointer<Language>();
@@ -762,7 +762,7 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
     }
 
     foreach (ContextPtr ctx, contexts) {
-        ctx->resolveContextReferences(contextMap, error, theme);
+        ctx->resolveContextReferences(contextMap, error);
         if (!error.isNull()) {
             {
                 QMutexLocker locker(&loadedLanguageCacheLock);
@@ -775,23 +775,17 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
     return languagePtr;
 }
 
-QSharedPointer<Language> loadLanguage(const QString &xmlFileName, const Theme *theme) {
+QSharedPointer<Language> loadLanguage(const QString &xmlFileName) {
     if (xmlFileName.isEmpty()) {
         return {};
     }
 
-    // TODO: the syntax should be part of the highlighter and not language. This will reduce some
-    //       memory consumption, as many files can share the same lanaguge. Otherwise - we cannot
-    //       load the same syntax with two different highlighters, nor  change the theme
-    //       of languages.
-#if 0
     {
         QMutexLocker locker(&loadedLanguageCacheLock);
         if (loadedLanguageCache.contains(xmlFileName)) {
             return loadedLanguageCache[xmlFileName];
         }
     }
-#endif
 
     QString xmlFilePath = ":/qutepart/syntax/" + xmlFileName;
 
@@ -804,7 +798,7 @@ QSharedPointer<Language> loadLanguage(const QString &xmlFileName, const Theme *t
     QXmlStreamReader xmlReader(&syntaxFile);
 
     QString error;
-    QSharedPointer<Language> language = parseXmlFile(xmlFileName, xmlReader, error, theme);
+    QSharedPointer<Language> language = parseXmlFile(xmlFileName, xmlReader, error);
     if (language.isNull()) {
         qCritical() << "Failed to parse XML file '" << xmlFilePath << "': " << error;
         return QSharedPointer<Language>();
@@ -813,7 +807,7 @@ QSharedPointer<Language> loadLanguage(const QString &xmlFileName, const Theme *t
     return language;
 }
 
-ContextPtr loadExternalContext(const QString &externalCtxName, const Theme *theme) {
+ContextPtr loadExternalContext(const QString &externalCtxName) {
     QString langName, contextName;
 
     if (externalCtxName.startsWith("##")) {
@@ -836,7 +830,7 @@ ContextPtr loadExternalContext(const QString &externalCtxName, const Theme *them
         return ContextPtr();
     }
 
-    QSharedPointer<Language> language = loadLanguage(langInfo.id, theme);
+    QSharedPointer<Language> language = loadLanguage(langInfo.id);
     if (language.isNull()) {
         qWarning() << "Failed to load context" << externalCtxName;
         return ContextPtr();

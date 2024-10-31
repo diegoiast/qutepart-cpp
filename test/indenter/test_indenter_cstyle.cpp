@@ -10,7 +10,7 @@ class Test : public BaseTest {
         BaseTest::init();
 
         qpart.setIndentAlgorithm(Qutepart::INDENT_ALG_CSTYLE);
-        qpart.setHighlighter("cpp.xml", nullptr);
+        qpart.setHighlighter("cpp.xml");
         qpart.setIndentWidth(2);
     }
 
