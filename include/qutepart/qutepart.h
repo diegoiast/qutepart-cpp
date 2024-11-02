@@ -322,38 +322,28 @@ class Qutepart : public QPlainTextEdit {
     int completionThreshold() const;
 
     // Actions
-    QAction *increaseIndentAction() const;
-    QAction *decreaseIndentAction() const;
-
-    QAction *toggleBookmarkAction() const;
-    QAction *prevBookmarkAction() const;
-    QAction *nextBookmarkAction() const;
-
-    QAction *invokeCompletionAction() const;
-
-    QAction *scrollDownAction() const;
-    QAction *scrollUpAction() const;
-
-    QAction *duplicateSelectionAction() const;
-
-    QAction *moveLineUpAction() const;
-    QAction *moveLineDownAction() const;
-
-    QAction *deleteLineAction() const;
-
-    QAction *cutLineAction() const;
-    QAction *copyLineAction() const;
-    QAction *pasteLineAction() const;
-
-    QAction *insertLineAboveAction() const;
-    QAction *insertLineBelowAction() const;
-
-    QAction *joinLinesAction() const;
-
+    inline QAction *increaseIndentAction() const { return increaseIndentAction_; }
+    inline QAction *decreaseIndentAction() const { return decreaseIndentAction_; }
+    inline QAction *toggleBookmarkAction() const { return toggleBookmarkAction_; }
+    inline QAction *prevBookmarkAction() const { return prevBookmarkAction_; }
+    inline QAction *nextBookmarkAction() const { return nextBookmarkAction_; }
+    inline QAction *invokeCompletionAction() const { return invokeCompletionAction_; }
+    inline QAction *scrollDownAction() const { return scrollDownAction_; }
+    inline QAction *scrollUpAction() const { return scrollUpAction_; }
+    inline QAction *duplicateSelectionAction() const { return duplicateSelectionAction_; }
+    inline QAction *moveLineUpAction() const { return moveLineUpAction_; }
+    inline QAction *moveLineDownAction() const { return moveLineDownAction_; }
+    inline QAction *deleteLineAction() const { return deleteLineAction_; }
+    inline QAction *cutLineAction() const;
+    inline QAction *copyLineAction() const { return copyLineAction_; }
+    inline QAction *pasteLineAction() const { return pasteLineAction_; }
+    inline QAction *insertLineAboveAction() const { return insertLineAboveAction_; }
+    inline QAction *insertLineBelowAction() const { return insertLineBelowAction_; }
+    inline QAction *joinLinesAction() const { return joinLinesAction_; }
     /// Zoom In the document by scaling fonts
-    QAction *zoomInAction() const;
+    inline QAction *zoomInAction() const { return zoomInAction_; }
     /// Zoom Out the document by scaling fonts
-    QAction *zoomOutAction() const;
+    inline QAction *zoomOutAction() const { return zoomOutAction_; }
 
     // Convenience functions
     void resetSelection();
@@ -458,34 +448,24 @@ class Qutepart : public QPlainTextEdit {
     QAction *homeSelectAction_;
     QAction *endAction_;
     QAction *endSelectAction_;
-
     QAction *increaseIndentAction_;
     QAction *decreaseIndentAction_;
-
     QAction *toggleBookmarkAction_;
     QAction *prevBookmarkAction_;
     QAction *nextBookmarkAction_;
-
     QAction *invokeCompletionAction_;
-
     QAction *scrollDownAction_;
     QAction *scrollUpAction_;
-
     QAction *duplicateSelectionAction_;
-
     QAction *moveLineUpAction_;
     QAction *moveLineDownAction_;
     QAction *deleteLineAction_;
-
     QAction *cutLineAction_;
     QAction *copyLineAction_;
     QAction *pasteLineAction_;
-
     QAction *insertLineAboveAction_;
     QAction *insertLineBelowAction_;
-
     QAction *joinLinesAction_;
-
     QAction *zoomInAction_;
     QAction *zoomOutAction_;
 

@@ -324,45 +324,45 @@ int Qutepart::completionThreshold() const { return completionThreshold_; }
 
 void Qutepart::setCompletionThreshold(int val) { completionThreshold_ = val; }
 
-QAction *Qutepart::increaseIndentAction() const { return increaseIndentAction_; }
 
-QAction *Qutepart::decreaseIndentAction() const { return decreaseIndentAction_; }
 
-QAction *Qutepart::toggleBookmarkAction() const { return toggleBookmarkAction_; }
 
-QAction *Qutepart::prevBookmarkAction() const { return prevBookmarkAction_; }
 
-QAction *Qutepart::nextBookmarkAction() const { return nextBookmarkAction_; }
 
-QAction *Qutepart::invokeCompletionAction() const { return invokeCompletionAction_; }
 
-QAction *Qutepart::duplicateSelectionAction() const { return duplicateSelectionAction_; }
 
-QAction *Qutepart::moveLineUpAction() const { return moveLineUpAction_; }
 
-QAction *Qutepart::moveLineDownAction() const { return moveLineDownAction_; }
 
-QAction *Qutepart::deleteLineAction() const { return deleteLineAction_; }
+
+
+
+
+
+
+
+
+
+
 
 QAction *Qutepart::cutLineAction() const { return cutLineAction_; }
 
-QAction *Qutepart::copyLineAction() const { return copyLineAction_; }
 
-QAction *Qutepart::pasteLineAction() const { return pasteLineAction_; }
 
-QAction *Qutepart::insertLineAboveAction() const { return insertLineAboveAction_; }
 
-QAction *Qutepart::insertLineBelowAction() const { return insertLineBelowAction_; }
 
-QAction *Qutepart::joinLinesAction() const { return joinLinesAction_; }
 
-QAction *Qutepart::zoomInAction() const { return zoomInAction_; }
 
-QAction *Qutepart::zoomOutAction() const { return zoomOutAction_; }
 
-QAction *Qutepart::scrollDownAction() const { return scrollDownAction_; }
 
-QAction *Qutepart::scrollUpAction() const { return scrollUpAction_; }
+
+
+
+
+
+
+
+
+
 
 void Qutepart::resetSelection() {
     QTextCursor cursor = textCursor();
