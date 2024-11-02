@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language>
-<language name="Protobuf" version="9" kateversion="5.0" section="Sources" extensions="*.proto" mimetype="text/x-protobuf" author="Slawomir Mikula (slawek.mikula@gmail.com)" license="LGPL">
+<!DOCTYPE language SYSTEM "language.dtd">
+<language name="Protobuf" version="6" kateversion="5.0" section="Sources" extensions="*.proto" mimetype="text/x-protobuf" author="Slawomir Mikula (slawek.mikula@gmail.com)" license="LGPL">
   <highlighting>
     <list name="keywords">
       <item>message</item>
@@ -46,7 +46,7 @@
         <keyword attribute="Keyword" context="#stay" String="keywords"/>
         <keyword attribute="Operator" context="#stay" String="operators"/>
         <keyword attribute="Data Type" context="#stay" String="datatypes"/>
-        <RegExpr attribute="Keyword" context="Imports" String="\b(?:package|import)\b" />
+        <RegExpr attribute="Keyword" context="Imports" String="\b(package|import)\b" />
         <DetectIdentifier />
         <DetectChar attribute="Symbol" context="#stay" char="{" beginRegion="Brace1" />
         <DetectChar attribute="Symbol" context="#stay" char="}" endRegion="Brace1" />
@@ -54,10 +54,14 @@
         <Detect2Chars attribute="Comment" context="Commentar 1" char="/" char1="/"/>
         <Detect2Chars attribute="Comment" context="Commentar 2" char="/" char1="*" beginRegion="Comment"/>
         <AnyChar attribute="Symbol" context="#stay" String=":!%&amp;()+,-/.*&lt;=&gt;?[]|~^&#59;"/>
-        <Float attribute="Float" context="#stay"/>
+        <Float attribute="Float" context="#stay">
+            <AnyChar String="fF" attribute="Float" context="#stay"/>
+        </Float>
         <HlCOct attribute="Octal" context="#stay"/>
         <HlCHex attribute="Hex" context="#stay"/>
-        <Int attribute="Decimal" context="#stay"/>
+        <Int attribute="Decimal" context="#stay">
+            <StringDetect attribute="Decimal" context="#stay" String="L" insensitive="true"/>
+        </Int>
         <HlCChar attribute="Char" context="#stay"/>
         <RegExpr attribute="Char" context="#stay" String="'\\u[0-9a-fA-F]{4}'"/>
       </context>
@@ -74,14 +78,12 @@
 
       <context attribute="Comment" lineEndContext="#pop" name="Commentar 1">
         <LineContinue attribute="Comment" context="#stay"/>
-        <DetectSpaces />
-        <IncludeRules context="##Comments" />
+        <IncludeRules context="##Alerts" />
       </context>
 
       <context attribute="Comment" lineEndContext="#stay" name="Commentar 2">
-        <DetectSpaces />
         <Detect2Chars attribute="Comment" context="#pop" char="*" char1="/" endRegion="Comment"/>
-        <IncludeRules context="##Comments" />
+        <IncludeRules context="##Alerts" />
       </context>
 
     </contexts>
@@ -107,9 +109,8 @@
   <general>
     <comments>
       <comment name="singleLine" start="//" />
-      <comment name="multiLine" start="/*" end="*/" region="Comment" />
+      <comment name="multiLine" start="/*" end="*/" />
     </comments>
     <keywords casesensitive="1" />
   </general>
 </language>
-<!-- kate: replace-tabs on; tab-width 2; indent-width 2; -->

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language>
+<!DOCTYPE language SYSTEM "language.dtd">
 <!-- Highlighting for Sieve scripts (RFC 5228) and
      Sieve extensions published at https://www.iana.org/assignments/sieve-extensions/sieve-extensions.xhtml
 -->
 <language
     name="Sieve"
-    version="10"
+    version="6"
     kateversion="5.0"
     section="Scripts"
     extensions="*.siv;*.sieve"
@@ -108,23 +108,22 @@
                 <IncludeRules context="common-string-rules"/>
             </context>
             <context name="multiline-string-context" attribute="String" lineEndContext="#stay">
-                <LineContinue attribute="String" context="#pop" char="." column="0" endRegion="StringRegion"/>
+                <RegExpr attribute="String" context="#pop" String="\.$" column="0" endRegion="StringRegion"/>
                 <HlCStringChar attribute="Special Character" context="#stay"/>
                 <IncludeRules context="common-string-rules"/>
             </context>
             <context name="common-string-rules" attribute="String" lineEndContext="#stay">
                 <RegExpr attribute="Variable" context="#stay" String="\$\{\w+\}"/>
-                <RegExpr attribute="Special Character" context="#stay" String="\$\{(hex|unicode):[ 0-9a-f]+}" insensitive="true"/>
+                <RegExpr attribute="Special Character" context="#stay" String="\$\{hex:[ 0-9a-f]+}" insensitive="true"/>
+                <RegExpr attribute="Special Character" context="#stay" String="\$\{unicode:[ 0-9a-f]+}" insensitive="true"/>
             </context>
 
             <context name="comment-context" lineEndContext="#pop" attribute="Comment">
-                <DetectSpaces />
-                <IncludeRules context="##Comments"/>
+                <IncludeRules context="##Alerts"/>
             </context>
             <context name="multiline-comment-context" lineEndContext="#stay" attribute="Comment">
-                <DetectSpaces />
                 <Detect2Chars attribute="Comment" context="#pop" char="*" char1="/" endRegion="CommentRegion"/>
-                <IncludeRules context="##Comments"/>
+                <IncludeRules context="##Alerts"/>
             </context>
         </contexts>
 
@@ -151,4 +150,3 @@
         <keywords casesensitive="1" weakDeliminator=":"/>
     </general>
 </language>
-<!-- kate: replace-tabs on; tab-width 4; indent-width 4; -->

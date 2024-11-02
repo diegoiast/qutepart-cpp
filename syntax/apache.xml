@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language>
+<!DOCTYPE language SYSTEM "language.dtd">
 
 <!-- Changelog:
 
@@ -13,7 +13,7 @@ v1.0:
 -->
 
 <language name="Apache Configuration" section="Configuration"
-          version="6" kateversion="5.0"
+          version="3" kateversion="5.0"
           extensions="httpd.conf;httpd2.conf;apache.conf;apache2.conf;.htaccess*;.htpasswd*"
           mimetype=""
           author="Jan Janssen (medhefgo@googlemail.com)" license="LGPL">
@@ -576,14 +576,15 @@ v1.0:
 
  <context name="Alternative Directives" attribute="Other" lineEndContext="#pop">
   <keyword attribute="Alternates" context="#stay" String="Alternates" />
-  <AnyChar attribute="Alternates" context="#stay" String="-+" />
+  <DetectChar attribute="Alternates" context="#stay" char="-" />
+  <DetectChar attribute="Alternates" context="#stay" char="+" />
   <IncludeRules context="Comment Alert" />
  </context>
 
 <!--	Other -->
  <context name="Comment" attribute="Comment" lineEndContext="#pop">
   <DetectSpaces />
-  <IncludeRules context="##Comments" />
+  <IncludeRules context="##Alerts" />
   <DetectIdentifier />
  </context>
 
@@ -630,4 +631,3 @@ v1.0:
 </general>
 
 </language>
-<!-- kate: replace-tabs on; tab-width 1; indent-width 1; -->

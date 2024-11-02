@@ -15,7 +15,7 @@ FOOTER = """    </qresource>
 def parse_args():
     parser = argparse.ArgumentParser(description='Regenerate .qrc Qt resource file with list of syntax files')
     parser.add_argument('--xml_path', default='./syntax')
-    parser.add_argument('--out_file', default='syntax-files.qrc')
+    parser.add_argument('--out_file', default='qutepart-syntax-files.qrc')
     return parser.parse_args()
 
 

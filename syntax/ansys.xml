@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language>
-<language name="Ansys" version="9" kateversion="5.0" section="Scientific" extensions="*.ans" author="Giovanni Bacci (giovanni@castellodilari.it)" license="LGPL" >
+<!DOCTYPE language SYSTEM "language.dtd">
+<language name="Ansys" version="5" kateversion="5.0" section="Scientific" extensions="*.ans" author="Giovanni Bacci (giovanni@castellodilari.it)" license="LGPL" >
 <highlighting>
 	<list name="session_cmds">
 		<item>/BATCH</item>
@@ -1974,7 +1974,7 @@
 			<RangeDetect attribute="Normal Text" context="#stay" char="(" char1=")" />
 			<DetectChar attribute="error" context="open_parentesis" char="(" />
 			<!-- the next one highlight variable assignements as normal text, to avoid F,,FY,1 been highlighted as F=10 -->
-			<RegExpr attribute="Normal Text" context="#stay" String="^[A-Za-z0-9]+\=" column="0" />
+			<RegExpr attribute="Normal Text" context="#stay" String="^[A-Za-z0-9]+\=" />
 			<keyword attribute="Keyword" context="#stay" String="elements" />
 			<keyword attribute="MatProp" context="#stay" String="material_properties" />
 			<keyword attribute="Labels" context="#stay" String="force-displacement-labels" />
@@ -2002,10 +2002,9 @@
 			<RangeDetect attribute="variable" context="#stay" char="%" char1="%" />
 			<keyword attribute="MatProp" context="#stay" String="APDL_commands" />
 			<Float attribute="NumFloat" context="#stay" />
-			<Int attribute="NumInt" context="Int Suffixes" />
-		</context>
-		<context name="Int Suffixes" attribute="NumInt" lineEndContext="#pop" fallthrough="true" fallthroughContext="#pop">
-			<Detect2Chars attribute="NumInt" context="#pop" char="*" char1="*" />
+			<Int attribute="NumInt" context="#stay" >
+				<StringDetect attribute="NumInt" context="#stay" String="**" />
+			</Int>
 		</context>
 		<context attribute="String" name="doublequotestring" lineEndContext="#stay" >
 			<DetectChar attribute="String" context="#pop" char="&quot;" />
@@ -2013,9 +2012,7 @@
 		<context attribute="parentesis_not_closed" name="open_parentesis" lineEndContext="#pop" >
 			<DetectChar attribute="Normal Text" context="#pop" char=")" />
 		</context>
-		<context attribute="comment" name="comment" lineEndContext="#pop" >
-			<IncludeRules context="##Comments" />
-		</context>
+		<context attribute="comment" name="comment" lineEndContext="#pop" />
 	</contexts>
 	<itemDatas>
 		<itemData name="Normal Text" defStyleNum="dsNormal" />
@@ -2056,4 +2053,3 @@
 		<keywords casesensitive="0" weakDeliminator="/*" />
 	</general>
 </language>
-<!-- kate: replace-tabs off; -->

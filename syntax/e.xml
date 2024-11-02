@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language>
-<language name="E Language" version="5" kateversion="5.0" section="Sources" extensions="*.e" mimetype="text/x-e-src">
+<!DOCTYPE language SYSTEM "language.dtd">
+<language name="E Language" version="3" kateversion="5.0" section="Sources" extensions="*.e" mimetype="text/x-e-src">
     <highlighting>
         <list name="Type">
             <item>FALSE</item>
@@ -226,10 +226,7 @@
             </context>
 
 
-            <context name="comment" attribute="Comment" lineEndContext="#pop">
-                <DetectSpaces />
-                <IncludeRules context="##Comments" />
-            </context>
+            <context name="comment" attribute="Comment" lineEndContext="#pop" />
 
             <context name="string" attribute="Vector" lineEndContext="#stay" >
                 <DetectChar attribute="Vector" context="#pop" char="&quot;" />
@@ -259,4 +256,5 @@
     <keywords casesensitive="1" />
   </general>
 </language>
-<!-- kate: replace-tabs on; tab-width 4; indent-width 4; -->
+
+

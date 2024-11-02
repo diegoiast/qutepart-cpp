@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language>
-<language name="AHDL" version="6" kateversion="5.0" section="Hardware" extensions="*.ahdl;*.tdf" mimetype="text/x-ahdl" author="Dominik Haumann (dhaumann@kde.org)" license="MIT">
+<!DOCTYPE language SYSTEM "language.dtd">
+<language name="AHDL" version="3" kateversion="5.0" section="Hardware" extensions="*.ahdl;*.tdf" mimetype="text/x-ahdl" author="Dominik Haumann (dhaumann@kde.org)" license="MIT">
   <highlighting>
     <list name="keywords">
       <item>assert</item>
@@ -107,7 +107,7 @@
         <DetectChar attribute="String" context="string" char="&quot;" />
         <RegExpr attribute="Region Marker" context="#stay" String="--\s*BEGIN.*$" beginRegion="region" firstNonSpace="true"/>
         <RegExpr attribute="Region Marker" context="#stay" String="--\s*END.*$" endRegion="region" firstNonSpace="true"/>
-        <Detect2Chars attribute="Comment" context="LineComment" char="-" char1="-" />
+        <RegExpr attribute="Comment" context="#stay" String="--.*$" />
         <DetectChar attribute="Comment" context="comment" char="%" />
         <HlCChar attribute="Char" context="#stay"/>
       </context>
@@ -117,10 +117,6 @@
       </context>
       <context name="comment" attribute="Comment" lineEndContext="#stay" >
         <DetectChar attribute="Comment" context="#pop" char="%" />
-        <IncludeRules context="##Comments" />
-      </context>
-      <context name="LineComment" attribute="Comment" lineEndContext="#pop">
-        <IncludeRules context="##Comments" />
       </context>
     </contexts>
     <itemDatas>
@@ -141,7 +137,7 @@
   <general>
     <comments>
       <comment name="singleLine" start="--" />
-      <comment name="multiLine" start="%" end="%" region="Comment" />
+      <comment name="multiLine" start="%" end="%" />
     </comments>
     <keywords casesensitive="0" />
   </general>

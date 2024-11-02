@@ -19,9 +19,9 @@
     Usage: place maxima.xml in $KDEDIR/share/apps/katepart/syntax.
 -->
 
-<!DOCTYPE language>
+<!DOCTYPE language SYSTEM "language.dtd">
 
-<language name="Maxima" version="7" kateversion="5.2" section="Scientific" extensions="*.mac;*.MAC;*.dem;*.DEM" casesensitive="1" author="Alexey Beshenov &lt;al@beshenov.ru&gt;" license="LGPLv2.1+">
+<language name="Maxima" version="3" kateversion="5.2" section="Scientific" extensions="*.mac;*.MAC;*.dem;*.DEM" casesensitive="1" author="Alexey Beshenov &lt;al@beshenov.ru&gt;" license="LGPLv2.1+">
     <highlighting>
 
         <list name="MaximaKeyword">
@@ -40,6 +40,11 @@
             <item>thru</item>
             <item>true</item>
             <item>while</item>
+        </list>
+
+        <list name="SpecialComment">
+            <item>FIXME</item>
+            <item>TODO</item>
         </list>
 
         <list name="MaximaFunction">
@@ -191,7 +196,6 @@
             <item>cdf_student_t</item>
             <item>cdf_weibull</item>
             <item>cdisplay</item>
-            <item>celine</item>
             <item>ceiling</item>
             <item>central_moment</item>
             <item>cequal</item>
@@ -1581,7 +1585,6 @@
             <item>dotident</item>
             <item>dotscrules</item>
             <item>draw_graph_program</item>
-            <item>%e</item>
             <item>%edispflag</item>
             <item>%emode</item>
             <item>%enumer</item>
@@ -1617,7 +1620,6 @@
             <item>fpprec</item>
             <item>fpprintprec</item>
             <item>functions</item>
-            <item>%gamma</item>
             <item>gammalim</item>
             <item>gdet</item>
             <item>genindex</item>
@@ -1628,7 +1630,6 @@
             <item>gradefs</item>
             <item>grind</item>
             <item>halfangles</item>
-            <item>%i</item>
             <item>%iargs</item>
             <item>ibase</item>
             <item>icounter</item>
@@ -1638,10 +1639,7 @@
             <item>igeowedge_flag</item>
             <item>imetric</item>
             <item>inchar</item>
-            <item>ind</item>
-            <item>inf</item>
             <item>infeval</item>
-            <item>infinity</item>
             <item>inflag</item>
             <item>infolists</item>
             <item>in_netmath</item>
@@ -1693,7 +1691,6 @@
             <item>maxpsiposint</item>
             <item>maxtayorder</item>
             <item>method</item>
-            <item>minf</item>
             <item>mode_check_errorp</item>
             <item>mode_checkp</item>
             <item>mode_check_warnp</item>
@@ -1717,8 +1714,6 @@
             <item>packagefile</item>
             <item>partswitch</item>
             <item>pfeformat</item>
-            <item>%phi</item>
-            <item>%pi</item>
             <item>%piargs</item>
             <item>piece</item>
             <item>plot_options</item>
@@ -1834,13 +1829,10 @@
             <item>tr_warn_undefined_variable</item>
             <item>tr_windy</item>
             <item>ttyoff</item>
-            <item>und</item>
             <item>use_fast_arrays</item>
             <item>values</item>
             <item>vect_cross</item>
             <item>verbose</item>
-            <item>zeroa</item>
-            <item>zerob</item>
             <item>zerobern</item>
             <item>zeta%pi</item>
         </list>
@@ -1855,7 +1847,9 @@
                 <DetectChar attribute="String" context="String" char="&quot;"/>
                 <Detect2Chars attribute="Comment" context="Comment" char="/" char1="*" beginRegion="comment"/>
                 <RegExpr attribute="Label" String="[a-zA-Z_][a-zA-Z0-9%_]*"/>
-                <RegExpr attribute="Float" String="[-+]?\d+\.\d*([BbDdEeSs][-+]?\d+)?|[-+]?\.\d+([BbDdEeSs][-+]?\d+)?|[-+]?\d+[BbDdEeSs][-+]?\d+"/>
+                <RegExpr attribute="Float" String="[-+]?\d+\.\d*([BbDdEeSs][-+]?\d+)?"/>
+                <RegExpr attribute="Float" String="[-+]?\.\d+([BbDdEeSs][-+]?\d+)?"/>
+                <RegExpr attribute="Float" String="[-+]?\d+[BbDdEeSs][-+]?\d+"/>
                 <RegExpr attribute="Integer" String="[-+]?\d+"/>
                 <DetectChar attribute="Quote" char="'"/>
             </context>
@@ -1864,9 +1858,9 @@
             </context>
 
             <context attribute="Comment" lineEndContext="#stay" name="Comment">
+                <keyword attribute="Special" String="SpecialComment"/>
                 <DetectSpaces/>
                 <Detect2Chars attribute="Comment" context="#pop" char="*" char1="/" endRegion="comment"/>
-                <IncludeRules context="##Comments"/>
             </context>
         </contexts>
 
@@ -1881,16 +1875,16 @@
             <itemData name="Float" defStyleNum="dsFloat"/>
             <itemData name="Comment" defStyleNum="dsComment"/>
             <itemData name="Quote" defStyleNum="dsDocumentation" bold="true"/>
+            <itemData name="Special" defStyleNum="dsSpecialString" bold="true" />
         </itemDatas>
 
     </highlighting>
 
     <general>
         <comments>
-            <comment name="multiLine" start="/*" end="*/" region="comment"/>
+            <comment name="multiLine" start="/*" end="*/"/>
         </comments>
         <keywords casesensitive="true" weakDeliminator="%" additionalDeliminator="@#"/>
     </general>
 
 </language>
-<!-- kate: replace-tabs on; tab-width 4; indent-width 4; -->

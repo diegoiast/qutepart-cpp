@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language>
+<!DOCTYPE language SYSTEM "language.dtd">
 <language name="Pascal"
           section="Sources" 
-          version="4"
-          kateversion="5.0"
+          version="2"
+          kateversion="3.3"
           extensions="*.p;*.pas;*.pp"
           mimetype="text/x-pascal" 
           priority="8"
@@ -139,6 +139,12 @@
       <item>File</item>
       <item>Text</item>
     </list>
+    <list name="attention">
+      <item>FIXME</item>
+      <item>TODO</item>
+      <item>NOTE</item>
+      <item>###</item>
+    </list>
     <contexts>
       <context attribute="Normal Text" lineEndContext="#stay" name="Normal">
         <RegExpr attribute="Keyword" context="#stay" String="\b(begin|case|record)(?=(\{[^}]*(\}|$)|\(\*.*(\*\)|$))*([\s]|$|//))" insensitive="true" beginRegion="Region1"/>
@@ -179,18 +185,15 @@
         <DetectChar attribute="Directive" context="#pop" char="}"/>
       </context>
       <context attribute="Comment" lineEndContext="#stay" name="Comment1">
-        <DetectSpaces />
+        <keyword attribute="Alert" context="#stay" String="attention" />
         <DetectChar attribute="Comment" context="#pop" char="}"              endRegion="Region2"/>
-        <IncludeRules context="##Comments"/>
       </context>
       <context attribute="Comment" lineEndContext="#stay" name="Comment2">
-        <DetectSpaces />
+        <keyword attribute="Alert" context="#stay" String="attention" />
         <Detect2Chars attribute="Comment" context="#pop" char="*" char1=")"   endRegion="Region3"/>
-        <IncludeRules context="##Comments"/>
       </context>
       <context attribute="Comment" lineEndContext="#pop" name="Comment3">
-        <DetectSpaces />
-        <IncludeRules context="##Comments"/>
+        <keyword attribute="Alert" context="#stay" String="attention" />
       </context>
     </contexts>
     <itemDatas>
@@ -203,14 +206,14 @@
       <itemData name="String"      defStyleNum="dsString" />
       <itemData name="Directive"   defStyleNum="dsOthers" />
       <itemData name="Comment"     defStyleNum="dsComment" />
+      <itemData name="Alert"        defStyleNum="dsAlert" />
     </itemDatas>
   </highlighting>
   <general>
     <keywords casesensitive="0" />
     <comments>
-      <comment name="singleLine" start="//" position="afterwhitespace" />
-      <comment name="multiLine" start="{" end="}" region="Region2" />
+      <comment name="singleLine" start="//" />
+      <comment name="multiLine" start="{" end="}" />
     </comments>
   </general>
 </language>
-<!-- kate: replace-tabs on; tab-width 2; indent-width 2; -->

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language>
+<!DOCTYPE language SYSTEM "language.dtd">
 <!-- TADS 3 syntax highlight definition for Kate. -->
 <!-- Author: Nikos Chantziaras <realnc@gmail.com> -->
 <language name="TADS 3" section="Sources"
-          version="7" kateversion="5.0"
+          version="3" kateversion="3.3"
           indenter="cstyle"
           extensions="*.t;*.h"
           mimetype=""
@@ -82,7 +82,7 @@
 			<DetectChar attribute="Normal Text" context="#stay" char="{" beginRegion="Brace1"/>
 			<DetectChar attribute="Normal Text" context="#stay" char="}" endRegion="Brace1"/>
 			<AnyChar attribute="Symbol" context="#stay" String="!%&amp;()+,-&lt;=&gt;?[]^{|}~"/>
-			<DetectChar attribute="Preprocessor" context="Preprocessor" char="#"/>
+			<RegExpr attribute="Preprocessor" context="Preprocessor" String="#"/>
 		</context>
 
 		<context attribute="String" lineEndContext="#stay" name="String">
@@ -115,14 +115,12 @@
 		</context>
 
 		<context attribute="Comment" lineEndContext="#pop" name="ShortComment">
-			<DetectSpaces />
-			<IncludeRules context="##Comments"/>
+			<RegExpr attribute="Preprocessor" context="#stay" String="(FIXME|TODO)"/>
 		</context>
 
 		<context attribute="Comment" lineEndContext="#stay" name="LongComment">
-			<DetectSpaces />
+			<RegExpr attribute="Preprocessor" context="#stay" String="(FIXME|TODO)"/>
 			<Detect2Chars attribute="Comment" context="#pop" char="*" char1="/" endRegion="Comment"/>
-			<IncludeRules context="##Comments"/>
 		</context>
 
 		<context attribute="Preprocessor" lineEndContext="#pop" name="Preprocessor">
@@ -134,9 +132,8 @@
 		</context>
 
 		<context attribute="Comment" lineEndContext="#stay" name="LongComment/Preprocessor">
-			<DetectSpaces />
+			<RegExpr attribute="Preprocessor" context="#stay" String="(FIXME|TODO)"/>
 			<Detect2Chars attribute="Comment" context="#pop" char="*" char1="/"/>
-			<IncludeRules context="##Comments"/>
 		</context>
 
 		<context name="embedded" attribute="Embedded Expression" lineEndContext="#stay">
@@ -151,18 +148,18 @@
 
 	<itemDatas>
 		<itemData name="Normal Text" defStyleNum="dsNormal"/>
-		<itemData name="Keyword" defStyleNum="dsKeyword" spellChecking="false"/>
-		<itemData name="Decimal" defStyleNum="dsDecVal" spellChecking="false"/>
-		<itemData name="Octal" defStyleNum="dsBaseN" spellChecking="false"/>
-		<itemData name="Hex" defStyleNum="dsBaseN" spellChecking="false"/>
+		<itemData name="Keyword" defStyleNum="dsKeyword"/>
+		<itemData name="Decimal" defStyleNum="dsDecVal"/>
+		<itemData name="Octal" defStyleNum="dsBaseN"/>
+		<itemData name="Hex" defStyleNum="dsBaseN"/>
 		<itemData name="String" defStyleNum="dsString"/>
 		<itemData name="ValString" defStyleNum="dsString"/>
 		<itemData name="Comment" defStyleNum="dsComment"/>
-		<itemData name="Symbol" defStyleNum="dsOperator" spellChecking="false"/>
-		<itemData name="Preprocessor" defStyleNum="dsPreprocessor" spellChecking="false"/>
-		<itemData name="Backslash Code" defStyleNum="dsSpecialChar" bold="1" italic="0" spellChecking="false"/>
-		<itemData name="HTML Tag" defStyleNum="dsOthers" bold="0" italic="1" spellChecking="false"/>
-		<itemData name="Embedded Expression" defStyleNum="dsVariable" bold="0" italic="1" spellChecking="false"/>
+		<itemData name="Symbol" defStyleNum="dsNormal"/>
+		<itemData name="Preprocessor" defStyleNum="dsOthers"/>
+		<itemData name="Backslash Code" defStyleNum="dsKeyword" color="#0F0F8F" selColor="#ffffff" bold="1" italic="0"/>
+		<itemData name="HTML Tag" defStyleNum="dsKeyword" color="#0F0F8F" selColor="#ffffff" bold="0" italic="1"/>
+		<itemData name="Embedded Expression" defStyleNum="dsNormal" color="#000000" selColor="#ffffff" bold="0" italic="1"/>
 	</itemDatas>
 
 </highlighting>
@@ -170,11 +167,10 @@
 <general>
 	<comments>
 		<comment name="singleLine" start="//"/>
-		<comment name="multiLine" start="/*" end="*/" region="Comment"/>
+		<comment name="multiLine" start="/*" end="*/"/>
 	</comments>
 
 	<keywords casesensitive="1"/>
 </general>
 
 </language>
-<!-- kate: replace-tabs off; -->

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language>
+<!DOCTYPE language SYSTEM "language.dtd">
 
-<language name="fstab" version="6" kateversion="5.0" section="Configuration" extensions="fstab;mtab" author="Diego Iastrubni (elcuco@kde.org)" license="Public Domain" >
+<language name="fstab" version="2" kateversion="5.0" section="Configuration" extensions="fstab;mtab" author="Diego Iastrubni (elcuco@kde.org)" license="Public Domain" >
 	<highlighting>
 		<list name="valid_fs">
 			<item>ext2</item>
@@ -23,43 +23,42 @@
 			<!-- <file system> <mount point> <type> <options> <dump>  <pass>  -->
 			<context name="device"      attribute="Device"      lineEndContext="#stay">
 				<DetectChar context="comment"  char="#" firstNonSpace="1" />
-				<DetectSpaces context="mount_point" />
+				<RegExpr context="mount_point" String="[\s]*" />
 			</context>
 
-			<context name="mount_point" attribute="Mount Point" lineEndContext="#pop">
+			<context name="mount_point" attribute="Mount Point" lineEndContext="device" >
 				<DetectChar context="comment"  char="#" firstNonSpace="1" />
-				<DetectSpaces context="_type" />
+				<RegExpr context="_type" String="[\s]*" />
 			</context>
 						
-			<context name="_type" attribute="Normal" lineEndContext="#pop#pop">
+			<context name="_type" attribute="Normal" lineEndContext="device" >
 				<DetectChar context="comment"  char="#" firstNonSpace="1" />
 				<RegExpr context="type" String="[\S]*" />
 			</context>
 			
-			<context name="type" attribute="Type" lineEndContext="#pop#pop#pop">
+			<context name="type" attribute="Type" lineEndContext="device" >
 				<DetectChar context="comment"  char="#" firstNonSpace="1" />
 				<keyword    context="#stay"  attribute="Valid FileSystem" String="valid_fs" />
-				<DetectSpaces context="options"/>
+				<RegExpr context="options" String="[\s]*"/>
 			</context>
 				
-			<context name="options" attribute="Options" lineEndContext="#pop#pop#pop#pop">
+			<context name="options" attribute="Options" lineEndContext="device" >
 				<DetectChar context="comment"  char="#" firstNonSpace="1" />
-				<DetectSpaces context="dump"/>
+				<RegExpr context="dump" String="[\s]*"/>
 			</context>
 			
-			<context name="dump" attribute="Dump" lineEndContext="#pop#pop#pop#pop#pop">
+			<context name="dump" attribute="Dump" lineEndContext="device" >
 				<DetectChar context="comment"  char="#" firstNonSpace="1" />
-				<DetectSpaces context="pass"/>
+				<RegExpr context="pass" String="[\s]*"/>
 			</context>
 			
-			<context name="pass" attribute="Pass" lineEndContext="#pop#pop#pop#pop#pop#pop">
+			<context name="pass" attribute="Pass" lineEndContext="device" >
 				<DetectChar context="comment"  char="#" firstNonSpace="1" />
-				<DetectSpaces context="__error"/>
+				<RegExpr context="__error" String="[\s]*"/>
 			</context>
 			
 			<context name="__error" attribute="Pass" lineEndContext="device" >
 				<DetectChar context="comment"  char="#" />
-				<DetectSpaces/>
 				<RegExpr context="error" String="[\S]*"/>
 			</context>
 			
@@ -69,24 +68,22 @@
 			
 			<!-- comment -->
 			<context name="comment" attribute="Comment" lineEndContext="#pop" >
-				<DetectSpaces />
-				<IncludeRules context="##Comments" />
 			</context>
 		</contexts>
 		
 		<itemDatas>
-			<itemData name="Device"     defStyleNum="dsKeyword" spellChecking="false"/>
-			<itemData name="Mount Point" defStyleNum="dsDataType"  spellChecking="false"/>
-			<itemData name="Type"       defStyleNum="dsFunction"  spellChecking="false"/>
-			<itemData name="Options"    defStyleNum="dsAttribute"  spellChecking="false"/>
-			<itemData name="Dump"       defStyleNum="dsDecVal"  spellChecking="false"/>
-			<itemData name="Pass"       defStyleNum="dsDecVal"  spellChecking="false"/>
+			<itemData name="Device"     defStyleNum="dsKeyword" />
+			<itemData name="Mount Point" defStyleNum="dsDataType"  />
+			<itemData name="Type"       defStyleNum="dsFunction"  />
+			<itemData name="Options"    defStyleNum="dsAttribute"  />
+			<itemData name="Dump"       defStyleNum="dsDecVal"  />
+			<itemData name="Pass"       defStyleNum="dsDecVal"  />
 			
-			<itemData name="Valid FileSystem" defStyleNum="dsDataType" italic="1" spellChecking="false"/>
+			<itemData name="Valid FileSystem" defStyleNum="dsDataType" italic="1"/>
 			
-			<itemData name="Normal"     defStyleNum="dsNormal" spellChecking="false"/>
+			<itemData name="Normal"     defStyleNum="dsNormal" />
 			<itemData name="Comment"    defStyleNum="dsComment" />
-			<itemData name="Error"      defStyleNum="dsError" spellChecking="false"/>
+			<itemData name="Error"      defStyleNum="dsError" />
 		</itemDatas>
 	</highlighting>
 	
@@ -96,4 +93,4 @@
 		</comments>
 	</general>
 </language>
-<!-- kate: replace-tabs off; -->
+

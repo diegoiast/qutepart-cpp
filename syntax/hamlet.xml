@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language
+<!DOCTYPE language SYSTEM "language.dtd"
 [
   <!-- names must start with a letter, ideogram or underscore. \w matches any
   word character *or* a number, hence the lookahead -->
   <!ENTITY name    "(?![0-9])[\w_:][\w.:_-]*">
 ]>
-<language name="Hamlet" version="6" kateversion="5.53" section="Markup" extensions="*.hamlet" author="Bastian Holst (bastianholst@gmx.de)" license="LGPL" indenter="haskell">
+<language name="Hamlet" version="3" kateversion="2.4" section="Markup" extensions="*.hamlet" author="Bastian Holst (bastianholst@gmx.de)" license="LGPL" indenter="haskell">
 <highlighting>
 <contexts>
   <context attribute="Normal Text" lineEndContext="#pop" name="Normal Text" >
     <RegExpr attribute="Element" context="element" String="&lt;&name;\b" />
     <!-- A widget -->
-    <Detect2Chars attribute="Code" context="Code" char="^" char1="{"/>
+    <StringDetect attribute="Code" context="Code" String="^{"/>
     <!-- Something implementing ToHtml -->
-    <Detect2Chars attribute="Code" context="Code" char="#" char1="{"/>
+    <StringDetect attribute="Code" context="Code" String="#{"/>
     <!-- An URL -->
-    <Detect2Chars attribute="Code" context="Code" char="@" char1="{"/>
+    <StringDetect attribute="Code" context="Code" String="@{"/>
     <!-- A Message -->
-    <Detect2Chars attribute="Code" context="Code" char="_" char1="{"/>
+    <StringDetect attribute="Code" context="Code" String="_{"/>
     <DetectChar attribute="Logic" context="Logic" firstNonSpace="true" char="$"/>
   </context>
 
   <context attribute="Element" lineEndContext="#stay" name="element" >
     <Detect2Chars attribute="Element" context="#pop" char="/" char1="&gt;" />
     <DetectChar attribute="Element" context="#pop" char="&gt;" />
-    <RegExpr attribute="Attribute" context="Attribute" String="^&name;|\s+&name;" />
+    <RegExpr attribute="Attribute" context="Attribute" String="&name;" column="0"/>
+    <RegExpr attribute="Attribute" context="Attribute" String="\s+&name;" />
     <RegExpr attribute="Class" context="#stay" String="\.&name;"/>
     <RegExpr attribute="Error" context="#stay" String="\S" />
   </context>
@@ -49,7 +50,7 @@
   </context>
 
   <context name="Assignment" attribute="Normal Text" lineEndContext="#pop">
-    <Detect2Chars attribute="Assignment" context="Codeline" char="&lt;" char1="-"/>
+    <StringDetect attribute="Assignment" context="Codeline" String="&lt;-"/>
     <IncludeRules context="##Haskell" />
   </context>
 
@@ -62,8 +63,8 @@
   <context attribute="Value" lineEndContext="#stay" name="Value">
     <DetectChar attribute="Value" context="Value DQ" char="&quot;" />
     <DetectChar attribute="Value" context="Value SQ" char="&apos;" />
-    <Detect2Chars attribute="Code" context="Value Code" char="@" char1="{"/>
-    <Detect2Chars attribute="Code" context="Value Code" char="#" char1="{"/>
+    <StringDetect attribute="Code" context="Value Code" String="@{"/>
+    <StringDetect attribute="Code" context="Value Code" String="#{"/>
     <RegExpr attribute="Value" context="#pop#pop" String="[^&quot;&apos;&gt;\s]+"/>
     <RegExpr attribute="Error" context="#stay" String="\S" />
   </context>
@@ -95,7 +96,9 @@
 </itemDatas>
 </highlighting> 
 <general>
+  <comments>
+    <comment name="singleLine" start="#"/>
+  </comments>
   <keywords casesensitive="1"/>
 </general> 
 </language>
-<!-- kate: replace-tabs on; tab-width 2; indent-width 2; -->

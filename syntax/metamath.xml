@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language [
+<!DOCTYPE language SYSTEM "language.dtd" [
 	<!ENTITY label "[0-9A-Za-z.\-_]+">
 	<!ENTITY symbol "[^ $]+">
 ]>
-<!-- low priority to let Objective-C++ win for .mm files per default -->
-<language name="Metamath" section="Scientific" extensions="*.mm" priority="-9"
-	version="5" kateversion="5.0" author="Aaron Puchert" license="MIT">
+<language name="Metamath" section="Scientific" extensions="*.mm"
+	version="1" kateversion="5.0" author="Aaron Puchert" license="MIT">
 <highlighting>
 	<contexts>
 		<!-- Block: ${ statement* $} -->
@@ -24,7 +23,6 @@
 		<context name="Comment" attribute="Comment" lineEndContext="#stay">
 			<RegExpr String=" ~ *&label;" attribute="ReferenceLabel" context="#stay"/>
 			<Detect2Chars char="$" char1=")" attribute="Comment" context="#pop" endRegion="comment"/>
-			<IncludeRules context="##Comments"/>
 		</context>
 		<!-- Include: $[ filename $] -->
 		<context name="Include" attribute="Include" lineEndContext="#stay">
@@ -104,15 +102,15 @@
 		</context>
 	</contexts>
 	<itemDatas>
-		<itemData name="Normal"   defStyleNum="dsNormal" spellChecking="false"/>
+		<itemData name="Normal"   defStyleNum="dsNormal"/>
 		<itemData name="Comment"  defStyleNum="dsComment"/>
-		<itemData name="Include"  defStyleNum="dsImport" spellChecking="false"/>
-		<itemData name="Keyword"  defStyleNum="dsKeyword" spellChecking="false"/>
-		<itemData name="Variable" defStyleNum="dsVariable" spellChecking="false"/>
-		<itemData name="Constant" defStyleNum="dsFunction" spellChecking="false"/>
-		<itemData name="Label"    defStyleNum="dsSpecialString" spellChecking="false"/>
-		<itemData name="ReferenceLabel"  defStyleNum="dsCommentVar" spellChecking="false"/>
-		<itemData name="CompressedProof" defStyleNum="dsString" spellChecking="false"/>
+		<itemData name="Include"  defStyleNum="dsImport"/>
+		<itemData name="Keyword"  defStyleNum="dsKeyword"/>
+		<itemData name="Variable" defStyleNum="dsVariable"/>
+		<itemData name="Constant" defStyleNum="dsFunction"/>
+		<itemData name="Label"    defStyleNum="dsSpecialString"/>
+		<itemData name="ReferenceLabel"  defStyleNum="dsCommentVar"/>
+		<itemData name="CompressedProof" defStyleNum="dsString"/>
 	</itemDatas>
 </highlighting>
 <general>
@@ -122,4 +120,3 @@
 	</comments>
 </general>
 </language>
-<!-- kate: replace-tabs off; -->

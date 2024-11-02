@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE language>
+<!DOCTYPE language SYSTEM "language.dtd">
 <language name = "kdesrc-buildrc"
-       version = "5"
-   kateversion = "5.0"
+       version = "2"
+   kateversion = "3.5"
        section = "Configuration"
     extensions = ".kdesrc-buildrc;kdesrc-buildrc"
         author = "Michael Pyne &lt;mpyne@kde.org&gt;"
@@ -12,8 +12,6 @@
     <list name="bools">
       <item>true</item>
       <item>false</item>
-      <item>True</item>
-      <item>False</item>
       <item>TRUE</item>
       <item>FALSE</item>
       <item>0</item>
@@ -24,76 +22,71 @@
       <item>set-env</item> <!-- Handled separately for special syntax highlighting. -->
     </list>
 
+    <!-- List of options that can be present in a module-set -->
+    <list name="moduleSetOptions">
+      <item>use-modules</item>
+      <item>ignore-modules</item>
+    </list>
+
     <!-- These options should only have a boolean value passed to them. -->
     <list name="globalBoolOptions">
       <item>async</item>
       <item>colorful-output</item>
       <item>disable-agent-check</item>
-      <item>install-environment-driver</item>  <!-- DEPRECATED - replaced with install-login-session -->
-      <item>install-login-session</item>
-      <item>install-session-driver</item>  <!-- DEPRECATED - replaced with install-login-session -->
-      <item>install-login-session</item>
-      <item>pretend</item>  <!-- undocumented? -->
-      <item>purge-old-logs</item>  <!-- global only? -->
+      <item>disable-snapshot</item>
+      <item>pretend</item>
+      <item>purge-old-logs</item>
       <item>stop-on-failure</item>
       <item>use-idle-io-priority</item>
-      <item>use-inactive-modules</item>
-    </list>
-
-    <list name="globalOptions">
-      <item>git-desired-protocol</item>  <!-- DEPRECATED - replaced with git-push-protocol -->
-      <item>git-push-protocol</item>
-      <item>git-repository-base</item>
-      <item>http-proxy</item>  <!-- global only? -->
-      <item>directory-layout</item>  <!-- global only? -->
-      <item>include-dependencies</item>  <!-- global only? -->
-      <item>libname</item>  <!-- global only? -->
-      <item>niceness</item>
-      <item>num-cores</item>
-      <item>num-cores-low-mem</item>
-      <item>ssh-identity-file</item>
-      <item>debug-level</item>  <!-- undocumented? -->
-      <item>persistent-data-file</item>
-      <item>source-when-start-program</item>
     </list>
 
     <list name="boolOptions">
-      <item>build-system-only</item>  <!-- undocumented? -->
+      <item>build-system-only</item>
       <item>build-when-unchanged</item>
+      <item>ignore-kde-structure</item>
       <item>install-after-build</item>
+      <item>install-session-driver</item>
       <item>manual-build</item>
       <item>manual-update</item>
       <item>no-src</item>
-      <item>reconfigure</item>  <!-- undocumented? -->
-      <item>refresh-build</item>  <!-- undocumented? -->
+      <item>reconfigure</item>
+      <item>recreate-configure</item>
+      <item>refresh-build</item>
       <item>run-tests</item>
       <item>use-clean-install</item>
+    </list>
+
+    <list name="globalOptions">
+      <item>branch-group</item>
+      <item>git-desired-protocol</item>
+      <item>git-repository-base</item>
+      <item>http-proxy</item>
+      <item>kde-languages</item>
+      <item>niceness</item>
+      <item>debug-level</item>
+      <item>persistent-data-file</item>
     </list>
 
     <list name="options">
       <item>binpath</item>
       <item>branch</item>
-      <item>branch-group</item>
       <item>build-dir</item>
-      <item>cmake-generator</item>
-      <item>cmake-toolchain</item>
+      <item>checkout-only</item>
       <item>cmake-options</item>
-      <item>compile-commands-export</item>
-      <item>compile-commands-linking</item>
       <item>configure-flags</item>
       <item>custom-build-command</item>
       <item>cxxflags</item>
       <item>dest-dir</item>
       <item>do-not-compile</item>
       <item>git-user</item>
-      <item>generate-vscode-project-config</item>
       <item>kdedir</item>
-      <item>libpath</item>  <!-- global only? -->
+      <item>libpath</item>
       <item>log-dir</item>
       <item>make-install-prefix</item>
       <item>make-options</item>
-      <item>ninja-options</item>
+      <item>module-base-path</item>
       <item>override-build-system</item>
+      <item>override-url</item>
       <item>prefix</item>
       <item>qmake-options</item>
       <item>qtdir</item>
@@ -101,13 +94,8 @@
       <item>repository</item>
       <item>revision</item>
       <item>source-dir</item>
+      <item>svn-server</item>
       <item>tag</item>
-    </list>
-
-    <!-- List of options that can be present in a module-set -->
-    <list name="moduleSetOptions">
-      <item>use-modules</item>
-      <item>ignore-modules</item>
     </list>
 
     <list name="includeKeyword">
@@ -135,12 +123,10 @@
         <keyword String="openModule" attribute="Module Declaration" context="Module Decl" firstNonSpace="true" beginRegion="Module Options"/>
 
         <keyword String="includeKeyword" attribute="Option Name" context="Include Decl" firstNonSpace="true"/>
-        <DetectChar attribute="Comment" context="Comment" char="#"/>
+        <DetectChar context="Comment" char="#"/>
       </context>
 
       <context name="Comment" attribute="Comment" lineEndContext="#pop">
-        <DetectSpaces />
-        <IncludeRules context="##Comments"/>
       </context>
 
       <context name="Include Decl" attribute="Option Value" lineEndContext="#pop">
@@ -149,7 +135,7 @@
       <context name="Module Decl" attribute="Module Name" lineEndContext="Module Options">
         <DetectSpaces/>
         <RegExpr attribute="Module Name" String="[a-zA-Z0-9/-]+"/>
-        <DetectChar attribute="Comment" context="Comment" char="#"/>
+        <DetectChar context="Comment" char="#"/>
       </context>
 
       <context name="Common Module Options" attribute="Normal Text" lineEndContext="#stay">
@@ -162,7 +148,7 @@
         <!-- No kdesrc-build options start with digits or a dash. -->
         <RegExpr attribute="Possible Error" context="Option Value" String="[0-9-][a-zA-Z0-9_-]+" />
         <RegExpr attribute="Unknown Option Name" context="Option Value" String="[a-zA-Z0-9_-]+" />
-        <DetectChar attribute="Comment" context="Comment" char="#"/>
+        <DetectChar context="Comment" char="#"/>
       </context>
 
       <context attribute="Normal Text" name="CMake Option" lineEndContext="#pop">
@@ -173,7 +159,7 @@
       </context>
 
       <context name="Global Options" attribute="Normal Text" lineEndContext="#stay">
-        <StringDetect attribute="Module Declaration" context="Root Level" endRegion="Global Options" String="end global" firstNonSpace="true"/>
+        <RegExpr attribute="Module Declaration" context="Root Level" endRegion="Global Options" String="end global" firstNonSpace="true"/>
         <keyword attribute="Possible Error" String="moduleSetOptions"/>
 
         <!-- Specific to global section -->
@@ -185,8 +171,8 @@
 
       <context name="Module Options" attribute="Normal Text" lineEndContext="#stay">
         <DetectSpaces/>
-        <StringDetect attribute="Module Declaration" context="Root Level" endRegion="Module Options" String="end module" firstNonSpace="true"/>
-        <StringDetect attribute="Module Declaration" context="Root Level" endRegion="Module Options" String="end options" firstNonSpace="true"/>
+        <RegExpr attribute="Module Declaration" context="Root Level" endRegion="Module Options" String="end module" firstNonSpace="true"/>
+        <RegExpr attribute="Module Declaration" context="Root Level" endRegion="Module Options" String="end options" firstNonSpace="true"/>
         <keyword attribute="Possible Error" String="moduleSetOptions"/>
 
         <!-- Specific to global section -->
@@ -210,7 +196,7 @@
       </context>
 
       <context name="ModuleSet use-module" attribute="Module Name" lineEndContext="#pop">
-        <DetectChar attribute="Comment" context="Comment" char="#"/>
+        <DetectChar context="Comment" char="#"/>
         <LineContinue attribute="Possible Error" context="#stay"/>
       </context>
 
@@ -218,21 +204,21 @@
         <DetectSpaces/>
         <RegExpr attribute="Variable" String="\$\{[a-zA-Z0-9_-]+\}"/>
         <RegExpr attribute="Option Value" String="[a-zA-Z:0-9,./+!=@_-]*" context="#stay" />
-        <DetectChar attribute="Comment" context="Comment" char="#"/>
+        <DetectChar context="Comment" char="#"/>
         <LineContinue attribute="Option Value" context="#stay"/>
       </context>
 
       <context name="Bool Option Value" attribute="Possible Error" lineEndContext="#pop">
         <DetectSpaces attribute="Normal Text"/>
         <keyword attribute="Option Value" context="#stay" String="bools"/>
-        <DetectChar attribute="Comment" context="Comment" char="#"/>
+        <DetectChar context="Comment" char="#"/>
         <LineContinue attribute="Possible Error" context="#stay"/>
       </context>
 
       <context name="Environment Name" attribute="Environment Variable Name" lineEndContext="#pop">
         <DetectSpaces/>
         <RegExpr attribute="Environment Variable Name" context="Option Value" String="[a-zA-Z0-9_-]+" />
-        <DetectChar attribute="Comment" context="Comment" char="#"/>
+        <DetectChar context="Comment" char="#"/>
       </context>
     </contexts>
 
@@ -259,4 +245,3 @@
   </general>
 
 </language>
-<!-- kate: replace-tabs on; tab-width 2; indent-width 2; -->
