@@ -100,8 +100,7 @@ Qutepart::~Qutepart() {}
 Lines Qutepart::lines() const { return Lines(document()); }
 
 void Qutepart::setHighlighter(const QString &languageId) {
-    highlighter_ =
-        QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), languageId));
+    highlighter_ = QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), languageId));
     indenter_->setLanguage(languageId);
 
     if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
@@ -324,45 +323,7 @@ int Qutepart::completionThreshold() const { return completionThreshold_; }
 
 void Qutepart::setCompletionThreshold(int val) { completionThreshold_ = val; }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 QAction *Qutepart::cutLineAction() const { return cutLineAction_; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void Qutepart::resetSelection() {
     QTextCursor cursor = textCursor();
@@ -550,6 +511,10 @@ void Qutepart::initActions() {
                                  [this] { this->zoomIn(); });
     zoomOutAction_ = createAction("Zoom Out", QKeySequence(Qt::CTRL | Qt::Key_Minus), QString(),
                                   [this] { this->zoomOut(); });
+
+    toggleActionComment_ =
+        createAction(tr("Toggle comment"), QKeySequence(Qt::CTRL | Qt::Key_Slash), {},
+                     [this] { this->toggleComment(); });
 }
 
 QAction *Qutepart::createAction(const QString &text, QKeySequence shortcut,
@@ -1081,6 +1046,170 @@ void Qutepart::insertLineBelow() {
 
     setTextCursor(cursor);
     autoIndentCurrentLine();
+}
+
+auto static splitLeadingWhitespace(const QString &str) -> std::tuple<QString, QString> {
+    int i = 0;
+    while (i < str.length() && str[i].isSpace()) {
+        ++i;
+    }
+    return {str.left(i), str.mid(i)};
+}
+
+void Qutepart::toggleComment() {
+    auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_);
+    if (!hl) {
+        return;
+    }
+
+    AtomicEditOperation op(this);
+    auto cursor = textCursor();
+    auto language = hl->getLanguage();
+    auto selectionStart = cursor.selectionStart();
+    auto selectionEnd = cursor.selectionEnd();
+
+    cursor.setPosition(selectionStart);
+    auto startComment = language->getStartMultilineComment();
+    auto endComment = language->getEndMultilineComment();
+    auto singleLineComment = language->getSingleLineComment();
+
+    auto handleSingleLineComment = [&]() {
+        auto originalPosition = cursor.position();
+        cursor.movePosition(QTextCursor::StartOfLine);
+        cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+        auto [indentation, text] = splitLeadingWhitespace(cursor.selectedText());
+
+#if 0
+        if (text.startsWith(singleLineComment)) {
+            text = text.mid(singleLineComment.length());
+            originalPosition -= singleLineComment.length();
+        } else {
+            text = singleLineComment + text;
+            originalPosition += singleLineComment.length();
+        }
+#endif
+        if (!singleLineComment.isEmpty()) {
+            // Language has single-line comments
+            if (text.startsWith(singleLineComment)) {
+                text = text.mid(singleLineComment.length());
+                originalPosition -= singleLineComment.length();
+            } else {
+                text = singleLineComment + text;
+                originalPosition += singleLineComment.length();
+            }
+        } else if (!startComment.isEmpty() && !endComment.isEmpty()) {
+            // Language only has multi-line comments
+            if (text.startsWith(startComment) && text.endsWith(endComment)) {
+                text = text.mid(startComment.length(), text.length() - startComment.length() - endComment.length());
+                originalPosition -= startComment.length();
+            } else {
+                text = startComment + text + endComment;
+                originalPosition += startComment.length();
+            }
+        }
+        cursor.removeSelectedText();
+        cursor.insertText(indentation + text);
+        cursor.setPosition(originalPosition);
+    };
+
+    auto handleMultilineComment = [&]() {
+        cursor.setPosition(selectionStart);
+        cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, startComment.length());
+        auto startsWithComment = (cursor.selectedText().startsWith(startComment));
+
+        cursor.setPosition(selectionEnd - endComment.length());
+        cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, endComment.length());
+        auto endsWithComment = (cursor.selectedText().endsWith(endComment));
+
+        if (startsWithComment && endsWithComment) {
+            cursor.setPosition(selectionStart);
+            cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, startComment.length());
+            cursor.removeSelectedText();
+            cursor.setPosition(selectionEnd - startComment.length() - endComment.length());
+            cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, endComment.length());
+            cursor.removeSelectedText();
+            selectionEnd -= (startComment.length() + endComment.length());
+        } else {
+            cursor.setPosition(selectionEnd);
+            cursor.insertText(endComment);
+            cursor.setPosition(selectionStart);
+            cursor.insertText(startComment);
+            selectionEnd += (startComment.length() + endComment.length());
+        }
+
+        cursor.setPosition(selectionStart);
+        cursor.setPosition(selectionEnd, QTextCursor::KeepAnchor);
+    };
+
+    auto handleMultilineCommentSingleLines = [&]() {
+        int startBlock = cursor.document()->findBlock(selectionStart).blockNumber();
+        int endBlock = cursor.document()->findBlock(selectionEnd).blockNumber();
+
+        bool allNonEmptyLinesCommented = true;
+        cursor.setPosition(selectionStart);
+        for (int i = startBlock; i <= endBlock; ++i) {
+            QString line = cursor.block().text().trimmed();
+            if (!line.isEmpty() && !line.startsWith(singleLineComment)) {
+                allNonEmptyLinesCommented = false;
+                break;
+            }
+            cursor.movePosition(QTextCursor::NextBlock);
+        }
+
+        cursor.setPosition(selectionStart);
+        for (int i = startBlock; i <= endBlock; ++i) {
+            cursor.movePosition(QTextCursor::StartOfLine);
+            QString line = cursor.block().text();
+            QString trimmedLine = line.trimmed();
+
+            if (allNonEmptyLinesCommented) {
+                if (trimmedLine.startsWith(singleLineComment)) {
+                    int index = line.indexOf(singleLineComment);
+                    cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, index);
+                    cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, singleLineComment.length());
+                    cursor.removeSelectedText();
+                }
+            } else {
+                if (!trimmedLine.isEmpty() && !trimmedLine.startsWith(singleLineComment)) {
+                    cursor.insertText(singleLineComment);
+                }
+            }
+
+            if (i < endBlock) {
+                cursor.movePosition(QTextCursor::NextBlock);
+            }
+        }
+
+        // Adjust selection
+        cursor.setPosition(selectionStart);
+        cursor.setPosition(selectionEnd, QTextCursor::KeepAnchor);
+        QString newSelectedText = cursor.selectedText();
+        int lineSeparatorCount = newSelectedText.count(QChar::ParagraphSeparator);
+        int newSelectionEnd = cursor.position();
+
+        if (allNonEmptyLinesCommented) {
+            newSelectionEnd -= singleLineComment.length() * (lineSeparatorCount + 1);
+        } else {
+            newSelectionEnd += singleLineComment.length() * (lineSeparatorCount + 1);
+        }
+
+        // Restore selection
+        cursor.setPosition(selectionStart);
+        cursor.setPosition(newSelectionEnd, QTextCursor::KeepAnchor);
+    };
+
+    // if has selecion
+    if (selectionStart != selectionEnd) {
+        if (startComment.isEmpty() && endComment.isEmpty()) {
+            handleMultilineCommentSingleLines();
+        } else {
+            handleMultilineComment();
+        }
+    } else {
+        handleSingleLineComment();
+    }
+
+    setTextCursor(cursor);
 }
 
 void Qutepart::updateExtraSelections() {

@@ -344,6 +344,8 @@ class Qutepart : public QPlainTextEdit {
     inline QAction *zoomInAction() const { return zoomInAction_; }
     /// Zoom Out the document by scaling fonts
     inline QAction *zoomOutAction() const { return zoomOutAction_; }
+    /// Commend the current line, or selected text
+    inline QAction *toggleCommentAction() const { return toggleActionComment_; }
 
     // Convenience functions
     void resetSelection();
@@ -395,6 +397,7 @@ class Qutepart : public QPlainTextEdit {
 
     void insertLineAbove();
     void insertLineBelow();
+    void toggleComment();
 
   private slots:
     void updateViewport();
@@ -468,6 +471,7 @@ class Qutepart : public QPlainTextEdit {
     QAction *joinLinesAction_;
     QAction *zoomInAction_;
     QAction *zoomOutAction_;
+    QAction *toggleActionComment_;
 
     friend class LineNumberArea;
     friend class MarkArea;

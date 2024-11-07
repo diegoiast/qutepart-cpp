@@ -532,11 +532,11 @@ QHash<QString, Style> loadStyles(QXmlStreamReader &xmlReader, QString &error) {
 
         QHash<QString, QString> attrsMap = attrsToInsensitiveHashMap(attrs);
         QHash<QString, bool> flags;
-        foreach (QString flagName, QStringList() << "spellChecking"
-                                                 << "italic"
-                                                 << "bold"
-                                                 << "underline"
-                                                 << "strikeout") {
+        foreach (const auto &flagName, QStringList() << "spellChecking"
+                                                     << "italic"
+                                                     << "bold"
+                                                     << "underline"
+                                                     << "strikeout") {
             if (attrsMap.contains(flagName)) {
                 bool val = parseBoolAttribute(attrsMap.value(flagName, "false"), error);
                 if (!error.isNull()) {
@@ -566,6 +566,39 @@ QHash<QString, Style> loadStyles(QXmlStreamReader &xmlReader, QString &error) {
     }
 
     return styles;
+}
+
+auto static loadComments(QXmlStreamReader &xmlReader, QString &start, QString &end,
+                         QString &singleLine, QString &error) -> QString {
+    while (xmlReader.readNextStartElement()) {
+        if (xmlReader.name() != QLatin1String("comment")) {
+            error = QString("Not expected tag when parsing comments <%1>")
+                        .arg(xmlReader.name().toString());
+            return {};
+        }
+        auto attrs = xmlReader.attributes();
+        auto name = getRequiredAttribute(attrs, "name", error);
+        if (!error.isNull()) {
+            return {};
+        }
+
+        if (name == QStringLiteral("singleLine")) {
+            singleLine = getRequiredAttribute(attrs, "start", error);
+        } else if (name == QStringLiteral("multiLine")) {
+            start = getRequiredAttribute(attrs, "start", error);
+            end = getAttribute(attrs, "end", error);
+        } else {
+            error = QString("Invalid comment type <%1>").arg(name);
+            return {};
+        }
+        if (!error.isNull()) {
+            return {};
+        }
+
+        xmlReader.readNextStartElement();
+    }
+
+    return "ok";
 }
 
 QSet<QChar> strToSet(const QString &str) {
@@ -621,6 +654,7 @@ void makeKeywordsLowerCase(QHash<QString, QStringList> &keywordLists) {
 // Load keyword lists, contexts, attributes
 QList<ContextPtr> loadLanguageSytnax(QXmlStreamReader &xmlReader, QString &keywordDeliminators,
                                      QString &indenter, QSet<QString> &allLanguageKeywords,
+                                     QString &start, QString &end, QString &singleLine,
                                      QString &error) {
     QHash<QString, QStringList> keywordLists = loadKeywordLists(xmlReader, error);
     if (!error.isNull()) {
@@ -653,6 +687,11 @@ QList<ContextPtr> loadLanguageSytnax(QXmlStreamReader &xmlReader, QString &keywo
             // Convert all list items to lowercase
             if (!keywordsKeySensitive) {
                 makeKeywordsLowerCase(keywordLists);
+            }
+        } else if (xmlReader.name() == QLatin1String("comments")) {
+            loadComments(xmlReader, start, end, singleLine, error);
+            if (!error.isNull()) {
+                return {};
             }
         } else if (xmlReader.name() == QLatin1String("indentation")) {
             if (xmlReader.attributes().hasAttribute("mode")) {
@@ -734,17 +773,19 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
         return QSharedPointer<Language>();
     }
 
-    QString keywordDeliminators;
+    QString keywordDeliminators, commentStart, commentEnd, commentSingleLine;
     QSet<QString> allLanguageKeywords;
-    QList<ContextPtr> contexts = loadLanguageSytnax(xmlReader, keywordDeliminators, indenter,
-                                                    allLanguageKeywords, error);
+    QList<ContextPtr> contexts =
+        loadLanguageSytnax(xmlReader, keywordDeliminators, indenter, allLanguageKeywords,
+                           commentStart, commentEnd, commentSingleLine, error);
 
     if (!error.isNull()) {
         return QSharedPointer<Language>();
     }
 
-    Language *language = new Language(name, extensions, mimetypes, priority, hidden, indenter,
-                                      allLanguageKeywords, contexts);
+    Language *language =
+        new Language(name, extensions, mimetypes, priority, hidden, indenter, commentStart,
+                     commentEnd, commentSingleLine, allLanguageKeywords, contexts);
 
     QSharedPointer<Language> languagePtr(language);
 

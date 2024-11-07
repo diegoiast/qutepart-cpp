@@ -10,8 +10,12 @@ namespace Qutepart {
 
 Language::Language(const QString &name, const QStringList &extensions, const QStringList &mimetypes,
                    int priority, bool hidden, const QString &indenter,
-                   const QSet<QString> &allLanguageKeywords, const QList<ContextPtr> &contexts)
-    : name(name), extensions(extensions), mimetypes(mimetypes), priority(priority), hidden(hidden),
+                   QString startMultilineComment, QString endMultilineComment,
+                   QString singleLineComment, const QSet<QString> &allLanguageKeywords,
+                   const QList<ContextPtr> &contexts)
+    : name(name), startMultilineComment(startMultilineComment),
+      endMultilineComment(endMultilineComment), singleLineComment(singleLineComment),
+      extensions(extensions), mimetypes(mimetypes), priority(priority), hidden(hidden),
       indenter(indenter), allLanguageKeywords_(allLanguageKeywords), contexts(contexts),
       defaultContextStack(contexts[0].data()) {}
 
@@ -36,7 +40,8 @@ void Language::printDescription(QTextStream &out) const {
     }
 }
 
-int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats, const Theme *theme) {
+int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats,
+                             const Theme *theme) {
     // qDebug() << "Highlighting: " << block.text();
     ContextStack contextStack = getContextStack(block);
 
@@ -51,8 +56,8 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
 
         const Context *context = contextStack.currentContext();
 
-        contextStack =
-            context->parseBlock(contextStack, textToMatch, formats, textTypeMap, lineContinue, theme);
+        contextStack = context->parseBlock(contextStack, textToMatch, formats, textTypeMap,
+                                           lineContinue, theme);
     } while (!textToMatch.isEmpty());
 
     if (!lineContinue) {
@@ -74,8 +79,6 @@ ContextPtr Language::getContext(const QString &contextName) const {
 
     return ContextPtr();
 }
-
-QSet<QString> Language::allLanguageKeywords() const { return allLanguageKeywords_; }
 
 ContextStack Language::getContextStack(QTextBlock block) {
     TextBlockUserData *data = nullptr;

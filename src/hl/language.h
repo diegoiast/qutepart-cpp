@@ -14,8 +14,11 @@ class Theme;
 
 class Language {
   public:
-    Language(const QString &name, const QStringList &extensions, const QStringList &mimetypes,
+        Language(const QString &name, const QStringList &extensions, const QStringList &mimetypes,
              int priority, bool hidden, const QString &indenter,
+             QString startMultilineComment,
+             QString endMultilineComment,
+             QString singleLineComment,
              const QSet<QString> &allLanguageKeywords, const QList<ContextPtr> &contexts);
 
     void printDescription(QTextStream &out) const;
@@ -26,13 +29,20 @@ class Language {
     */
     int highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats, const Theme *theme);
 
-    ContextPtr defaultContext() const { return contexts.first(); }
+    inline ContextPtr defaultContext() const { return contexts.first(); }
     ContextPtr getContext(const QString &contextName) const;
 
-    QSet<QString> allLanguageKeywords() const;
+    inline QSet<QString> allLanguageKeywords() const { return allLanguageKeywords_; }
+    inline QString getStartMultilineComment() const { return startMultilineComment; }
+    inline QString getEndMultilineComment() const { return endMultilineComment; }
+    inline QString getSingleLineComment() const { return singleLineComment; }
 
   protected:
     QString name;
+    QString startMultilineComment;
+    QString endMultilineComment;
+    QString singleLineComment;
+
     QStringList extensions;
     QStringList mimetypes;
     int priority;
