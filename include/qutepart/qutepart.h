@@ -334,7 +334,7 @@ class Qutepart : public QPlainTextEdit {
     inline QAction *moveLineUpAction() const { return moveLineUpAction_; }
     inline QAction *moveLineDownAction() const { return moveLineDownAction_; }
     inline QAction *deleteLineAction() const { return deleteLineAction_; }
-    inline QAction *cutLineAction() const;
+    inline QAction *cutLineAction() const { return cutLineAction_; }
     inline QAction *copyLineAction() const { return copyLineAction_; }
     inline QAction *pasteLineAction() const { return pasteLineAction_; }
     inline QAction *insertLineAboveAction() const { return insertLineAboveAction_; }
