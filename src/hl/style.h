@@ -15,7 +15,7 @@ class Style {
      */
     void updateTextType(const QString &attribute);
 
-    inline char textType() const { return _textType; };
+    inline char textType() const { return _textType; }
     inline const QSharedPointer<QTextCharFormat> format() const { return _format; }
 
     inline const QStringView getDefStyle() const { return defStyleName; }

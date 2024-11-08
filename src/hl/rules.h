@@ -25,7 +25,7 @@ struct AbstractRuleParams {
 class AbstractRule {
   public:
     AbstractRule(const AbstractRuleParams &params);
-    virtual ~AbstractRule(){};
+    virtual ~AbstractRule(){}
 
     virtual void printDescription(QTextStream &out) const;
     virtual QString description() const;
@@ -33,7 +33,7 @@ class AbstractRule {
     virtual void resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
                                           QString &error);
     virtual void setKeywordParams(const QHash<QString, QStringList> &, bool, const QString &,
-                                  QString &){};
+                                  QString &){}
     void setStyles(const QHash<QString, Style> &styles, QString &error);
 
     bool lookAhead;
@@ -45,8 +45,8 @@ class AbstractRule {
 
   protected:
     friend class Context;
-    virtual QString name() const { return "AbstractRule"; };
-    virtual QString args() const { return QString(); };
+    virtual QString name() const { return "AbstractRule"; }
+    virtual QString args() const { return QString(); }
 
     MatchResult *makeMatchResult(int length, bool lineContinue = false,
                                  const QStringList &data = QStringList()) const;
@@ -82,8 +82,8 @@ class KeywordRule : public AbstractRule {
     void setKeywordParams(const QHash<QString, QStringList> &lists, bool caseSensitive,
                           const QString &, QString &error) override;
 
-    QString name() const override { return "Keyword"; };
-    QString args() const override { return listName; };
+    QString name() const override { return "Keyword"; }
+    QString args() const override { return listName; }
 
   private:
     virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
@@ -98,7 +98,7 @@ class DetectCharRule : public AbstractRule {
   public:
     DetectCharRule(const AbstractRuleParams &params, QChar value, int index);
 
-    QString name() const override { return "DetectChar"; };
+    QString name() const override { return "DetectChar"; }
     QString args() const override;
 
   private:
@@ -112,7 +112,7 @@ class Detect2CharsRule : public AbstractStringRule {
     using AbstractStringRule::AbstractStringRule;
 
   public:
-    QString name() const override { return "Detect2Chars"; };
+    QString name() const override { return "Detect2Chars"; }
 
   private:
     MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
@@ -122,7 +122,7 @@ class AnyCharRule : public AbstractStringRule {
     using AbstractStringRule::AbstractStringRule;
 
   public:
-    QString name() const override { return "AnyChar"; };
+    QString name() const override { return "AnyChar"; }
 
   private:
     virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
@@ -132,7 +132,7 @@ class StringDetectRule : public AbstractStringRule {
     using AbstractStringRule::AbstractStringRule;
 
   public:
-    QString name() const override { return "StringDetect"; };
+    QString name() const override { return "StringDetect"; }
 
   private:
     virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
@@ -142,7 +142,7 @@ class WordDetectRule : public AbstractStringRule {
     using AbstractStringRule::AbstractStringRule;
 
   public:
-    QString name() const override { return "WordDetect"; };
+    QString name() const override { return "WordDetect"; }
     void setKeywordParams(const QHash<QString, QStringList> &lists, bool caseSensitive,
                           const QString &, QString &error) override;
 
@@ -157,7 +157,7 @@ class RegExpRule : public AbstractRule {
                bool minimal, bool wordStart, bool lineStart);
 
   private:
-    QString name() const override { return "RegExpr"; };
+    QString name() const override { return "RegExpr"; }
     QString args() const override;
 
     QRegularExpression compileRegExp(const QString &pattern) const;
@@ -189,7 +189,7 @@ class IntRule : public AbstractNumberRule {
     using AbstractNumberRule::AbstractNumberRule;
 
   public:
-    QString name() const override { return "Int"; };
+    QString name() const override { return "Int"; }
 
   private:
     virtual int tryMatchText(const QStringView &text) const override;
@@ -199,7 +199,7 @@ class FloatRule : public AbstractNumberRule {
     using AbstractNumberRule::AbstractNumberRule;
 
   public:
-    QString name() const override { return "Float"; };
+    QString name() const override { return "Float"; }
 
   private:
     int tryMatchText(const QStringView &text) const override;
@@ -209,7 +209,7 @@ class HlCOctRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
   public:
-    QString name() const override { return "HlCOct"; };
+    QString name() const override { return "HlCOct"; }
 
   private:
     MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
@@ -219,7 +219,7 @@ class HlCHexRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
   public:
-    QString name() const override { return "HlCHex"; };
+    QString name() const override { return "HlCHex"; }
 
   private:
     MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
@@ -229,7 +229,7 @@ class HlCStringCharRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
   public:
-    QString name() const override { return "HlCStringChar"; };
+    QString name() const override { return "HlCStringChar"; }
 
   private:
     MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
@@ -239,7 +239,7 @@ class HlCCharRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
   public:
-    QString name() const override { return "HlCChar"; };
+    QString name() const override { return "HlCChar"; }
 
   private:
     MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
@@ -248,7 +248,7 @@ class HlCCharRule : public AbstractRule {
 class RangeDetectRule : public AbstractRule {
   public:
     RangeDetectRule(const AbstractRuleParams &params, const QString &char0, const QString &char1);
-    QString name() const override { return "RangeDetect"; };
+    QString name() const override { return "RangeDetect"; }
     QString args() const override;
 
   private:
@@ -262,7 +262,7 @@ class LineContinueRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
   public:
-    QString name() const override { return "LineContinue"; };
+    QString name() const override { return "LineContinue"; }
 
   private:
     MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
@@ -272,8 +272,8 @@ class IncludeRulesRule : public AbstractRule {
   public:
     IncludeRulesRule(const AbstractRuleParams &params, const QString &contextName);
 
-    QString name() const override { return "IncludeRules"; };
-    QString args() const override { return contextName; };
+    QString name() const override { return "IncludeRules"; }
+    QString args() const override { return contextName; }
 
     void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error) override;
 
@@ -288,7 +288,7 @@ class DetectSpacesRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
   public:
-    QString name() const override { return "DetectSpaces"; };
+    QString name() const override { return "DetectSpaces"; }
 
   private:
     MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
@@ -298,7 +298,7 @@ class DetectIdentifierRule : public AbstractRule {
     using AbstractRule::AbstractRule;
 
   public:
-    QString name() const override { return "DetectIdentifier"; };
+    QString name() const override { return "DetectIdentifier"; }
 
   private:
     MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;

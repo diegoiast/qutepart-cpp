@@ -19,8 +19,8 @@ class ContextSwitcher {
 
     void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error);
 
-    int popsCount() const { return _popsCount; };
-    ContextPtr context() const { return _context; };
+    int popsCount() const { return _popsCount; }
+    ContextPtr context() const { return _context; }
 
   protected:
     int _popsCount;
