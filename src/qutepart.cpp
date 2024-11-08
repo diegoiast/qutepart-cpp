@@ -323,8 +323,6 @@ int Qutepart::completionThreshold() const { return completionThreshold_; }
 
 void Qutepart::setCompletionThreshold(int val) { completionThreshold_ = val; }
 
-QAction *Qutepart::cutLineAction() const { return cutLineAction_; }
-
 void Qutepart::resetSelection() {
     QTextCursor cursor = textCursor();
     cursor.setPosition(cursor.position());
