@@ -459,6 +459,7 @@ QStringList loadKeywordList(QXmlStreamReader &xmlReader, QString &error) {
         if (xmlReader.name() == QLatin1String("include")) {
             // TODO includes in list is not supported yet
             xmlReader.readElementText();
+            qDebug() << "include list is not supported yet, some parts of language will not be loaded" << xmlReader.device();
             continue;
         }
         if (xmlReader.name() != QLatin1String("item")) {

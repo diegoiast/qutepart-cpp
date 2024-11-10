@@ -35,6 +35,7 @@ class AbstractRule {
     virtual void setKeywordParams(const QHash<QString, QStringList> &, bool, const QString &,
                                   QString &){}
     void setStyles(const QHash<QString, Style> &styles, QString &error);
+    void setTheme(const Theme *theme);
 
     bool lookAhead;
 
@@ -57,7 +58,7 @@ class AbstractRule {
     virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const = 0;
 
     QString attribute; // may be null
-    ContextSwitcher context;
+    ContextSwitcher contextSwitcher;
     bool firstNonSpace;
     int column; // -1 if not set
     bool dynamic;

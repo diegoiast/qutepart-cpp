@@ -3,11 +3,59 @@
 
 namespace Qutepart {
 
-QSharedPointer<QTextCharFormat> defaultFormat(const QString &style, QString &error) {
-    QSharedPointer<QTextCharFormat> format(new QTextCharFormat());
+auto static applyTheme(QTextCharFormat &format, const Theme *theme, QStringView defStyle) -> void {
+    auto fixedName = defStyle.toString().mid(2);
+    if (!theme->textStyles.contains(fixedName)) {
+        return;
+    }
 
-    bool bold = false;
-    bool underline = false;
+#if 0
+    qDebug() << "Patching (context)" << fixedName
+        << "color:" << format.foreground().color().name(QColor::HexRgb) << " -> " << theme->textStyles[fixedName].value("text-color");
+#endif
+
+    auto styleProperties = theme->textStyles[fixedName];
+    for (auto it = styleProperties.constBegin(); it != styleProperties.constEnd(); ++it) {
+        auto &key = it.key();
+        auto &value = it.value();
+
+        if (key == "text-color") {
+            auto val = QColor(value);
+            format.setForeground(val);
+        } else if (key == "selected-text-color") {
+            // TODO
+        } else if (key == "background-color") {
+            auto val = QColor(value);
+            format.setBackground(val);
+        } else if (key == "bold") {
+            auto val = value.toLower() == "true";
+            format.setFontWeight(val ? QFont::Bold : QFont::Normal);
+        } else if (key == "italic") {
+            auto val = value.toLower() == "true";
+            format.setFontItalic(val);
+        } else if (key == "underline") {
+            auto val = value.toLower() == "true";
+            format.setFontUnderline(val);
+        } else if (key == "strike-through") {
+            auto val = value.toLower() == "true";
+            format.setFontStrikeOut(val);
+        } else if (key == "font-family") {
+            format.setFontFamilies({value});
+        } else if (key == "font-size") {
+            bool ok;
+            int fontSize = value.toInt(&ok);
+            if (ok) {
+                format.setFontPointSize(fontSize);
+            }
+        }
+        // Add more properties as needed
+    }
+}
+
+QTextCharFormat defaultFormat(const QString &style, QString &error) {
+    auto bold = false;
+    auto underline = false;
+    QTextCharFormat format;
     QString colorName;
     QString bgColorName;
 
@@ -21,9 +69,8 @@ QSharedPointer<QTextCharFormat> defaultFormat(const QString &style, QString &err
     } else if (style == "dsControlFlow") {
         bold = true;
     } else if (style == "dsOperator") {
-    }
-
-    else if (style == "dsBuiltIn") {
+        // TODO
+    } else if (style == "dsBuiltIn") {
         colorName = "#644a9a";
         bold = true;
     } else if (style == "dsExtension") {
@@ -33,9 +80,7 @@ QSharedPointer<QTextCharFormat> defaultFormat(const QString &style, QString &err
         colorName = "#006e28";
     } else if (style == "dsAttribute") {
         colorName = "#0057ad";
-    }
-
-    else if (style == "dsChar") {
+    } else if (style == "dsChar") {
         colorName = "#914c9c";
     } else if (style == "dsSpecialChar") {
         colorName = "#3dade8";
@@ -47,9 +92,7 @@ QSharedPointer<QTextCharFormat> defaultFormat(const QString &style, QString &err
         colorName = "#fe5500";
     } else if (style == "dsImport") {
         colorName = "#b969c3";
-    }
-
-    else if (style == "dsDataType") {
+    } else if (style == "dsDataType") {
         colorName = "#0057ad";
     } else if (style == "dsDecVal") {
         colorName = "#af8000";
@@ -57,13 +100,9 @@ QSharedPointer<QTextCharFormat> defaultFormat(const QString &style, QString &err
         colorName = "#af8000";
     } else if (style == "dsFloat") {
         colorName = "#af8000";
-    }
-
-    else if (style == "dsConstant") {
+    } else if (style == "dsConstant") {
         bold = true;
-    }
-
-    else if (style == "dsComment") {
+    } else if (style == "dsComment") {
         colorName = "#888786";
     } else if (style == "dsDocumentation") {
         colorName = "#608880";
@@ -71,9 +110,7 @@ QSharedPointer<QTextCharFormat> defaultFormat(const QString &style, QString &err
         colorName = "#0094fe";
     } else if (style == "dsCommentVar") {
         colorName = "#c960c9";
-    }
-
-    else if (style == "dsRegionMarker") {
+    } else if (style == "dsRegionMarker") {
         colorName = "#0057ad";
         bgColorName = "#e0e9f8";
     } else if (style == "dsInformation") {
@@ -91,58 +128,58 @@ QSharedPointer<QTextCharFormat> defaultFormat(const QString &style, QString &err
         underline = true;
     } else {
         error = QString("Unknown default style '%1'").arg(style);
-        return format;
+        return {};
     }
 
     if (bold) {
-        format->setFontWeight(QFont::Bold);
+        format.setFontWeight(QFont::Bold);
     }
 
     if (underline) {
-        format->setFontUnderline(true);
+        format.setFontUnderline(true);
     }
 
     if (!colorName.isNull()) {
-        format->setForeground(QColor(colorName));
+        format.setForeground(QColor(colorName));
     }
 
     if (!bgColorName.isNull()) {
-        format->setBackground(QColor(bgColorName));
+        format.setBackground(QColor(bgColorName));
     }
 
     return format;
 }
 
-QSharedPointer<QTextCharFormat> makeFormat(const QString &defStyle, const QString &color,
+QTextCharFormat makeFormat(const QString &defStyle, const QString &color,
                                            const QString & /*selColor*/,
                                            const QHash<QString, bool> &flags, QString &error) {
-    QSharedPointer<QTextCharFormat> format = defaultFormat(defStyle, error);
+    auto format = defaultFormat(defStyle, error);
     if (!error.isNull()) {
-        return QSharedPointer<QTextCharFormat>();
+        return {};
     }
 
     if (!color.isNull()) {
-        format->setForeground(QColor(color));
+        format.setForeground(QColor(color));
     }
 
     if (flags.contains("italic")) {
-        format->setFontItalic(flags["italic"]);
+        format.setFontItalic(flags["italic"]);
     }
 
     if (flags.contains("bold")) {
         if (flags["bold"]) {
-            format->setFontWeight(QFont::Bold);
+            format.setFontWeight(QFont::Bold);
         } else {
-            format->setFontWeight(QFont::Normal);
+            format.setFontWeight(QFont::Normal);
         }
     }
 
     if (flags.contains("underline")) {
-        format->setFontUnderline(flags["underline"]);
+        format.setFontUnderline(flags["underline"]);
     }
 
     if (flags.contains("strikeout")) {
-        format->setFontStrikeOut(flags["strikeout"]);
+        format.setFontStrikeOut(flags["strikeout"]);
     }
 
     return format;
@@ -175,8 +212,7 @@ char detectTextType(const QString &attribute, const QString &defStyleName) {
 
 Style makeStyle(const QString &defStyleName, const QString &color,
                 const QString &selColor, const QHash<QString, bool> &flags, QString &error) {
-    QSharedPointer<QTextCharFormat> format =
-        makeFormat(defStyleName, color, selColor, flags, error);
+    auto format = makeFormat(defStyleName, color, selColor, flags, error);
     if (!error.isNull()) {
         return Style();
     }
@@ -186,12 +222,25 @@ Style makeStyle(const QString &defStyleName, const QString &color,
 
 Style::Style() : _textType(' ') {}
 
-Style::Style(const QString &defStyleName, QSharedPointer<QTextCharFormat> format)
-    : _format(format), _textType(detectTextType(QString(), defStyleName)),
-      defStyleName(defStyleName) {}
+Style::Style(const QString &defStyleName, const QTextCharFormat &format)
+    : savedFormat(format), _textType(detectTextType(QString(), defStyleName)),
+      defStyleName(defStyleName) {
+  displayFormat = savedFormat;
+}
 
 void Style::updateTextType(const QString &attribute) {
     _textType = detectTextType(attribute, defStyleName);
+}
+
+void Style::setTheme(const Theme *theme) {
+    if (this->theme == theme) {
+        return;
+    }
+    this->theme = theme;
+    displayFormat = savedFormat;
+    if (theme) {
+        applyTheme(displayFormat, theme, defStyleName);
+    }
 }
 
 } // namespace Qutepart

@@ -40,8 +40,7 @@ void Language::printDescription(QTextStream &out) const {
     }
 }
 
-int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats,
-                             const Theme *theme) {
+int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats) {
     // qDebug() << "Highlighting: " << block.text();
     ContextStack contextStack = getContextStack(block);
 
@@ -57,7 +56,7 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
         const Context *context = contextStack.currentContext();
 
         contextStack = context->parseBlock(contextStack, textToMatch, formats, textTypeMap,
-                                           lineContinue, theme);
+                                           lineContinue);
     } while (!textToMatch.isEmpty());
 
     if (!lineContinue) {
@@ -78,6 +77,15 @@ ContextPtr Language::getContext(const QString &contextName) const {
     }
 
     return ContextPtr();
+}
+
+void Language::setTheme(const Theme *theme) {
+    foreach (auto  ctx, contexts) {
+#if 0
+        qDebug() << "Patching language " << this->name << ", context=" << ctx->name();
+#endif
+        ctx->setTheme(theme);
+    }
 }
 
 ContextStack Language::getContextStack(QTextBlock block) {

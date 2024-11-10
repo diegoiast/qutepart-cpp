@@ -9,7 +9,7 @@
 namespace Qutepart {
 
 AbstractRule::AbstractRule(const AbstractRuleParams &params)
-    : lookAhead(params.lookAhead), attribute(params.attribute), context(params.context),
+    : lookAhead(params.lookAhead), attribute(params.attribute), contextSwitcher(params.context),
       firstNonSpace(params.firstNonSpace), column(params.column), dynamic(params.dynamic) {}
 
 void AbstractRule::printDescription(QTextStream &out) const {
@@ -20,7 +20,7 @@ QString AbstractRule::description() const { return QString("%1(%2)").arg(name())
 
 void AbstractRule::resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
                                             QString &error) {
-    context.resolveContextReferences(contexts, error);
+    contextSwitcher.resolveContextReferences(contexts, error);
 }
 
 void AbstractRule::setStyles(const QHash<QString, Style> &styles, QString &error) {
@@ -34,6 +34,19 @@ void AbstractRule::setStyles(const QHash<QString, Style> &styles, QString &error
     }
 }
 
+void AbstractRule::setTheme(const Theme *theme) {
+    if (theme == style.getTheme()) {
+        return;
+    }
+#if 0
+    qDebug() << "    - rule " << this->name() << args();
+#endif
+    style.setTheme(theme);
+    if (contextSwitcher.context()) {
+        contextSwitcher.context()->setTheme(theme);
+    }
+}
+
 MatchResult *AbstractRule::makeMatchResult(int length, bool lineContinue,
                                            const QStringList &data) const {
     // qDebug() << "\t\trule matched" << description() << length << "lookAhead"
@@ -42,7 +55,7 @@ MatchResult *AbstractRule::makeMatchResult(int length, bool lineContinue,
         length = 0;
     }
 
-    return new MatchResult(length, data, lineContinue, context, style);
+    return new MatchResult(length, data, lineContinue, contextSwitcher, style);
 }
 
 MatchResult *AbstractRule::tryMatch(const TextToMatch &textToMatch) const {

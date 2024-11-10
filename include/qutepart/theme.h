@@ -8,14 +8,14 @@
 class QSyntaxHighlighter;
 namespace Qutepart {
 
-class Qutepart;
-
 typedef QHash<QString, QString> QStringHash;
 
 struct ThemeMetaData {
     QString copyright;
     QString license;
     QString name;
+    QString author;
+    QString description;
     int revision;
 };
 

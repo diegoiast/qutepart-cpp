@@ -43,6 +43,27 @@ void Context::printDescription(QTextStream &out) const {
 
 QString Context::name() const { return _name; }
 
+void Context::setTheme(const Theme *theme) {
+    style.setTheme(theme);
+
+    if (_lineEndContext.context()) {
+        _lineEndContext.context()->setTheme(theme);
+    }
+    if (_lineBeginContext.context()) {
+        _lineBeginContext.context()->setTheme(theme);
+    }
+    if (_lineEmptyContext.context()) {
+        _lineEmptyContext.context()->setTheme(theme);
+    }
+    if (fallthroughContext.context()) {
+        fallthroughContext.context()->setTheme(theme);
+    }
+
+    for (auto rule: rules) {
+        rule->setTheme(theme);
+    }
+}
+
 void Context::resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error) {
     _lineEndContext.resolveContextReferences(contexts, error);
     if (!error.isNull()) {
@@ -121,69 +142,18 @@ void fillTextTypeMap(QString &textTypeMap, int start, int length, QChar textType
     }
 }
 
-auto applyProperties(QTextCharFormat *format, QStringHash &styleProperties) -> void {
-    for (auto it = styleProperties.constBegin(); it != styleProperties.constEnd(); ++it) {
-        auto &key = it.key();
-        auto &value = it.value();
-
-        if (key == "text-color") {
-            auto val = QColor(value);
-            format->setForeground(val);
-        } else if (key == "selected-text-color") {
-            // TODO
-        } else if (key == "background-color") {
-            auto val = QColor(value);
-            format->setBackground(val);
-        } else if (key == "bold") {
-            auto val = value.toLower() == "true";
-            format->setFontWeight(val ? QFont::Bold : QFont::Normal);
-        } else if (key == "italic") {
-            auto val = value.toLower() == "true";
-            format->setFontItalic(val);
-        } else if (key == "underline") {
-            auto val = value.toLower() == "true";
-            format->setFontUnderline(val);
-        } else if (key == "strike-through") {
-            auto val = value.toLower() == "true";
-            format->setFontStrikeOut(val);
-        } else if (key == "font-family") {
-            format->setFontFamilies({value});
-        } else if (key == "font-size") {
-            bool ok;
-            int fontSize = value.toInt(&ok);
-            if (ok) {
-                format->setFontPointSize(fontSize);
-            }
-        }
-        // Add more properties as needed
-    }
-}
-
-
 // Helper function for parseBlock()
 void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult *matchRes,
                                const Context *context, QVector<QTextLayout::FormatRange> &formats,
-                               QString &textTypeMap, const Theme* theme) const {
-    QSharedPointer<QTextCharFormat> format = matchRes->style.format();
-    QTextCharFormat displayFormat;
+                               QString &textTypeMap) const {
+    auto displayFormat = matchRes->style.format();
 
-    if (format.isNull()) {
-        displayFormat = *context->style.format().get();
-    } else {
-        // find the theme's format
-        displayFormat = *format.get();
-        if (theme) {
-            auto fixedName = style.getDefStyle().mid(2).toString();
-            // qDebug() << "Patching (context)" << fixedName << "color:" << displayFormat.foreground().color().name(QColor::HexRgb) << " -> " << theme->textStyles[fixedName].value("text-color");
-            if (theme->textStyles.contains(fixedName)) {
-                auto styleProperties = theme->textStyles[fixedName];
-                applyProperties(&displayFormat, styleProperties);
-            }
-        }
+    if (!displayFormat.isValid()) {
+        displayFormat = context->style.format();
     }
 
-    if (!format.isNull()) {
-        appendFormat(formats, textToMatch.currentColumnIndex, matchRes->length, *format);
+    if (displayFormat.isValid()) {
+        appendFormat(formats, textToMatch.currentColumnIndex, matchRes->length, displayFormat);
     }
 
     QChar textType = matchRes->style.textType();
@@ -196,21 +166,11 @@ void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult
 // Parse block. Exits, when reached end of the text, or when context is switched
 const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToMatch &textToMatch,
                                        QVector<QTextLayout::FormatRange> &formats,
-                                       QString &textTypeMap, bool &lineContinue, const Theme *theme) const {
+                                       QString &textTypeMap, bool &lineContinue) const {
     textToMatch.contextData = &contextStack.currentData();
 
     if (textToMatch.isEmpty() && (!_lineEmptyContext.isNull())) {
         return contextStack.switchContext(_lineEmptyContext);
-    }
-
-    Style displayStyle = this->style;
-    if (theme) {
-        auto fixedName = style.getDefStyle().mid(2).toString();
-        // qDebug() << "Patching (style)" << fixedName;
-        if (theme->textStyles.contains(fixedName)) {
-            auto styleProperties = theme->textStyles[fixedName];
-            applyProperties(displayStyle.format().get(), styleProperties);
-        }
     }
 
     while (!textToMatch.isEmpty()) {
@@ -220,25 +180,25 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
             lineContinue = matchRes->lineContinue;
 
             if (matchRes->nextContext.isNull()) {
-                applyMatchResult(textToMatch, matchRes.data(), this, formats, textTypeMap, theme);
+                applyMatchResult(textToMatch, matchRes.data(), this, formats, textTypeMap);
                 textToMatch.shift(matchRes->length);
             } else {
                 ContextStack newContextStack =
                     contextStack.switchContext(matchRes->nextContext, matchRes->data);
 
                 applyMatchResult(textToMatch, matchRes.data(), newContextStack.currentContext(),
-                                 formats, textTypeMap, theme);
+                                 formats, textTypeMap);
                 textToMatch.shift(matchRes->length);
 
                 return newContextStack;
             }
         } else {
             lineContinue = false;
-            if (!displayStyle.format().isNull()) {
-                appendFormat(formats, textToMatch.currentColumnIndex, 1, *(displayStyle.format()));
+            if (style.format().isValid()) {
+                appendFormat(formats, textToMatch.currentColumnIndex, 1, style.format());
             }
 
-            textTypeMap[textToMatch.currentColumnIndex] = displayStyle.textType();
+            textTypeMap[textToMatch.currentColumnIndex] = style.textType();
 
             if (!this->fallthroughContext.isNull()) {
                 return contextStack.switchContext(this->fallthroughContext);
@@ -261,5 +221,6 @@ MatchResult *Context::tryMatch(const TextToMatch &textToMatch) const {
 
     return nullptr;
 }
+
 
 } // namespace Qutepart

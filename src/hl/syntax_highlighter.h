@@ -19,14 +19,13 @@ class SyntaxHighlighter : public QSyntaxHighlighter {
 
     inline QSharedPointer<Language> getLanguage() const { return language; }
     inline void setTheme(const Theme *t) {
-        this->theme = t;
+        language->setTheme(t);
         rehighlight();
     }
 
   protected:
     void highlightBlock(const QString &text) override;
     QSharedPointer<Language> language;
-    const Theme *theme = nullptr;
 };
 
 } // namespace Qutepart

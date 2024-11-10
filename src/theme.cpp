@@ -19,40 +19,6 @@
 
 namespace Qutepart {
 
-void applyStyleToFormat(QTextCharFormat &format, const QStringHash &styleProperties) {
-    for (auto it = styleProperties.constBegin(); it != styleProperties.constEnd(); ++it) {
-        const QString &key = it.key();
-        const QString &value = it.value();
-
-        if (key == "text-color" || key == "selected-text-color") {
-            format.setForeground(QColor(value));
-        } else if (key == "background-color") {
-            format.setBackground(QColor(value));
-        } else if (key == "bold") {
-            auto val = value.toLower() == "true";
-            format.setFontWeight(val ? QFont::Bold : QFont::Normal);
-        } else if (key == "italic") {
-            auto val = value.toLower() == "true";
-            format.setFontItalic(val);
-        } else if (key == "underline") {
-            auto val = value.toLower() == "true";
-            format.setFontUnderline(val);
-        } else if (key == "strike-through") {
-            auto val = value.toLower() == "true";
-            format.setFontStrikeOut(val);
-        } else if (key == "font-family") {
-            format.setFontFamilies({value});
-        } else if (key == "font-size") {
-            bool ok;
-            int fontSize = value.toInt(&ok);
-            if (ok) {
-                format.setFontPointSize(fontSize);
-            }
-        }
-        // Add more properties as needed
-    }
-}
-
 Theme::Theme() = default;
 
 auto Theme::loadTheme(const QString &filename) -> bool {
@@ -109,7 +75,9 @@ auto Theme::loadTheme(const QString &filename) -> bool {
 
         QStringHash styleProperties;
         for (auto propIt = styleObj.begin(); propIt != styleObj.end(); ++propIt) {
-            styleProperties[propIt.key()] = propIt.value().toString();
+            auto k = propIt.key();
+            auto v = propIt.value().toString();
+            styleProperties[k] = v;
         }
 
         textStyles[styleName] = styleProperties;
@@ -121,9 +89,11 @@ auto Theme::loadTheme(const QString &filename) -> bool {
     for (const auto &copyright : copyrightArray) {
         metaData.copyright.push_back(copyright.toString());
     }
-    metaData.license = metaDataObj["license"].toString();
     metaData.name = metaDataObj["name"].toString();
     metaData.revision = metaDataObj["revision"].toInt();
+    metaData.author = metaDataObj["author"].toString();
+    metaData.license = metaDataObj["license"].toString();
+    metaData.description = metaDataObj["description"].toString();
 
     return true;
 }

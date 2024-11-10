@@ -133,6 +133,9 @@ void Qutepart::setDefaultColors() {
 }
 
 void Qutepart::setTheme(const Theme *newTheme) {
+    if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
+        hl->setTheme(newTheme);
+    }
     theme = newTheme;
     if (highlighter_) {
         if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
@@ -160,7 +163,7 @@ void Qutepart::setTheme(const Theme *newTheme) {
         theme->editorColors[Theme::Colors::BackgroundColor].isValid()) {
         QPalette p(palette());
         p.setColor(QPalette::Base, theme->editorColors[Theme::Colors::BackgroundColor]);
-        p.setColor(QPalette::Text, theme->textStyles["Normal"]["text-color"]);
+        p.setColor(QPalette::Text, theme->textStyles[QStringLiteral("Normal")]["text-color"]);
         setPalette(p);
     }
     updateExtraSelections();
