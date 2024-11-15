@@ -62,7 +62,7 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
 }
 
 QList<QTextEdit::ExtraSelection> Qutepart::highlightWord(const QString &word) {
-    if (blockCount() > 10000) {
+    if (blockCount() > MaxLinesForWordHighligher) {
         return {};
     }
 

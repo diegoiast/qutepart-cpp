@@ -475,6 +475,8 @@ class Qutepart : public QPlainTextEdit {
 
     friend class LineNumberArea;
     friend class MarkArea;
+public:
+    int MaxLinesForWordHighligher = 100000;
 };
 
 /**
