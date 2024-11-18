@@ -21,27 +21,12 @@
 
 namespace Qutepart {
 
-class EdgeLine : public QWidget {
-  public:
-    EdgeLine(Qutepart *qpart) : QWidget(qpart), qpart(qpart) {
-        setAttribute(Qt::WA_TransparentForMouseEvents);
-    }
-
-    void paintEvent(QPaintEvent *event) {
-        QPainter painter(this);
-        painter.fillRect(event->rect(), qpart->lineLengthEdgeColor());
-    }
-
-  private:
-    Qutepart *qpart;
-};
-
 Qutepart::Qutepart(QWidget *parent, const QString &text)
     : QPlainTextEdit(text, parent), indenter_(std::make_unique<Indenter>()),
       markArea_(std::make_unique<MarkArea>(this)), completer_(std::make_unique<Completer>(this)),
       drawIndentations_(true), drawAnyWhitespace_(false), drawIncorrectIndentation_(true),
       drawSolidEdge_(true), enableSmartHomeEnd_(true), lineLengthEdge_(80),
-      completionEnabled_(true), completionThreshold_(3), solidEdgeLine_(new EdgeLine(this)),
+      completionEnabled_(true), completionThreshold_(3),
       totalMarginWidth_(0) {
 
     setDefaultColors();
@@ -129,7 +114,7 @@ void Qutepart::setDefaultColors() {
     lineLengthEdgeColor_.setAlphaF(0.5f);
     lineNumberColor = palette.color(QPalette::Text);
     currentLineNumberColor = palette.color(QPalette::ButtonText);
-    indentColor_ = lineNumberColor.lighter();
+    indentColor_ = whitespaceColor_.lighter();
 }
 
 void Qutepart::setTheme(const Theme *newTheme) {
@@ -158,6 +143,7 @@ void Qutepart::setTheme(const Theme *newTheme) {
     lineLengthEdgeColor_ = theme->editorColors[Theme::Colors::WordWrapMarker];
     currentLineColor_ = theme->editorColors[Theme::Colors::CurrentLine];
     indentColor_ = theme->editorColors[Theme::Colors::IndentationLine];
+    whitespaceColor_ = theme->editorColors[Theme::Colors::IndentationLine];
 
     if (theme->editorColors.contains(Theme::Colors::BackgroundColor) &&
         theme->editorColors[Theme::Colors::BackgroundColor].isValid()) {
@@ -223,11 +209,8 @@ void Qutepart::setDrawIncorrectIndentation(bool draw) { drawIncorrectIndentation
 bool Qutepart::drawSolidEdge() const { return drawSolidEdge_; }
 
 void Qutepart::setDrawSolidEdge(bool draw) {
-    drawSolidEdge_ = true;
-    solidEdgeLine_->setVisible(draw);
-    if (draw) {
-        setSolidEdgeGeometry();
-    }
+    drawSolidEdge_ = draw;
+    update();
 }
 
 int Qutepart::lineLengthEdge() const { return lineLengthEdge_; }
@@ -542,6 +525,17 @@ QAction *Qutepart::createAction(const QString &text, QKeySequence shortcut,
 void Qutepart::drawIndentMarkersAndEdge(const QRect &paintEventRect) {
     QPainter painter(viewport());
 
+    if (drawSolidEdge_) {
+        painter.setPen(lineLengthEdgeColor_);
+        QRect cr = contentsRect();
+        int x = fontMetrics().horizontalAdvance(QString().fill('9', lineLengthEdge_)) +
+                cursorRect(firstVisibleBlock(), 0, 0).left();
+        painter.drawLine(
+            QPoint(x+1, cr.top()),
+            QPoint(x+1, cr.bottom())
+        );
+    }
+
     for (QTextBlock block = firstVisibleBlock(); block.isValid(); block = block.next()) {
         QRectF blockGeometry = blockBoundingGeometry(block).translated(contentOffset());
         if (blockGeometry.top() > paintEventRect.bottom()) {
@@ -568,14 +562,6 @@ void Qutepart::drawIndentMarkersAndEdge(const QRect &paintEventRect) {
 
                     textRef = textRef.mid(indenter_->width());
                     column += indenter_->width();
-                }
-            }
-
-            // Draw edge, but not over a cursor
-            if (!drawSolidEdge_) {
-                int edgePos = effectiveEdgePos(block.text());
-                if (edgePos != -1 && edgePos != textCursor().columnNumber()) {
-                    drawEdgeLine(&painter, block, edgePos);
                 }
             }
 
@@ -716,22 +702,6 @@ QTextEdit::ExtraSelection Qutepart::currentLineExtraSelection() const {
     return selection;
 }
 
-void Qutepart::setSolidEdgeGeometry() {
-    // Sets the solid edge line geometry if needed
-    if (lineLengthEdge_ > 0) {
-        QRect cr = contentsRect();
-
-        // contents margin usually gives 1
-        // cursor rectangle left edge for the very first character usually
-        // gives 4
-        int x = fontMetrics().horizontalAdvance(QString().fill('9', lineLengthEdge_)) +
-                /* self._totalMarginWidth + */
-                /* self.contentsMargins().left() + */
-                cursorRect(firstVisibleBlock(), 0, 0).left();
-        solidEdgeLine_->setGeometry(QRect(x, cr.top(), 1, cr.bottom()));
-    }
-}
-
 void Qutepart::updateViewport() {
     // Recalculates geometry for all the margins and the editor viewport
     QRect cr = contentsRect();
@@ -759,8 +729,6 @@ void Qutepart::updateViewport() {
         totalMarginWidth_ = totalMarginWidth;
         setViewportMargins(totalMarginWidth_, 0, 0, 0);
     }
-
-    setSolidEdgeGeometry();
 }
 
 void Qutepart::resizeEvent(QResizeEvent *event) {

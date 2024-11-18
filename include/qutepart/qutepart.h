@@ -372,7 +372,6 @@ class Qutepart : public QPlainTextEdit {
 
     QTextEdit::ExtraSelection currentLineExtraSelection() const;
 
-    void setSolidEdgeGeometry();
     void resizeEvent(QResizeEvent *event) override;
 
     void updateTabStopWidth();
@@ -442,8 +441,6 @@ class Qutepart : public QPlainTextEdit {
 
     bool completionEnabled_;
     int completionThreshold_;
-
-    QWidget *solidEdgeLine_;
     int totalMarginWidth_;
 
     // private, not API
