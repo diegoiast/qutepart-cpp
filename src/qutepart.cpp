@@ -499,6 +499,30 @@ void Qutepart::initActions() {
     toggleActionComment_ =
         createAction(tr("Toggle comment"), QKeySequence(Qt::CTRL | Qt::Key_Slash), {},
                      [this] { this->toggleComment(); });
+
+    findMatchingBracketAction_ = new QAction(tr("Matching bracket"), this);
+    findMatchingBracketAction_->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_BracketLeft),
+                                              QKeySequence(Qt::CTRL | Qt::Key_BracketRight)});
+    connect(findMatchingBracketAction_, &QAction::triggered, findMatchingBracketAction_, [this]() {
+        if (bracketHighlighter_) {
+            auto cursor = textCursor();
+            auto position = cursor.positionInBlock();
+            auto p1 = TextPosition(cursor.block(), position);
+            auto p2 = bracketHighlighter_->getCachedMatch(p1);
+
+            if (!p2.isValid()) {
+                p1.column++;
+                p2 = bracketHighlighter_->getCachedMatch(p1);
+                if (!p2.isValid()) {
+                    p1.column -= 2;
+                    p2 = bracketHighlighter_->getCachedMatch(p1);
+                }
+            }
+            if (p2.isValid()) {
+                goTo(p2.block.blockNumber(), p2.column);
+            }
+        }
+    });
 }
 
 QAction *Qutepart::createAction(const QString &text, QKeySequence shortcut,

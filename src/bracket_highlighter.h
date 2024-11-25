@@ -17,6 +17,12 @@ class BracketHighlighter {
     QList<QTextEdit::ExtraSelection> extraSelections(const TextPosition &pos);
     QTextEdit::ExtraSelection makeMatchSelection(const TextPosition &pos, bool matched);
 
+    inline const TextPosition getCachedMatch(TextPosition &pos) {
+        if (pos == cachedBracket_) {
+            return cachedMatchingBracket_;
+        }
+        return {};
+    }
   private:
     QList<QTextEdit::ExtraSelection> highlightBracket(QChar bracket, const TextPosition &pos);
     TextPosition cachedBracket_;

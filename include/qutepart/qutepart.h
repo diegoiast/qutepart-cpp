@@ -346,6 +346,8 @@ class Qutepart : public QPlainTextEdit {
     inline QAction *zoomOutAction() const { return zoomOutAction_; }
     /// Commend the current line, or selected text
     inline QAction *toggleCommentAction() const { return toggleActionComment_; }
+    /// Find matching bracket for this position
+    inline QAction *findMatchingBracketAction() const { return findMatchingBracketAction_; }
 
     // Convenience functions
     void resetSelection();
@@ -469,6 +471,7 @@ class Qutepart : public QPlainTextEdit {
     QAction *zoomInAction_;
     QAction *zoomOutAction_;
     QAction *toggleActionComment_;
+    QAction *findMatchingBracketAction_;
 
     friend class LineNumberArea;
     friend class MarkArea;
