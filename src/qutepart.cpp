@@ -383,16 +383,18 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
 }
 
 void Qutepart::keyReleaseEvent(QKeyEvent *event) {
-    bool textTyped = false;
-    if (!event->text().isEmpty()) {
-        QChar ch = event->text()[0];
-        textTyped =
-            ((event->modifiers() == Qt::NoModifier || event->modifiers() == Qt::ShiftModifier)) &&
-            (ch.isLetter() || ch.isDigit() || ch == '_');
-    }
+    if (this->focusWidget() == this) {
+        bool textTyped = false;
+        if (!event->text().isEmpty()) {
+            QChar ch = event->text()[0];
+            textTyped =
+                ((event->modifiers() == Qt::NoModifier || event->modifiers() == Qt::ShiftModifier)) &&
+                (ch.isLetter() || ch.isDigit() || ch == '_');
+        }
 
-    if (textTyped || (event->key() == Qt::Key_Backspace && completer_->isVisible())) {
-        completer_->invokeCompletionIfAvailable(false);
+        if (textTyped || (event->key() == Qt::Key_Backspace && completer_->isVisible())) {
+            completer_->invokeCompletionIfAvailable(false);
+        }
     }
 
     QPlainTextEdit::keyReleaseEvent(event);
