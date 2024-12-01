@@ -1245,8 +1245,11 @@ void Qutepart::onShortcutHome(QTextCursor::MoveMode moveMode) {
 // Smart end behaviour. Move to last non-space or to end of line
 void Qutepart::onShortcutEnd(QTextCursor::MoveMode moveMode) {
     QTextCursor cursor = textCursor();
-    int lastNonSpace = lastNonSpaceColumn(cursor.block().text());
+    int lastNonSpace = lastNonSpaceColumn(cursor.block().text()) + 1;
     int lastChar = cursor.block().length() - 1;
+    if (lastNonSpace > lastChar) {
+        lastNonSpace = lastChar;
+    }
     if (enableSmartHomeEnd_ && cursor.positionInBlock() == lastNonSpace) {
         setPositionInBlock(&cursor, lastChar, moveMode);
     } else {
