@@ -468,8 +468,10 @@ void Qutepart::initActions() {
     moveLineDownAction_ = createAction("Move line down", QKeySequence(Qt::ALT | Qt::Key_Down),
                                        QString(), [this] { this->moveSelectedLines(+1); });
 
-    deleteLineAction_ = createAction("Delete line", QKeySequence(Qt::ALT | Qt::Key_Delete),
+    deleteLineAction_ = createAction("Delete line", {},
                                      QString(), [this] { this->deleteLine(); });
+    deleteLineAction_->setShortcuts({QKeySequence(Qt::SHIFT | Qt::Key_Delete),
+                                              QKeySequence(Qt::ALT | Qt::Key_Delete)});
 
     cutLineAction_ = createAction("Cut line", QKeySequence(Qt::ALT | Qt::Key_X), QString(),
                                   [this] { this->cutLine(); });
