@@ -312,8 +312,12 @@ class Qutepart : public QPlainTextEdit {
 
     /// When cursor moves, select the current word under cursor in all the document
     void setMarkCurrentWord(bool enable);
-    bool getMarkCurrentWord();
+    bool getMarkCurrentWord() const;
 
+    /// When pressinv '[' - should we enclose the selection with '[]'? Supports for quotes etc
+    void setBracketAutoEnclose(bool enable);
+    bool getBracketAutoEnclose() const; 
+    
     // Autocompletion
     void setCompletionEnabled(bool);
     bool completionEnabled() const;
@@ -441,6 +445,7 @@ class Qutepart : public QPlainTextEdit {
     QColor indentColor_;
     QColor whitespaceColor_;
 
+    bool brakcetsQutoEnclose;
     bool completionEnabled_;
     int completionThreshold_;
     int totalMarginWidth_;

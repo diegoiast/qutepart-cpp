@@ -26,7 +26,7 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
       markArea_(std::make_unique<MarkArea>(this)), completer_(std::make_unique<Completer>(this)),
       drawIndentations_(true), drawAnyWhitespace_(false), drawIncorrectIndentation_(true),
       drawSolidEdge_(true), enableSmartHomeEnd_(true), lineLengthEdge_(80),
-      completionEnabled_(true), completionThreshold_(3),
+      brakcetsQutoEnclose(true), completionEnabled_(true), completionThreshold_(3),
       totalMarginWidth_(0) {
 
     setDefaultColors();
@@ -299,7 +299,17 @@ void Qutepart::setMarkCurrentWord(bool enable) {
     updateExtraSelections();
 }
 
-bool Qutepart::getMarkCurrentWord() { return currentWordTimer != nullptr; }
+bool Qutepart::getMarkCurrentWord() const { return currentWordTimer != nullptr; }
+
+void Qutepart::setBracketAutoEnclose(bool enable)
+{
+    brakcetsQutoEnclose = enable;
+}
+
+bool Qutepart::getBracketAutoEnclose() const
+{
+    return brakcetsQutoEnclose;
+}
 
 bool Qutepart::completionEnabled() const { return completionEnabled_; }
 
@@ -340,6 +350,17 @@ bool isCharEvent(QKeyEvent *ev) {
     return true;
 }
 
+void addBrackets(QTextCursor &cursor, QChar openBracket, QChar closeBracket) {
+    auto start = cursor.selectionStart();
+    auto end = cursor.selectionEnd();
+    cursor.beginEditBlock();
+    cursor.setPosition(start);
+    cursor.insertText(QString(openBracket));
+    cursor.setPosition(end + 1);
+    cursor.insertText(QString(closeBracket));
+    cursor.endEditBlock();
+}
+
 } // anonymous namespace
 
 void Qutepart::keyPressEvent(QKeyEvent *event) {
@@ -366,6 +387,31 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         // but single operation is more preferable.
         AtomicEditOperation op(this);
         QPlainTextEdit::keyPressEvent(event);
+    } else if (cursor.hasSelection()) {
+        switch (event->key()) {
+        case Qt::Key_Apostrophe:
+            addBrackets(cursor, '\'', '\'');
+            setTextCursor(cursor);
+            break;
+        case Qt::Key_QuoteDbl:
+            addBrackets(cursor, '"', '"');
+            setTextCursor(cursor);
+            break;
+        case Qt::Key_ParenLeft:
+            addBrackets(cursor, '(', ')');
+            setTextCursor(cursor);
+            break;
+        case Qt::Key_BracketLeft:
+            addBrackets(cursor, '[', ']');
+            setTextCursor(cursor);
+            break;
+        case Qt::Key_BraceLeft:
+            addBrackets(cursor, '{', '}');
+            setTextCursor(cursor);
+            break;
+        default:
+            QPlainTextEdit::keyPressEvent(event);
+        }
     } else {
         // make action shortcuts override keyboard events (non-default Qt
         // behaviour)
