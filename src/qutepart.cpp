@@ -660,12 +660,11 @@ void Qutepart::drawWhiteSpace(QPainter *painter, QTextBlock block, int column, Q
     if (leftCursorRect.top() == rightCursorRect.top()) { // if on the same visual line
         int middleHeight = (leftCursorRect.top() + leftCursorRect.bottom()) / 2;
         if (ch == ' ') {
-            painter->setPen(Qt::transparent);
-            painter->setBrush(QBrush(whitespaceColor_));
+            painter->setPen(whitespaceColor_);
             int xPos = (leftCursorRect.x() + rightCursorRect.x()) / 2;
-            painter->drawRect(QRect(xPos, middleHeight, 2, 2));
+            painter->drawRect(QRect(xPos, middleHeight, 1, 1));
         } else {
-            painter->setPen(whitespaceColor_.lighter(120));
+            painter->setPen(whitespaceColor_);
             painter->drawLine(leftCursorRect.x() + 3, middleHeight, rightCursorRect.x() - 3,
                               middleHeight);
         }
@@ -708,55 +707,77 @@ int Qutepart::effectiveEdgePos(const QString &text) {
     return -1;
 }
 
+/**
+ * @brief Determines which whitespace characters should be visible in the given text.
+ *
+ * This function analyzes the input text and marks whitespace characters that should
+ * be visually represented based on the current settings.
+ *
+ * @param text The input text to analyze.
+ * @param result Pointer to a QVector<bool> that will be filled with the visibility
+ *               status of each character. True means the whitespace should be visible.
+ *
+ * @details The function behaves differently based on two member variables:
+ * - If drawAnyWhitespace_ is true, all whitespace characters are marked as visible.
+ * - If drawIncorrectIndentation_ is true, only incorrect indentation is marked:
+ *   - For tab-based indentation: groups of spaces as wide as a tab are marked.
+ *   - For space-based indentation: all tabs are marked.
+ *
+ * Trailing whitespace is always marked as visible if either condition is true.
+ * If both drawAnyWhitespace_ and drawIncorrectIndentation_ are false, no whitespace
+ * will be marked.
+ *
+ * @note The function does nothing if the input text is empty.
+ *
+ * @see drawAnyWhitespace_
+ * @see drawIncorrectIndentation_
+ * @see indenter_
+ */
 void Qutepart::chooseVisibleWhitespace(const QString &text, QVector<bool> *result) {
     if (text.isEmpty()) {
         return;
     }
 
     int lastNonSpaceColumn = text.length() - 1;
-    while (lastNonSpaceColumn < 1 and lastNonSpaceColumn > text.size() &&
-           text[lastNonSpaceColumn].isSpace()) {
+    while (lastNonSpaceColumn >= 0 && text[lastNonSpaceColumn].isSpace()) {
         lastNonSpaceColumn--;
     }
 
-    // Draw not trailing whitespace
     if (drawAnyWhitespace_) {
-        // Any
-        for (int column = 0; column < lastNonSpaceColumn; column++) {
-            QChar ch = text[column];
-            if (ch.isSpace() &&
-                (ch == '\t' || column == 0 || text[column - 1].isSpace() ||
-                 ((column + 1) < lastNonSpaceColumn && text[column + 1].isSpace()))) {
+        // Mark any whitespace
+        for (int column = 0; column < text.length(); column++) {
+            if (text[column].isSpace()) {
                 result->replace(column, true);
             }
         }
     } else if (drawIncorrectIndentation_) {
-        // Only incorrect
+        // Only mark incorrect indentation
         if (indenter_->useTabs()) {
             // Find big space groups
-            QString bigSpaceGroup = QString().fill(' ', indenter_->width());
+            QString bigSpaceGroup = QString(indenter_->width(), ' ');
             for (int column = text.indexOf(bigSpaceGroup);
-                 column != -1 && column < lastNonSpaceColumn;
-                 column = text.indexOf(bigSpaceGroup, column)) {
-                int index = -1;
-                for (index = column; index < column + indenter_->width(); index++) {
+                 column != -1 && column <= lastNonSpaceColumn;
+                 column = text.indexOf(bigSpaceGroup, column + 1)) {
+                for (int index = column; index < column + indenter_->width(); index++) {
                     result->replace(index, true);
                 }
-                for (; index < lastNonSpaceColumn && text[index] == ' '; index++) {
+                // Mark any additional spaces after the big space group
+                for (int index = column + indenter_->width(); 
+                     index <= lastNonSpaceColumn && text[index] == ' '; 
+                     index++) {
                     result->replace(index, true);
                 }
-                column = index;
             }
         } else {
-            // Find tabs:
-            for (int column = text.indexOf('\t'); column != -1 && column < lastNonSpaceColumn;
-                 column = text.indexOf('\t', column)) {
+            // Find tabs
+            for (int column = text.indexOf('\t'); 
+                 column != -1 && column <= lastNonSpaceColumn;
+                 column = text.indexOf('\t', column + 1)) {
                 result->replace(column, true);
-                column += 1;
             }
         }
     }
-
+    
     // Draw trailing whitespace
     if (drawIncorrectIndentation_ || drawAnyWhitespace_) {
         for (int column = lastNonSpaceColumn + 1; column < text.length(); column++) {
