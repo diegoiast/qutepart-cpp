@@ -18,6 +18,7 @@ typedef QSharedPointer<Context> ContextPtr;
 class AbstractRule;
 typedef QSharedPointer<AbstractRule> RulePtr;
 
+class Language;
 class TextToMatch;
 class MatchResult;
 class Theme;
@@ -49,6 +50,12 @@ class Context {
     // Try to match textToMatch with nested rules
     MatchResult *tryMatch(const TextToMatch &textToMatch) const;
 
+    void setLanguage(QSharedPointer<Language> lang) {
+        this->lang = lang;
+    }
+    const QSharedPointer<Language> getLanguage() const {
+        return lang;
+    }
   protected:
     void applyMatchResult(const TextToMatch &textToMatch, const MatchResult *matchRes,
                           const Context *context, QVector<QTextLayout::FormatRange> &formats,
@@ -64,6 +71,7 @@ class Context {
     bool _dynamic;
     QList<RulePtr> rules;
     Style style;
+    QSharedPointer<Language> lang;
 };
 
 } // namespace Qutepart

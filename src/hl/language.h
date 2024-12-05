@@ -53,7 +53,7 @@ class Language {
 
     QList<ContextPtr> contexts;
     ContextStack defaultContextStack;
-
+  public:
     ContextStack getContextStack(QTextBlock block);
     ContextStack switchAtEndOfLine(ContextStack contextStack);
 };

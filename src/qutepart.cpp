@@ -1059,14 +1059,15 @@ void Qutepart::toggleComment() {
 
     AtomicEditOperation op(this);
     auto cursor = textCursor();
-    auto language = hl->getLanguage();
-    auto selectionStart = cursor.selectionStart();
-    auto selectionEnd = cursor.selectionEnd();
-
-    cursor.setPosition(selectionStart);
+    auto stack = hl->getLanguage()->getContextStack(cursor.block());
+    auto ctx = stack.currentContext();
+    auto language = ctx->getLanguage();
     auto startComment = language->getStartMultilineComment();
     auto endComment = language->getEndMultilineComment();
     auto singleLineComment = language->getSingleLineComment();
+    auto selectionStart = cursor.selectionStart();
+    auto selectionEnd = cursor.selectionEnd();
+    cursor.setPosition(selectionStart);
 
     auto handleSingleLineComment = [&]() {
         auto originalPosition = cursor.position();

@@ -800,6 +800,9 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
      */
     QHash<QString, ContextPtr> contextMap; // to resolve references
     foreach (ContextPtr ctxPtr, contexts) {
+        if (ctxPtr->getLanguage().isNull()) {
+            ctxPtr->setLanguage(languagePtr);
+        }
         contextMap[ctxPtr->name()] = ctxPtr;
     }
 
