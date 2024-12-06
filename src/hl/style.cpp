@@ -52,10 +52,9 @@ auto static applyTheme(QTextCharFormat &format, const Theme *theme, QStringView 
     }
 }
 
-QTextCharFormat defaultFormat(const QString &style, QString &error) {
+QSharedPointer<QTextCharFormat> defaultFormat(const QString &style, QString &error) {
     auto bold = false;
     auto underline = false;
-    QTextCharFormat format;
     QString colorName;
     QString bgColorName;
 
@@ -131,26 +130,27 @@ QTextCharFormat defaultFormat(const QString &style, QString &error) {
         return {};
     }
 
+    QSharedPointer<QTextCharFormat> format(new QTextCharFormat());
     if (bold) {
-        format.setFontWeight(QFont::Bold);
+        format->setFontWeight(QFont::Bold);
     }
 
     if (underline) {
-        format.setFontUnderline(true);
+        format->setFontUnderline(true);
     }
 
     if (!colorName.isNull()) {
-        format.setForeground(QColor(colorName));
+        format->setForeground(QColor(colorName));
     }
 
     if (!bgColorName.isNull()) {
-        format.setBackground(QColor(bgColorName));
+        format->setBackground(QColor(bgColorName));
     }
 
     return format;
 }
 
-QTextCharFormat makeFormat(const QString &defStyle, const QString &color,
+QSharedPointer<QTextCharFormat> makeFormat(const QString &defStyle, const QString &color,
                                            const QString & /*selColor*/,
                                            const QHash<QString, bool> &flags, QString &error) {
     auto format = defaultFormat(defStyle, error);
@@ -159,27 +159,27 @@ QTextCharFormat makeFormat(const QString &defStyle, const QString &color,
     }
 
     if (!color.isNull()) {
-        format.setForeground(QColor(color));
+        format->setForeground(QColor(color));
     }
 
     if (flags.contains("italic")) {
-        format.setFontItalic(flags["italic"]);
+        format->setFontItalic(flags["italic"]);
     }
 
     if (flags.contains("bold")) {
         if (flags["bold"]) {
-            format.setFontWeight(QFont::Bold);
+            format->setFontWeight(QFont::Bold);
         } else {
-            format.setFontWeight(QFont::Normal);
+            format->setFontWeight(QFont::Normal);
         }
     }
 
     if (flags.contains("underline")) {
-        format.setFontUnderline(flags["underline"]);
+        format->setFontUnderline(flags["underline"]);
     }
 
     if (flags.contains("strikeout")) {
-        format.setFontStrikeOut(flags["strikeout"]);
+        format->setFontStrikeOut(flags["strikeout"]);
     }
 
     return format;
@@ -220,26 +220,32 @@ Style makeStyle(const QString &defStyleName, const QString &color,
     return Style(defStyleName, format);
 }
 
-Style::Style() : _textType(' ') {}
+Style::Style() : _textType(' ') {
+    // displayFormat = QSharedPointer<QTextCharFormat>(new QTextCharFormat());
+}
 
-Style::Style(const QString &defStyleName, const QTextCharFormat &format)
+Style::Style(const QString &defStyleName, QSharedPointer<QTextCharFormat> format)
     : savedFormat(format), _textType(detectTextType(QString(), defStyleName)),
       defStyleName(defStyleName) {
-  displayFormat = savedFormat;
+    displayFormat = QSharedPointer<QTextCharFormat>(new QTextCharFormat());
+    *displayFormat = *savedFormat;
 }
 
 void Style::updateTextType(const QString &attribute) {
     _textType = detectTextType(attribute, defStyleName);
 }
 
-void Style::setTheme(const Theme *theme) {
-    if (this->theme == theme) {
+void Style::setTheme(const Theme *newTheme) {
+    if (this->theme == newTheme) {
         return;
     }
-    this->theme = theme;
-    displayFormat = savedFormat;
-    if (theme) {
-        applyTheme(displayFormat, theme, defStyleName);
+    this->theme = newTheme;
+    if (!displayFormat) {
+        return;
+    }
+    *displayFormat = *savedFormat;
+    if (newTheme) {
+        applyTheme(*displayFormat, newTheme, defStyleName);
     }
 }
 

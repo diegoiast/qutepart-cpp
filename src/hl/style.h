@@ -10,7 +10,7 @@ class Theme;
 class Style {
   public:
     Style();
-    Style(const QString &defStyleName, const QTextCharFormat &format);
+    Style(const QString &defStyleName, QSharedPointer<QTextCharFormat> format);
 
     /* Called by some clients.
        If the style knows attribute it can better detect textType
@@ -19,16 +19,16 @@ class Style {
 
     inline char textType() const { return _textType; }
     inline const QStringView getDefStyle() const { return defStyleName; }
-    inline const QTextCharFormat format() const {
+    inline const QSharedPointer<QTextCharFormat> format() const {
         return displayFormat;
     }
 
-    void setTheme(const Theme *theme);
+    void setTheme(const Theme *newTheme);
     inline const Theme* getTheme() const { return theme; }
 
   private:
-    QTextCharFormat savedFormat;
-    QTextCharFormat displayFormat;
+    QSharedPointer<QTextCharFormat> savedFormat;
+    QSharedPointer<QTextCharFormat> displayFormat;
     char _textType;
 
     QString defStyleName;

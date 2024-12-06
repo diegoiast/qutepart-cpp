@@ -148,12 +148,12 @@ void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult
                                QString &textTypeMap) const {
     auto displayFormat = matchRes->style.format();
 
-    if (!displayFormat.isValid()) {
+    if (displayFormat.isNull()) {
         displayFormat = context->style.format();
     }
 
-    if (displayFormat.isValid()) {
-        appendFormat(formats, textToMatch.currentColumnIndex, matchRes->length, displayFormat);
+    if (!displayFormat.isNull()) {
+        appendFormat(formats, textToMatch.currentColumnIndex, matchRes->length, *displayFormat);
     }
 
     QChar textType = matchRes->style.textType();
@@ -194,8 +194,8 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
             }
         } else {
             lineContinue = false;
-            if (style.format().isValid()) {
-                appendFormat(formats, textToMatch.currentColumnIndex, 1, style.format());
+            if (!style.format().isNull()) {
+                appendFormat(formats, textToMatch.currentColumnIndex, 1, *style.format());
             }
 
             textTypeMap[textToMatch.currentColumnIndex] = style.textType();
