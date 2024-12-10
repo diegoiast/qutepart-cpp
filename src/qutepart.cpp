@@ -479,30 +479,40 @@ void Qutepart::changeEvent(QEvent *event) {
 }
 
 void Qutepart::drawMinimapText(QPainter *painter, bool simple) {
-    painter->save();
-
-    // TODO: should be lighter on dark themes
-    auto viewportColor_ = palette().base().color().darker();
+    
     auto minimapArea = QRect(viewport()->width() - minimapWidth, 0, minimapWidth, viewport()->height());
     auto doc = document();
     auto block = doc->firstBlock();
-    auto lineHeight = 2; 
-    auto charWidth = 2;
-
+    auto lineHeight = 3;
+    auto charWidth = 3;
     auto viewportStartLine = verticalScrollBar()->value();
     auto viewportEndLine = viewportStartLine + (viewport()->height() / fontMetrics().height());
     auto viewportStartY = minimapArea.top() + viewportStartLine * lineHeight;
     auto viewportHeight = (viewportEndLine - viewportStartLine) * lineHeight;
     auto viewportRect = QRect(minimapArea.left(), viewportStartY, minimapWidth, viewportHeight);
-    painter->fillRect(viewportRect, viewportColor_);
-
+    auto minimapBackground = palette().base().color();    
     auto currentLineNumber = textCursor().blockNumber();
     auto currentLineY = minimapArea.top() + currentLineNumber * lineHeight;
     auto currentLineRect = QRect(minimapArea.left(), currentLineY, minimapWidth, lineHeight);
+    auto palette = this->palette();
+    auto textColor = palette.color(QPalette::Text);
+    
+    if (minimapBackground.lightnessF() < 0.5) {
+        minimapBackground = minimapBackground.lighter();
+    } else {
+        minimapBackground = minimapBackground.darker();
+    }
+    if (minimapBackground == Qt::black) {
+        minimapBackground = QColor(30, 30, 30);
+    }
+    if (minimapBackground == Qt::white) {
+        minimapBackground = QColor(225, 225, 225);
+    }
+    painter->save();
+    painter->fillRect(viewportRect, minimapBackground);
     painter->fillRect(currentLineRect, currentLineColor_.lighter());
-
-    // TODO - use default color from theme
     painter->setFont(minimapFont());
+    
     auto lineNumber = 0;
     while (block.isValid()) {
         if (lineNumber * lineHeight >= minimapArea.height()) {
@@ -515,7 +525,7 @@ void Qutepart::drawMinimapText(QPainter *painter, bool simple) {
             painter->drawRect(minimapArea.left(), minimapArea.top() + lineNumber * lineHeight, minimapWidth, lineHeight);
         }
         
-        painter->setPen(Qt::black);
+        painter->setPen(textColor);
         if (simple) {
             auto lineText = block.text();
             for (auto charIndex = 0; charIndex < lineText.length(); ++charIndex) {
