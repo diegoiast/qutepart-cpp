@@ -479,24 +479,43 @@ void Qutepart::changeEvent(QEvent *event) {
 }
 
 void Qutepart::drawMinimapText(QPainter *painter, bool simple) {
-    
     auto minimapArea = QRect(viewport()->width() - minimapWidth, 0, minimapWidth, viewport()->height());
     auto doc = document();
     auto block = doc->firstBlock();
     auto lineHeight = 3;
     auto charWidth = 3;
+    auto totalLines = doc->blockCount();
+    auto viewportLines = viewport()->height() / fontMetrics().height();
     auto viewportStartLine = verticalScrollBar()->value();
-    auto viewportEndLine = viewportStartLine + (viewport()->height() / fontMetrics().height());
-    auto viewportStartY = minimapArea.top() + viewportStartLine * lineHeight;
-    auto viewportHeight = (viewportEndLine - viewportStartLine) * lineHeight;
-    auto viewportRect = QRect(minimapArea.left(), viewportStartY, minimapWidth, viewportHeight);
-    auto minimapBackground = palette().base().color();    
+    auto minimapContentHeight = totalLines * lineHeight;
+    auto minimapVisibleHeight = minimapArea.height();
+    
+    auto minimapOffset = 0;
+    if (minimapContentHeight > minimapVisibleHeight) {
+        auto scrollRatio = static_cast<float>(viewportStartLine) / totalLines;
+        minimapOffset = static_cast<int>(scrollRatio * (minimapContentHeight - minimapVisibleHeight));
+        minimapOffset = std::min(minimapOffset, minimapContentHeight - minimapVisibleHeight);
+    }
+
+    auto viewportStartY = viewportStartLine * lineHeight - minimapOffset;
+    auto viewportHeight = viewportLines * lineHeight;
+    auto viewportRect = QRect(
+        minimapArea.left(),
+        std::max(0, std::min(viewportStartY, minimapVisibleHeight - viewportHeight)),
+        minimapWidth,
+        std::min(viewportHeight, minimapArea.height()));
+
     auto currentLineNumber = textCursor().blockNumber();
-    auto currentLineY = minimapArea.top() + currentLineNumber * lineHeight;
-    auto currentLineRect = QRect(minimapArea.left(), currentLineY, minimapWidth, lineHeight);
+    auto currentLineY = currentLineNumber * lineHeight - minimapOffset;
+    auto currentLineRect = QRect(
+        minimapArea.left(),
+        std::max(0, std::min(currentLineY, minimapVisibleHeight - lineHeight)),
+        minimapWidth,
+        lineHeight);
+    
     auto palette = this->palette();
     auto textColor = palette.color(QPalette::Text);
-    
+    auto minimapBackground = palette.base().color();
     if (minimapBackground.lightnessF() < 0.5) {
         minimapBackground = minimapBackground.lighter();
     } else {
@@ -509,29 +528,28 @@ void Qutepart::drawMinimapText(QPainter *painter, bool simple) {
         minimapBackground = QColor(225, 225, 225);
     }
     painter->save();
+    // TODO - do we want a background for the minimap?
+    // painter->fillRect(minimapArea, minimapBackground);
     painter->fillRect(viewportRect, minimapBackground);
-    painter->fillRect(currentLineRect, currentLineColor_.lighter());
+    painter->fillRect(currentLineRect, currentLineColor_);
     painter->setFont(minimapFont());
     
     auto lineNumber = 0;
     while (block.isValid()) {
-        if (lineNumber * lineHeight >= minimapArea.height()) {
+        auto y = lineNumber * lineHeight - minimapOffset;
+        if (y >= minimapArea.height()) {
             break;
         }
-        
         if (lineNumber == currentLineNumber) {
             painter->setPen(Qt::NoPen);
             painter->setBrush(currentLineColor_);
-            painter->drawRect(minimapArea.left(), minimapArea.top() + lineNumber * lineHeight, minimapWidth, lineHeight);
-        }
-        
+            painter->drawRect(minimapArea.left(), y, minimapWidth, lineHeight);
+        }        
         painter->setPen(textColor);
         if (simple) {
             auto lineText = block.text();
             for (auto charIndex = 0; charIndex < lineText.length(); ++charIndex) {
                 auto dotX = minimapArea.left() + charIndex * charWidth;
-                auto dotY = minimapArea.top() + lineNumber * lineHeight;
-                
                 if (dotX >= minimapArea.right()) {
                     break;
                 }
@@ -539,17 +557,16 @@ void Qutepart::drawMinimapText(QPainter *painter, bool simple) {
                     lineText.at(charIndex).isLetterOrNumber() ||
                     lineText.at(charIndex).isPunct();
                 if (isDrawable) {
-                    painter->drawPoint(dotX, dotY);
+                    painter->drawPoint(dotX, y);
                 }
             }
         } else {
             auto padding = 5;
-            auto textRect = QRectF (
+            auto textRect = QRectF(
                 minimapArea.left() + padding,
-                minimapArea.top() + lineNumber * lineHeight,
-                minimapWidth - padding*2,
+                y,
+                minimapWidth - padding * 2,
                 lineHeight);
-    
             painter->drawText(textRect, Qt::AlignLeft, block.text());
         }
         block = block.next();
