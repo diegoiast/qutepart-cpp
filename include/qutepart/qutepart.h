@@ -362,6 +362,9 @@ class Qutepart : public QPlainTextEdit {
     void paintEvent(QPaintEvent *event) override;
     void changeEvent(QEvent *event) override;
 
+    void drawMinimapText(QPainter *painter, bool simple);
+    QFont minimapFont() const;
+
   private:
     void initActions();
     QAction *createAction(const QString &text, QKeySequence shortcut, const QString &iconFileName,

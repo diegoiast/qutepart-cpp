@@ -21,6 +21,8 @@
 
 namespace Qutepart {
 
+auto minimapWidth = 100;
+
 Qutepart::Qutepart(QWidget *parent, const QString &text)
     : QPlainTextEdit(text, parent), indenter_(std::make_unique<Indenter>()),
       markArea_(std::make_unique<MarkArea>(this)), completer_(std::make_unique<Completer>(this)),
@@ -39,11 +41,14 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     connect(this, &Qutepart::cursorPositionChanged, this, [this]() {
         lastWordUnderCursor.clear();
         updateExtraSelections();
+        viewport()->update();
     });
 
     setBracketHighlightingEnabled(true);
     setLineNumbersVisible(true);
     setMarkCurrentWord(true);
+    
+    setViewportMargins(minimapWidth + 10, 0, 0, 0);
 }
 
 QList<QTextEdit::ExtraSelection> Qutepart::highlightWord(const QString &word) {
@@ -449,6 +454,10 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
 void Qutepart::paintEvent(QPaintEvent *event) {
     QPlainTextEdit::paintEvent(event);
     drawIndentMarkersAndEdge(event->rect());
+    
+    QPainter painter(viewport());
+    auto isLargeDocument = document()->blockCount() > 10000;
+    drawMinimapText(&painter, isLargeDocument);
 }
 
 void Qutepart::changeEvent(QEvent *event) {
@@ -467,6 +476,83 @@ void Qutepart::changeEvent(QEvent *event) {
             lineNumberArea_->setFont(font());
         }
     }
+}
+
+void Qutepart::drawMinimapText(QPainter *painter, bool simple) {
+    painter->save();
+
+    // TODO: should be lighter on dark themes
+    auto viewportColor_ = palette().base().color().darker();
+    auto minimapArea = QRect(viewport()->width() - minimapWidth, 0, minimapWidth, viewport()->height());
+    auto doc = document();
+    auto block = doc->firstBlock();
+    auto lineHeight = 2; 
+    auto charWidth = 2;
+
+    auto viewportStartLine = verticalScrollBar()->value();
+    auto viewportEndLine = viewportStartLine + (viewport()->height() / fontMetrics().height());
+    auto viewportStartY = minimapArea.top() + viewportStartLine * lineHeight;
+    auto viewportHeight = (viewportEndLine - viewportStartLine) * lineHeight;
+    auto viewportRect = QRect(minimapArea.left(), viewportStartY, minimapWidth, viewportHeight);
+    painter->fillRect(viewportRect, viewportColor_);
+
+    auto currentLineNumber = textCursor().blockNumber();
+    auto currentLineY = minimapArea.top() + currentLineNumber * lineHeight;
+    auto currentLineRect = QRect(minimapArea.left(), currentLineY, minimapWidth, lineHeight);
+    painter->fillRect(currentLineRect, currentLineColor_.lighter());
+
+    // TODO - use default color from theme
+    painter->setFont(minimapFont());
+    auto lineNumber = 0;
+    while (block.isValid()) {
+        if (lineNumber * lineHeight >= minimapArea.height()) {
+            break;
+        }
+        
+        if (lineNumber == currentLineNumber) {
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(currentLineColor_);
+            painter->drawRect(minimapArea.left(), minimapArea.top() + lineNumber * lineHeight, minimapWidth, lineHeight);
+        }
+        
+        painter->setPen(Qt::black);
+        if (simple) {
+            auto lineText = block.text();
+            for (auto charIndex = 0; charIndex < lineText.length(); ++charIndex) {
+                auto dotX = minimapArea.left() + charIndex * charWidth;
+                auto dotY = minimapArea.top() + lineNumber * lineHeight;
+                
+                if (dotX >= minimapArea.right()) {
+                    break;
+                }
+                auto isDrawable =
+                    lineText.at(charIndex).isLetterOrNumber() ||
+                    lineText.at(charIndex).isPunct();
+                if (isDrawable) {
+                    painter->drawPoint(dotX, dotY);
+                }
+            }
+        } else {
+            auto padding = 5;
+            auto textRect = QRectF (
+                minimapArea.left() + padding,
+                minimapArea.top() + lineNumber * lineHeight,
+                minimapWidth - padding*2,
+                lineHeight);
+    
+            painter->drawText(textRect, Qt::AlignLeft, block.text());
+        }
+        block = block.next();
+        lineNumber++;
+    }
+
+    painter->restore();
+}
+
+QFont Qutepart::minimapFont() const {
+    QFont font = this->font();
+    font.setPointSizeF(2); // Force the font size to 1px
+    return font;
 }
 
 void Qutepart::initActions() {
