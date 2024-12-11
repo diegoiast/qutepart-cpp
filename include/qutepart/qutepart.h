@@ -91,6 +91,7 @@ class Indenter;
 class BracketHighlighter;
 class LineNumberArea;
 class MarkArea;
+class Minimap;
 class Completer;
 class Theme;
 
@@ -305,6 +306,9 @@ class Qutepart : public QPlainTextEdit {
     bool lineNumbersVisible() const;
     void setLineNumbersVisible(bool value);
 
+    bool minimapVisible() const;
+    void setMinimapVisible(bool value);    
+
     /// To to logical, or phisical end/start of line.
     bool getSmartHomeEnd() const;
     /// To to logical, or phisical end/start of line.
@@ -361,9 +365,6 @@ class Qutepart : public QPlainTextEdit {
     void keyReleaseEvent(QKeyEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void changeEvent(QEvent *event) override;
-
-    void drawMinimapText(QPainter *painter, bool simple);
-    QFont minimapFont() const;
 
   private:
     void initActions();
@@ -432,6 +433,7 @@ class Qutepart : public QPlainTextEdit {
     std::unique_ptr<BracketHighlighter> bracketHighlighter_;
     std::unique_ptr<LineNumberArea> lineNumberArea_;
     std::unique_ptr<MarkArea> markArea_;
+    std::unique_ptr<Minimap> miniMap_;
     std::unique_ptr<Completer> completer_;
 
     bool drawIndentations_;

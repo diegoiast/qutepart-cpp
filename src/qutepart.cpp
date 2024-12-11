@@ -21,7 +21,6 @@
 
 namespace Qutepart {
 
-auto minimapWidth = 100;
 
 Qutepart::Qutepart(QWidget *parent, const QString &text)
     : QPlainTextEdit(text, parent), indenter_(std::make_unique<Indenter>()),
@@ -46,9 +45,8 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
 
     setBracketHighlightingEnabled(true);
     setLineNumbersVisible(true);
+    setMinimapVisible(true);
     setMarkCurrentWord(true);
-    
-    setViewportMargins(minimapWidth + 10, 0, 0, 0);
 }
 
 QList<QTextEdit::ExtraSelection> Qutepart::highlightWord(const QString &word) {
@@ -254,6 +252,18 @@ void Qutepart::setLineNumbersVisible(bool value) {
     updateViewport();
 }
 
+
+bool Qutepart::minimapVisible() const { return lineNumberArea_.get(); }
+
+void Qutepart::setMinimapVisible(bool value) {
+    if ((!value) && miniMap_) {
+        miniMap_.reset();
+    } else if (value && (!miniMap_)) {
+        miniMap_ = std::make_unique<Minimap>(this);
+    }
+    updateViewport();
+}
+
 bool Qutepart::getSmartHomeEnd() const { return enableSmartHomeEnd_; }
 
 void Qutepart::setSmartHomeEnd(bool value) { enableSmartHomeEnd_ = value; }
@@ -454,10 +464,6 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
 void Qutepart::paintEvent(QPaintEvent *event) {
     QPlainTextEdit::paintEvent(event);
     drawIndentMarkersAndEdge(event->rect());
-    
-    QPainter painter(viewport());
-    auto isLargeDocument = document()->blockCount() > 10000;
-    drawMinimapText(&painter, isLargeDocument);
 }
 
 void Qutepart::changeEvent(QEvent *event) {
@@ -476,110 +482,6 @@ void Qutepart::changeEvent(QEvent *event) {
             lineNumberArea_->setFont(font());
         }
     }
-}
-
-void Qutepart::drawMinimapText(QPainter *painter, bool simple) {
-    auto minimapArea = QRect(viewport()->width() - minimapWidth, 0, minimapWidth, viewport()->height());
-    auto doc = document();
-    auto block = doc->firstBlock();
-    auto lineHeight = 3;
-    auto charWidth = 3;
-    auto totalLines = doc->blockCount();
-    auto viewportLines = viewport()->height() / fontMetrics().height();
-    auto viewportStartLine = verticalScrollBar()->value();
-    auto minimapContentHeight = totalLines * lineHeight;
-    auto minimapVisibleHeight = minimapArea.height();
-    
-    auto minimapOffset = 0;
-    if (minimapContentHeight > minimapVisibleHeight) {
-        auto scrollRatio = static_cast<float>(viewportStartLine) / totalLines;
-        minimapOffset = static_cast<int>(scrollRatio * (minimapContentHeight - minimapVisibleHeight));
-        minimapOffset = std::min(minimapOffset, minimapContentHeight - minimapVisibleHeight);
-    }
-
-    auto viewportStartY = viewportStartLine * lineHeight - minimapOffset;
-    auto viewportHeight = viewportLines * lineHeight;
-    auto viewportRect = QRect(
-        minimapArea.left(),
-        std::max(0, std::min(viewportStartY, minimapVisibleHeight - viewportHeight)),
-        minimapWidth,
-        std::min(viewportHeight, minimapArea.height()));
-
-    auto currentLineNumber = textCursor().blockNumber();
-    auto currentLineY = currentLineNumber * lineHeight - minimapOffset;
-    auto currentLineRect = QRect(
-        minimapArea.left(),
-        std::max(0, std::min(currentLineY, minimapVisibleHeight - lineHeight)),
-        minimapWidth,
-        lineHeight);
-    
-    auto palette = this->palette();
-    auto textColor = palette.color(QPalette::Text);
-    auto minimapBackground = palette.base().color();
-    if (minimapBackground.lightnessF() < 0.5) {
-        minimapBackground = minimapBackground.lighter();
-    } else {
-        minimapBackground = minimapBackground.darker();
-    }
-    if (minimapBackground == Qt::black) {
-        minimapBackground = QColor(30, 30, 30);
-    }
-    if (minimapBackground == Qt::white) {
-        minimapBackground = QColor(225, 225, 225);
-    }
-    painter->save();
-    // TODO - do we want a background for the minimap?
-    // painter->fillRect(minimapArea, minimapBackground);
-    painter->fillRect(viewportRect, minimapBackground);
-    painter->fillRect(currentLineRect, currentLineColor_);
-    painter->setFont(minimapFont());
-    
-    auto lineNumber = 0;
-    while (block.isValid()) {
-        auto y = lineNumber * lineHeight - minimapOffset;
-        if (y >= minimapArea.height()) {
-            break;
-        }
-        if (lineNumber == currentLineNumber) {
-            painter->setPen(Qt::NoPen);
-            painter->setBrush(currentLineColor_);
-            painter->drawRect(minimapArea.left(), y, minimapWidth, lineHeight);
-        }        
-        painter->setPen(textColor);
-        if (simple) {
-            auto lineText = block.text();
-            for (auto charIndex = 0; charIndex < lineText.length(); ++charIndex) {
-                auto dotX = minimapArea.left() + charIndex * charWidth;
-                if (dotX >= minimapArea.right()) {
-                    break;
-                }
-                auto isDrawable =
-                    lineText.at(charIndex).isLetterOrNumber() ||
-                    lineText.at(charIndex).isPunct();
-                if (isDrawable) {
-                    painter->drawPoint(dotX, y);
-                }
-            }
-        } else {
-            auto padding = 5;
-            auto textRect = QRectF(
-                minimapArea.left() + padding,
-                y,
-                minimapWidth - padding * 2,
-                lineHeight);
-            painter->drawText(textRect, Qt::AlignLeft, block.text());
-        }
-        block = block.next();
-        lineNumber++;
-    }
-
-    painter->restore();
-}
-
-QFont Qutepart::minimapFont() const {
-    QFont font = this->font();
-    font.setPointSizeF(2); // Force the font size to 1px
-    return font;
 }
 
 void Qutepart::initActions() {
@@ -930,26 +832,32 @@ void Qutepart::updateViewport() {
     int currentX = cr.left();
     int top = cr.top();
     int height = cr.height();
-
-    int totalMarginWidth = 0;
+    int viewportMarginStart = 0;
+    int viewportMarginEnd = 0;
 
     if (lineNumberArea_) {
         int width = lineNumberArea_->widthHint();
         lineNumberArea_->setGeometry(QRect(currentX, top, width, height));
         currentX += width;
-        totalMarginWidth += width;
+        viewportMarginStart += width;
+    }
+    
+    if (miniMap_) {
+        int width = miniMap_->widthHint();
+        miniMap_->setGeometry(QRect(cr.width()-width, top, width, height));
+        viewportMarginEnd += width;
     }
 
     {
         int width = markArea_->widthHint();
         markArea_->setGeometry(QRect(currentX, top, width, height));
         currentX += width;
-        totalMarginWidth += width;
+        viewportMarginStart += width;
     }
 
-    if (totalMarginWidth_ != totalMarginWidth) {
-        totalMarginWidth_ = totalMarginWidth;
-        setViewportMargins(totalMarginWidth_, 0, 0, 0);
+    if (totalMarginWidth_ != viewportMarginStart) {
+        totalMarginWidth_ = viewportMarginStart;
+        setViewportMargins(totalMarginWidth_, 0, viewportMarginEnd, 0);
     }
 }
 

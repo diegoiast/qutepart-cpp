@@ -58,4 +58,18 @@ class MarkArea : public SideArea {
     QPixmap bookmarkPixmap_;
 };
 
+class Minimap : public SideArea {
+public:
+    Minimap(Qutepart *textEdit);
+
+    int widthHint() const;
+
+private:
+    QFont minimapFont() const;
+    void mousePressEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
+
+    void drawMinimapText(QPainter *painter, bool simple);
+};
+
 } // namespace Qutepart
