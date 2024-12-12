@@ -19,12 +19,10 @@ class Style {
 
     inline char textType() const { return _textType; }
     inline const QStringView getDefStyle() const { return defStyleName; }
-    inline const QSharedPointer<QTextCharFormat> format() const {
-        return displayFormat;
-    }
+    inline const QSharedPointer<QTextCharFormat> format() const { return displayFormat; }
 
     void setTheme(const Theme *newTheme);
-    inline const Theme* getTheme() const { return theme; }
+    inline const Theme *getTheme() const { return theme; }
 
   private:
     QSharedPointer<QTextCharFormat> savedFormat;
@@ -32,10 +30,10 @@ class Style {
     char _textType;
 
     QString defStyleName;
-    const Theme* theme = nullptr;
+    const Theme *theme = nullptr;
 };
 
-Style makeStyle(const QString &defStyleName, const QString &color,
-                const QString & /*selColor*/, const QHash<QString, bool> &flags, QString &error);
+Style makeStyle(const QString &defStyleName, const QString &color, const QString & /*selColor*/,
+                const QHash<QString, bool> &flags, QString &error);
 
 } // namespace Qutepart

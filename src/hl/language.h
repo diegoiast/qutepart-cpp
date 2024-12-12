@@ -14,11 +14,9 @@ class Theme;
 
 class Language {
   public:
-        Language(const QString &name, const QStringList &extensions, const QStringList &mimetypes,
-             int priority, bool hidden, const QString &indenter,
-             QString startMultilineComment,
-             QString endMultilineComment,
-             QString singleLineComment,
+    Language(const QString &name, const QStringList &extensions, const QStringList &mimetypes,
+             int priority, bool hidden, const QString &indenter, QString startMultilineComment,
+             QString endMultilineComment, QString singleLineComment,
              const QSet<QString> &allLanguageKeywords, const QList<ContextPtr> &contexts);
 
     void printDescription(QTextStream &out) const;
@@ -31,7 +29,7 @@ class Language {
 
     inline ContextPtr defaultContext() const { return contexts.first(); }
     ContextPtr getContext(const QString &contextName) const;
-    void setTheme(const Theme* theme);
+    void setTheme(const Theme *theme);
 
     inline QSet<QString> allLanguageKeywords() const { return allLanguageKeywords_; }
     inline QString getStartMultilineComment() const { return startMultilineComment; }

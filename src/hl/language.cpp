@@ -55,8 +55,8 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
 
         const Context *context = contextStack.currentContext();
 
-        contextStack = context->parseBlock(contextStack, textToMatch, formats, textTypeMap,
-                                           lineContinue);
+        contextStack =
+            context->parseBlock(contextStack, textToMatch, formats, textTypeMap, lineContinue);
     } while (!textToMatch.isEmpty());
 
     if (!lineContinue) {
@@ -80,7 +80,7 @@ ContextPtr Language::getContext(const QString &contextName) const {
 }
 
 void Language::setTheme(const Theme *theme) {
-    foreach (auto  ctx, contexts) {
+    foreach (auto ctx, contexts) {
 #if 0
         qDebug() << "Patching language " << this->name << ", context=" << ctx->name();
 #endif

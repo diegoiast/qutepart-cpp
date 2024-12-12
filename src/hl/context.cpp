@@ -59,7 +59,7 @@ void Context::setTheme(const Theme *theme) {
         fallthroughContext.context()->setTheme(theme);
     }
 
-    for (auto rule: rules) {
+    for (auto rule : rules) {
         rule->setTheme(theme);
     }
 }
@@ -221,6 +221,5 @@ MatchResult *Context::tryMatch(const TextToMatch &textToMatch) const {
 
     return nullptr;
 }
-
 
 } // namespace Qutepart

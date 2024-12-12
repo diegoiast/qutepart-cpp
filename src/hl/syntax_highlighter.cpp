@@ -1,9 +1,9 @@
 #include <QTextLayout>
 #include <Qt>
 
-#include "theme.h"
 #include "language.h"
 #include "syntax_highlighter.h"
+#include "theme.h"
 
 namespace Qutepart {
 

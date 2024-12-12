@@ -209,9 +209,8 @@ char detectTextType(const QString &attribute, const QString &defStyleName) {
     return ' ';
 }
 
-
-Style makeStyle(const QString &defStyleName, const QString &color,
-                const QString &selColor, const QHash<QString, bool> &flags, QString &error) {
+Style makeStyle(const QString &defStyleName, const QString &color, const QString &selColor,
+                const QHash<QString, bool> &flags, QString &error) {
     auto format = makeFormat(defStyleName, color, selColor, flags, error);
     if (!error.isNull()) {
         return Style();

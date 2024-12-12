@@ -21,7 +21,6 @@
 
 namespace Qutepart {
 
-
 Qutepart::Qutepart(QWidget *parent, const QString &text)
     : QPlainTextEdit(text, parent), indenter_(std::make_unique<Indenter>()),
       markArea_(std::make_unique<MarkArea>(this)), completer_(std::make_unique<Completer>(this)),
@@ -29,17 +28,17 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
       drawSolidEdge_(true), enableSmartHomeEnd_(true), lineLengthEdge_(80),
       brakcetsQutoEnclose(true), completionEnabled_(true), completionThreshold_(3),
       viewportMarginStart_(0) {
-    
+
     setBracketHighlightingEnabled(true);
     setLineNumbersVisible(true);
     setMinimapVisible(true);
     setMarkCurrentWord(true);
     setDrawSolidEdge(drawSolidEdge_);
-    
+
     setDefaultColors();
     initActions();
     setAttribute(Qt::WA_KeyCompression, false); // vim can't process compressed keys
-    
+
     updateTabStopWidth();
     connect(this, &Qutepart::cursorPositionChanged, this, [this]() {
         lastWordUnderCursor.clear();
@@ -47,9 +46,7 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
         viewport()->update();
     });
 
-    QTimer::singleShot(0, this, [this]() {
-        updateViewport();
-    });
+    QTimer::singleShot(0, this, [this]() { updateViewport(); });
 }
 
 QList<QTextEdit::ExtraSelection> Qutepart::highlightWord(const QString &word) {
@@ -255,7 +252,6 @@ void Qutepart::setLineNumbersVisible(bool value) {
     updateViewport();
 }
 
-
 bool Qutepart::minimapVisible() const { return lineNumberArea_.get(); }
 
 void Qutepart::setMinimapVisible(bool value) {
@@ -319,15 +315,9 @@ void Qutepart::setMarkCurrentWord(bool enable) {
 
 bool Qutepart::getMarkCurrentWord() const { return currentWordTimer != nullptr; }
 
-void Qutepart::setBracketAutoEnclose(bool enable)
-{
-    brakcetsQutoEnclose = enable;
-}
+void Qutepart::setBracketAutoEnclose(bool enable) { brakcetsQutoEnclose = enable; }
 
-bool Qutepart::getBracketAutoEnclose() const
-{
-    return brakcetsQutoEnclose;
-}
+bool Qutepart::getBracketAutoEnclose() const { return brakcetsQutoEnclose; }
 
 bool Qutepart::completionEnabled() const { return completionEnabled_; }
 
@@ -451,9 +441,9 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
         bool textTyped = false;
         if (!event->text().isEmpty()) {
             QChar ch = event->text()[0];
-            textTyped =
-                ((event->modifiers() == Qt::NoModifier || event->modifiers() == Qt::ShiftModifier)) &&
-                (ch.isLetter() || ch.isDigit() || ch == '_');
+            textTyped = ((event->modifiers() == Qt::NoModifier ||
+                          event->modifiers() == Qt::ShiftModifier)) &&
+                        (ch.isLetter() || ch.isDigit() || ch == '_');
         }
 
         if (textTyped || (event->key() == Qt::Key_Backspace && completer_->isVisible())) {
@@ -532,10 +522,9 @@ void Qutepart::initActions() {
     moveLineDownAction_ = createAction("Move line down", QKeySequence(Qt::ALT | Qt::Key_Down),
                                        QString(), [this] { this->moveSelectedLines(+1); });
 
-    deleteLineAction_ = createAction("Delete line", {},
-                                     QString(), [this] { this->deleteLine(); });
-    deleteLineAction_->setShortcuts({QKeySequence(Qt::SHIFT | Qt::Key_Delete),
-                                              QKeySequence(Qt::ALT | Qt::Key_Delete)});
+    deleteLineAction_ = createAction("Delete line", {}, QString(), [this] { this->deleteLine(); });
+    deleteLineAction_->setShortcuts(
+        {QKeySequence(Qt::SHIFT | Qt::Key_Delete), QKeySequence(Qt::ALT | Qt::Key_Delete)});
 
     cutLineAction_ = createAction("Cut line", QKeySequence(Qt::ALT | Qt::Key_X), QString(),
                                   [this] { this->cutLine(); });
@@ -622,10 +611,7 @@ void Qutepart::drawIndentMarkersAndEdge(const QRect &paintEventRect) {
         QRect cr = contentsRect();
         int x = fontMetrics().horizontalAdvance(QString().fill('9', lineLengthEdge_)) +
                 cursorRect(firstVisibleBlock(), 0, 0).left();
-        painter.drawLine(
-            QPoint(x+1, cr.top()),
-            QPoint(x+1, cr.bottom())
-        );
+        painter.drawLine(QPoint(x + 1, cr.top()), QPoint(x + 1, cr.bottom()));
     }
 
     for (QTextBlock block = firstVisibleBlock(); block.isValid(); block = block.next()) {
@@ -743,7 +729,7 @@ int Qutepart::effectiveEdgePos(const QString &text) {
  *   - For tab-based indentation: groups of spaces as wide as a tab are marked.
  *   - For space-based indentation: all tabs are marked.
  *
- * The function only processes whitespace if either drawAnyWhitespace_ or 
+ * The function only processes whitespace if either drawAnyWhitespace_ or
  * drawIncorrectIndentation_ is true. If both are false, no whitespace will be marked.
  *
  * @note The function resizes the result vector to match the length of the input text.
@@ -808,8 +794,7 @@ void Qutepart::chooseVisibleWhitespace(const QString &text, QVector<bool> *resul
                 }
             } else {
                 // Find tabs
-                for (int column = text.indexOf('\t'); 
-                     column != -1 && column <= lastNonSpaceColumn;
+                for (int column = text.indexOf('\t'); column != -1 && column <= lastNonSpaceColumn;
                      column = text.indexOf('\t', column + 1)) {
                     result->replace(column, true);
                 }
@@ -836,7 +821,7 @@ void Qutepart::updateViewport() {
     auto height = cr.height();
     auto viewportMarginStart = 0;
     auto viewportMarginEnd = 0;
-    auto deltaOrizontal = verticalScrollBar()->isVisible()? verticalScrollBar()->width() : 0;
+    auto deltaOrizontal = verticalScrollBar()->isVisible() ? verticalScrollBar()->width() : 0;
 
     if (lineNumberArea_) {
         int width = lineNumberArea_->widthHint();
@@ -844,10 +829,10 @@ void Qutepart::updateViewport() {
         currentX += width;
         viewportMarginStart += width;
     }
-    
+
     if (miniMap_) {
         int width = miniMap_->widthHint();
-        miniMap_->setGeometry(QRect(cr.width()-width-deltaOrizontal, top, width, height));
+        miniMap_->setGeometry(QRect(cr.width() - width - deltaOrizontal, top, width, height));
         viewportMarginEnd += width;
     }
 
@@ -858,8 +843,7 @@ void Qutepart::updateViewport() {
         viewportMarginStart += width;
     }
 
-    if (viewportMarginStart_ != viewportMarginStart ||
-        viewportMarginEnd_ != viewportMarginEnd) {
+    if (viewportMarginStart_ != viewportMarginStart || viewportMarginEnd_ != viewportMarginEnd) {
         viewportMarginStart_ = viewportMarginStart;
         viewportMarginEnd_ = viewportMarginEnd;
         setViewportMargins(viewportMarginStart_, 0, viewportMarginEnd, 0);
@@ -1203,7 +1187,8 @@ void Qutepart::toggleComment() {
         } else if (!startComment.isEmpty() && !endComment.isEmpty()) {
             // Language only has multi-line comments
             if (text.startsWith(startComment) && text.endsWith(endComment)) {
-                text = text.mid(startComment.length(), text.length() - startComment.length() - endComment.length());
+                text = text.mid(startComment.length(),
+                                text.length() - startComment.length() - endComment.length());
                 originalPosition -= startComment.length();
             } else {
                 text = startComment + text + endComment;
@@ -1269,7 +1254,8 @@ void Qutepart::toggleComment() {
                 if (trimmedLine.startsWith(singleLineComment)) {
                     int index = line.indexOf(singleLineComment);
                     cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, index);
-                    cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, singleLineComment.length());
+                    cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
+                                        singleLineComment.length());
                     cursor.removeSelectedText();
                 }
             } else {

@@ -25,7 +25,7 @@ struct AbstractRuleParams {
 class AbstractRule {
   public:
     AbstractRule(const AbstractRuleParams &params);
-    virtual ~AbstractRule(){}
+    virtual ~AbstractRule() {}
 
     virtual void printDescription(QTextStream &out) const;
     virtual QString description() const;
@@ -33,7 +33,7 @@ class AbstractRule {
     virtual void resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
                                           QString &error);
     virtual void setKeywordParams(const QHash<QString, QStringList> &, bool, const QString &,
-                                  QString &){}
+                                  QString &) {}
     void setStyles(const QHash<QString, Style> &styles, QString &error);
     void setTheme(const Theme *theme);
 
@@ -276,7 +276,8 @@ class IncludeRulesRule : public AbstractRule {
     QString name() const override { return "IncludeRules"; }
     QString args() const override { return contextName; }
 
-    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error) override;
+    void resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
+                                  QString &error) override;
 
   private:
     MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;

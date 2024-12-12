@@ -1,9 +1,9 @@
 #include <QDebug>
 #include <qutepart.h>
 
-#include "text_block_utils.h"
 #include "bracket_highlighter.h"
 #include "hl/text_type.h"
+#include "text_block_utils.h"
 #include "theme.h"
 
 namespace Qutepart {

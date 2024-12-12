@@ -23,6 +23,7 @@ class BracketHighlighter {
         }
         return {};
     }
+
   private:
     QList<QTextEdit::ExtraSelection> highlightBracket(QChar bracket, const TextPosition &pos);
     TextPosition cachedBracket_;

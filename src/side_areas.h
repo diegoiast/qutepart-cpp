@@ -17,7 +17,7 @@ class SideArea : public QWidget {
   protected:
     Qutepart *qpart_;
 
-    virtual void updateWidth(){};
+    virtual void updateWidth() {};
 };
 
 class LineNumberArea : public SideArea {
@@ -59,7 +59,7 @@ class MarkArea : public SideArea {
 };
 
 class Minimap : public SideArea {
-public:
+  public:
     Minimap(Qutepart *textEdit);
 
     int widthHint() const;
@@ -78,7 +78,6 @@ public:
     bool isDragging = false;
     const int lineHeight = 3;
     const int charWidth = 3;
-
 };
 
 } // namespace Qutepart

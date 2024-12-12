@@ -43,14 +43,14 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
     QMenu *viewMenu = menuBar->addMenu("View");
     viewMenu->addAction(qutepart->zoomInAction());
     viewMenu->addAction(qutepart->zoomOutAction());
-    
+
     auto minimapAction = new QAction(viewMenu);
     minimapAction->setText("Show/hide minimap");
     minimapAction->setCheckable(true);
     minimapAction->setChecked(qutepart->minimapVisible());
-    QObject::connect(minimapAction, &QAction::triggered, minimapAction, [minimapAction, qutepart]() {
-        qutepart->setMinimapVisible(minimapAction->isChecked());
-    });
+    QObject::connect(
+        minimapAction, &QAction::triggered, minimapAction,
+        [minimapAction, qutepart]() { qutepart->setMinimapVisible(minimapAction->isChecked()); });
     viewMenu->addAction(minimapAction);
 
     QMenu *navMenu = menuBar->addMenu("Navigation");

@@ -307,7 +307,7 @@ class Qutepart : public QPlainTextEdit {
     void setLineNumbersVisible(bool value);
 
     bool minimapVisible() const;
-    void setMinimapVisible(bool value);    
+    void setMinimapVisible(bool value);
 
     /// To to logical, or phisical end/start of line.
     bool getSmartHomeEnd() const;
@@ -320,8 +320,8 @@ class Qutepart : public QPlainTextEdit {
 
     /// When pressinv '[' - should we enclose the selection with '[]'? Supports for quotes etc
     void setBracketAutoEnclose(bool enable);
-    bool getBracketAutoEnclose() const; 
-    
+    bool getBracketAutoEnclose() const;
+
     // Autocompletion
     void setCompletionEnabled(bool);
     bool completionEnabled() const;
@@ -486,6 +486,7 @@ class Qutepart : public QPlainTextEdit {
 
     friend class LineNumberArea;
     friend class MarkArea;
+
   public:
     int MaxLinesForWordHighligher = 100000;
 };
