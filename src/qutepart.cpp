@@ -827,13 +827,13 @@ QTextEdit::ExtraSelection Qutepart::currentLineExtraSelection() const {
 }
 
 void Qutepart::updateViewport() {
-    // Recalculates geometry for all the margins and the editor viewport
-    QRect cr = contentsRect();
-    int currentX = cr.left();
-    int top = cr.top();
-    int height = cr.height();
-    int viewportMarginStart = 0;
-    int viewportMarginEnd = 0;
+    auto cr = contentsRect();
+    auto currentX = cr.left();
+    auto top = cr.top();
+    auto height = cr.height();
+    auto viewportMarginStart = 0;
+    auto viewportMarginEnd = 0;
+    auto deltaOrizontal = verticalScrollBar()->isVisible()? verticalScrollBar()->width() : 0;
 
     if (lineNumberArea_) {
         int width = lineNumberArea_->widthHint();
@@ -844,7 +844,7 @@ void Qutepart::updateViewport() {
     
     if (miniMap_) {
         int width = miniMap_->widthHint();
-        miniMap_->setGeometry(QRect(cr.width()-width, top, width, height));
+        miniMap_->setGeometry(QRect(cr.width()-width-deltaOrizontal, top, width, height));
         viewportMarginEnd += width;
     }
 
@@ -867,8 +867,7 @@ void Qutepart::resizeEvent(QResizeEvent *event) {
 }
 
 void Qutepart::updateTabStopWidth() {
-    // Update tabstop width after font or indentation changed
-    int width = fontMetrics().horizontalAdvance(QString().fill(' ', indenter_->width()));
+    auto width = fontMetrics().horizontalAdvance(QString().fill(' ', indenter_->width()));
     setTabStopDistance(width);
 }
 
