@@ -234,8 +234,18 @@ void Minimap::mouseReleaseEvent(QMouseEvent *) {
     isDragging = false;
 }
 
-void Minimap::paintEvent(QPaintEvent *event)
-{
+void Minimap::wheelEvent(QWheelEvent *event) {
+    auto totalLines = qpart_->document()->blockCount();
+    auto delta = event->angleDelta().y();
+    auto linesToScroll = delta / 120;
+    auto currentLine = qpart_->verticalScrollBar()->value();
+    auto newLine = qBound(0, currentLine - linesToScroll, totalLines - 1);
+    
+    qpart_->verticalScrollBar()->setValue(newLine);
+    event->accept();
+}
+
+void Minimap::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     auto isLargeDocument = qpart_->document()->blockCount() > 10000;
     auto palette = this->palette();
