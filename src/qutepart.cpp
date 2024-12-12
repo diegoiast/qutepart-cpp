@@ -28,14 +28,18 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
       drawIndentations_(true), drawAnyWhitespace_(false), drawIncorrectIndentation_(true),
       drawSolidEdge_(true), enableSmartHomeEnd_(true), lineLengthEdge_(80),
       brakcetsQutoEnclose(true), completionEnabled_(true), completionThreshold_(3),
-      totalMarginWidth_(0) {
-
+      viewportMarginStart_(0) {
+    
+    setBracketHighlightingEnabled(true);
+    setLineNumbersVisible(true);
+    setMinimapVisible(true);
+    setMarkCurrentWord(true);
+    setDrawSolidEdge(drawSolidEdge_);
+    
     setDefaultColors();
     initActions();
-    setAttribute(Qt::WA_KeyCompression,
-                 false); // vim can't process compressed keys
-
-    setDrawSolidEdge(drawSolidEdge_);
+    setAttribute(Qt::WA_KeyCompression, false); // vim can't process compressed keys
+    
     updateTabStopWidth();
     connect(this, &Qutepart::cursorPositionChanged, this, [this]() {
         lastWordUnderCursor.clear();
@@ -43,10 +47,9 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
         viewport()->update();
     });
 
-    setBracketHighlightingEnabled(true);
-    setLineNumbersVisible(true);
-    setMinimapVisible(true);
-    setMarkCurrentWord(true);
+    QTimer::singleShot(0, this, [this]() {
+        updateViewport();
+    });
 }
 
 QList<QTextEdit::ExtraSelection> Qutepart::highlightWord(const QString &word) {
@@ -855,9 +858,11 @@ void Qutepart::updateViewport() {
         viewportMarginStart += width;
     }
 
-    if (totalMarginWidth_ != viewportMarginStart) {
-        totalMarginWidth_ = viewportMarginStart;
-        setViewportMargins(totalMarginWidth_, 0, viewportMarginEnd, 0);
+    if (viewportMarginStart_ != viewportMarginStart ||
+        viewportMarginEnd_ != viewportMarginEnd) {
+        viewportMarginStart_ = viewportMarginStart;
+        viewportMarginEnd_ = viewportMarginEnd;
+        setViewportMargins(viewportMarginStart_, 0, viewportMarginEnd, 0);
     }
 }
 

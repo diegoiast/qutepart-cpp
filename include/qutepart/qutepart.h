@@ -453,7 +453,8 @@ class Qutepart : public QPlainTextEdit {
     bool brakcetsQutoEnclose;
     bool completionEnabled_;
     int completionThreshold_;
-    int totalMarginWidth_;
+    int viewportMarginStart_;
+    int viewportMarginEnd_;
 
     // private, not API
     QAction *homeAction_;
@@ -485,7 +486,7 @@ class Qutepart : public QPlainTextEdit {
 
     friend class LineNumberArea;
     friend class MarkArea;
-public:
+  public:
     int MaxLinesForWordHighligher = 100000;
 };
 
