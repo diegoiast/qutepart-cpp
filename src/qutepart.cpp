@@ -21,29 +21,35 @@
 
 namespace Qutepart {
 
+
 Qutepart::Qutepart(QWidget *parent, const QString &text)
     : QPlainTextEdit(text, parent), indenter_(std::make_unique<Indenter>()),
       markArea_(std::make_unique<MarkArea>(this)), completer_(std::make_unique<Completer>(this)),
       drawIndentations_(true), drawAnyWhitespace_(false), drawIncorrectIndentation_(true),
       drawSolidEdge_(true), enableSmartHomeEnd_(true), lineLengthEdge_(80),
       brakcetsQutoEnclose(true), completionEnabled_(true), completionThreshold_(3),
-      totalMarginWidth_(0) {
-
+      viewportMarginStart_(0) {
+    
+    setBracketHighlightingEnabled(true);
+    setLineNumbersVisible(true);
+    setMinimapVisible(true);
+    setMarkCurrentWord(true);
+    setDrawSolidEdge(drawSolidEdge_);
+    
     setDefaultColors();
     initActions();
-    setAttribute(Qt::WA_KeyCompression,
-                 false); // vim can't process compressed keys
-
-    setDrawSolidEdge(drawSolidEdge_);
+    setAttribute(Qt::WA_KeyCompression, false); // vim can't process compressed keys
+    
     updateTabStopWidth();
     connect(this, &Qutepart::cursorPositionChanged, this, [this]() {
         lastWordUnderCursor.clear();
         updateExtraSelections();
+        viewport()->update();
     });
 
-    setBracketHighlightingEnabled(true);
-    setLineNumbersVisible(true);
-    setMarkCurrentWord(true);
+    QTimer::singleShot(0, this, [this]() {
+        updateViewport();
+    });
 }
 
 QList<QTextEdit::ExtraSelection> Qutepart::highlightWord(const QString &word) {
@@ -245,6 +251,18 @@ void Qutepart::setLineNumbersVisible(bool value) {
         lineNumberArea_ = std::make_unique<LineNumberArea>(this);
         connect(lineNumberArea_.get(), &LineNumberArea::widthChanged, this,
                 &Qutepart::updateViewport);
+    }
+    updateViewport();
+}
+
+
+bool Qutepart::minimapVisible() const { return lineNumberArea_.get(); }
+
+void Qutepart::setMinimapVisible(bool value) {
+    if ((!value) && miniMap_) {
+        miniMap_.reset();
+    } else if (value && (!miniMap_)) {
+        miniMap_ = std::make_unique<Minimap>(this);
     }
     updateViewport();
 }
@@ -812,31 +830,39 @@ QTextEdit::ExtraSelection Qutepart::currentLineExtraSelection() const {
 }
 
 void Qutepart::updateViewport() {
-    // Recalculates geometry for all the margins and the editor viewport
-    QRect cr = contentsRect();
-    int currentX = cr.left();
-    int top = cr.top();
-    int height = cr.height();
-
-    int totalMarginWidth = 0;
+    auto cr = contentsRect();
+    auto currentX = cr.left();
+    auto top = cr.top();
+    auto height = cr.height();
+    auto viewportMarginStart = 0;
+    auto viewportMarginEnd = 0;
+    auto deltaOrizontal = verticalScrollBar()->isVisible()? verticalScrollBar()->width() : 0;
 
     if (lineNumberArea_) {
         int width = lineNumberArea_->widthHint();
         lineNumberArea_->setGeometry(QRect(currentX, top, width, height));
         currentX += width;
-        totalMarginWidth += width;
+        viewportMarginStart += width;
+    }
+    
+    if (miniMap_) {
+        int width = miniMap_->widthHint();
+        miniMap_->setGeometry(QRect(cr.width()-width-deltaOrizontal, top, width, height));
+        viewportMarginEnd += width;
     }
 
     {
         int width = markArea_->widthHint();
         markArea_->setGeometry(QRect(currentX, top, width, height));
         currentX += width;
-        totalMarginWidth += width;
+        viewportMarginStart += width;
     }
 
-    if (totalMarginWidth_ != totalMarginWidth) {
-        totalMarginWidth_ = totalMarginWidth;
-        setViewportMargins(totalMarginWidth_, 0, 0, 0);
+    if (viewportMarginStart_ != viewportMarginStart ||
+        viewportMarginEnd_ != viewportMarginEnd) {
+        viewportMarginStart_ = viewportMarginStart;
+        viewportMarginEnd_ = viewportMarginEnd;
+        setViewportMargins(viewportMarginStart_, 0, viewportMarginEnd, 0);
     }
 }
 
@@ -846,8 +872,7 @@ void Qutepart::resizeEvent(QResizeEvent *event) {
 }
 
 void Qutepart::updateTabStopWidth() {
-    // Update tabstop width after font or indentation changed
-    int width = fontMetrics().horizontalAdvance(QString().fill(' ', indenter_->width()));
+    auto width = fontMetrics().horizontalAdvance(QString().fill(' ', indenter_->width()));
     setTabStopDistance(width);
 }
 
