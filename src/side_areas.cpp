@@ -215,46 +215,29 @@ Minimap::Minimap(Qutepart *textEdit):SideArea(textEdit)
     // TODO?
 }
 
-QFont Minimap::minimapFont() const {
-    QFont font = this->font();
-    font.setPointSizeF(2);
-    return font;
+int Minimap::widthHint() const {
+    return 150;
 }
 
-void Minimap::mousePressEvent(QMouseEvent *event)
-{
-    auto pos = event->pos();
-    auto doc = qpart_->document();
-    auto totalLines = doc->blockCount();
-    auto minimapContentHeight = totalLines * 3; // lineHeight is 3
-    auto minimapVisibleHeight = height();
-    
-    // Calculate the clicked position relative to the entire document
-    float clickRatio = static_cast<float>(pos.y()) / minimapVisibleHeight;
-    int clickedLine = static_cast<int>(clickRatio * totalLines);
-    
-    // Adjust for minimap offset if necessary
-    if (minimapContentHeight > minimapVisibleHeight) {
-        auto viewportStartLine = qpart_->verticalScrollBar()->value();
-        auto scrollRatio = static_cast<float>(viewportStartLine) / totalLines;
-        auto minimapOffset = static_cast<int>(scrollRatio * (minimapContentHeight - minimapVisibleHeight));
-        clickedLine += minimapOffset / 3; // Divide by lineHeight (3) to get line number
+void Minimap::mouseMoveEvent(QMouseEvent *event) {
+    if (isDragging) {
+        updateScroll(event->pos());
     }
-    
-    // Ensure the clicked line is within bounds
-    clickedLine = qBound(0, clickedLine, totalLines - 1);
-    
-    // Set cursor to the clicked line and scroll to it
-    QTextCursor cursor(doc->findBlockByNumber(clickedLine));
-    qpart_->setTextCursor(cursor);
-    qpart_->ensureCursorVisible();
+}
+
+void Minimap::mousePressEvent(QMouseEvent *event) {
+    isDragging = true;
+    updateScroll(event->pos());
+}
+
+void Minimap::mouseReleaseEvent(QMouseEvent *) {
+    isDragging = false;
 }
 
 void Minimap::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
     auto isLargeDocument = qpart_->document()->blockCount() > 10000;
-    
     auto palette = this->palette();
     // auto background = palette.color(QPalette::Base);
     auto background = palette.color(QPalette::AlternateBase);
@@ -262,12 +245,41 @@ void Minimap::paintEvent(QPaintEvent *event)
     drawMinimapText(&painter, isLargeDocument);
 }
 
+
+QFont Minimap::minimapFont() const {
+    QFont font = this->font();
+    font.setPointSizeF(2);
+    return font;
+}
+
+void Minimap::updateScroll(const QPoint &pos) {
+    auto doc = qpart_->document();
+    auto totalLines = doc->blockCount();
+    auto minimapContentHeight = totalLines * lineHeight;
+    auto minimapVisibleHeight = height();
+
+    auto minimapOffset = 0;
+    if (minimapContentHeight > minimapVisibleHeight) {
+        auto viewportStartLine = qpart_->verticalScrollBar()->value();
+        auto scrollRatio = static_cast<float>(viewportStartLine) / totalLines;
+        minimapOffset = static_cast<int>(scrollRatio * (minimapContentHeight - minimapVisibleHeight));
+    }
+
+    auto clickedLine = static_cast<int>((pos.y() + minimapOffset) / lineHeight);
+    clickedLine = qBound(0, clickedLine, totalLines - 1); // Ensure within bounds
+
+    // Center the clicked line in the viewport
+    auto visibleLines = qpart_->viewport()->height() / qpart_->fontMetrics().height();
+    auto scrollToLine = qMax(0, clickedLine - visibleLines / 2);
+    auto cursor = QTextCursor(doc->findBlockByNumber(clickedLine));
+    qpart_->setTextCursor(cursor);
+    qpart_->verticalScrollBar()->setValue(scrollToLine);
+}
+
 void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     auto minimapArea = rect();
     auto doc = qpart_->document();
     auto block = doc->firstBlock();
-    auto lineHeight = 3;
-    auto charWidth = 3;
     auto totalLines = doc->blockCount();
     auto viewportLines = qpart_->viewport()->height() / qpart_->fontMetrics().height();
     auto viewportStartLine = qpart_->verticalScrollBar()->value();
@@ -356,10 +368,6 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     }
 
     painter->restore();
-}
-
-int Minimap::widthHint() const {
-    return 150;
 }
 
 

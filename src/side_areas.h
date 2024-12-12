@@ -64,12 +64,20 @@ public:
 
     int widthHint() const;
 
-private:
-    QFont minimapFont() const;
+  private:
+    void mouseMoveEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
 
+    QFont minimapFont() const;
+    void updateScroll(const QPoint &pos);
     void drawMinimapText(QPainter *painter, bool simple);
+
+    bool isDragging = false;
+    const int lineHeight = 3;
+    const int charWidth = 3;
+
 };
 
 } // namespace Qutepart
