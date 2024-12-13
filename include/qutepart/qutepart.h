@@ -352,7 +352,7 @@ class Qutepart : public QPlainTextEdit {
     inline QAction *zoomInAction() const { return zoomInAction_; }
     /// Zoom Out the document by scaling fonts
     inline QAction *zoomOutAction() const { return zoomOutAction_; }
-    /// Commend the current line, or selected text
+    /// Comment the current line, or selected text
     inline QAction *toggleCommentAction() const { return toggleActionComment_; }
     /// Find matching bracket for this position
     inline QAction *findMatchingBracketAction() const { return findMatchingBracketAction_; }
