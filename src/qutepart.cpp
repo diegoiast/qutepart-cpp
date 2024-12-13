@@ -559,7 +559,10 @@ void Qutepart::initActions() {
 
     findMatchingBracketAction_ = new QAction(tr("Matching bracket"), this);
     findMatchingBracketAction_->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_BracketLeft),
-                                              QKeySequence(Qt::CTRL | Qt::Key_BracketRight)});
+                                              QKeySequence(Qt::CTRL | Qt::Key_BracketRight),
+                                              QKeySequence(Qt::CTRL | Qt::Key_BraceLeft),
+                                              QKeySequence(Qt::CTRL | Qt::Key_BraceRight),
+                                              });
     connect(findMatchingBracketAction_, &QAction::triggered, findMatchingBracketAction_, [this]() {
         if (bracketHighlighter_) {
             auto cursor = textCursor();
@@ -576,7 +579,15 @@ void Qutepart::initActions() {
                 }
             }
             if (p2.isValid()) {
-                goTo(p2.block.blockNumber(), p2.column);
+                auto shiftPressed = QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier);
+
+                if (shiftPressed) {
+                    cursor.setPosition(p1.block.position() + p1.column);
+                    cursor.setPosition(p2.block.position() + p2.column + 1, QTextCursor::KeepAnchor);
+                    setTextCursor(cursor);
+                } else {
+                    goTo(p2.block.blockNumber(), p2.column);
+                }
             }
         }
     });
