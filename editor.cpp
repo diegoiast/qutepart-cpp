@@ -14,6 +14,25 @@
 #include "qutepart.h"
 #include "theme.h"
 
+// a C comment
+/* 
+ * multiline comment - other features
+ */
+
+/**
+ * \brief doxygen comment
+ * 
+ * This shows how more complex comments are supported
+ * \todo make a better demo
+ */
+
+#if 0
+this will also be displayed as a comment
+#endif
+
+
+// note the minimap on the side
+
 bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart) {
     QFile file(filePath);
     if (file.exists()) {
@@ -57,6 +76,7 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
     navMenu->addAction(qutepart->toggleBookmarkAction());
     navMenu->addAction(qutepart->prevBookmarkAction());
     navMenu->addAction(qutepart->nextBookmarkAction());
+    navMenu->addAction(qutepart->findMatchingBracketAction());
 
     navMenu->addSeparator();
     navMenu->addAction(qutepart->scrollDownAction());
@@ -99,21 +119,27 @@ int main(int argc, char **argv) {
     Q_INIT_RESOURCE(qutepart_theme_data);
     QApplication app(argc, argv);
 
+    // put cursor over a work, to highlight it on the document
     Qutepart::Theme *theme = new Qutepart::Theme;
     Qutepart::Qutepart qutepart;
+    // selection will also highlight, but now its case sensitive
+    qutepart.setMarkCurrentWord(true);
 
     theme->loadTheme(":/qutepart/themes/github-light.theme");
     qutepart.setTheme(theme);
 
     QFont font = qutepart.font();
     font.setPointSize(12);
+    // alt + arrow moves line
     font.setFamily("Monospace");
     qutepart.setFont(font);
-
+    
+    // toggle comment a line, block
     auto filePath = QString(":/qutepart/syntax/c.xml");
     if (argc > 1) {
         filePath = argv[1];
     }
+    // matching brackets
     if (!openFile(filePath, &qutepart)) {
         return -1;
     }
