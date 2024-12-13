@@ -371,7 +371,7 @@ class Qutepart : public QPlainTextEdit {
     QAction *createAction(const QString &text, QKeySequence shortcut, const QString &iconFileName,
                           std::function<void()> const &handler);
 
-    QList<QTextEdit::ExtraSelection> highlightWord(const QString &word);
+    QList<QTextEdit::ExtraSelection> highlightText(const QString &word, bool fullWords);
     // whitespace and edge drawing
     void drawIndentMarkersAndEdge(const QRect &rect);
     void drawIndentMarker(QPainter *painter, QTextBlock block, int column);

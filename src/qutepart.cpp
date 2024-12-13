@@ -49,17 +49,13 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     QTimer::singleShot(0, this, [this]() { updateViewport(); });
 }
 
-QList<QTextEdit::ExtraSelection> Qutepart::highlightWord(const QString &word) {
+QList<QTextEdit::ExtraSelection> Qutepart::highlightText(const QString &text, bool fullWords) {
     if (blockCount() > MaxLinesForWordHighligher) {
         return {};
     }
-
     auto cursor = QTextCursor(document());
-    auto pattern = QString("\\b%1\\b").arg(QRegularExpression::escape(word));
-    auto regex = QRegularExpression(pattern);
-
-    QList<QTextEdit::ExtraSelection> extraSelections;
-    QTextCharFormat format;
+    auto extraSelections = QList<QTextEdit::ExtraSelection>();
+    auto format = QTextCharFormat();
     auto palette = style()->standardPalette();
     auto color = palette.color(QPalette::Highlight);
     color.setAlphaF(0.1f);
@@ -69,7 +65,14 @@ QList<QTextEdit::ExtraSelection> Qutepart::highlightWord(const QString &word) {
     }
     format.setBackground(color);
     while (!cursor.isNull() && !cursor.atEnd()) {
-        cursor = document()->find(regex, cursor);
+        QTextDocument::FindFlags flags;
+        if (fullWords) {
+            flags = QTextDocument::FindWholeWords;
+        } else {
+            // TODO: do this only if the current language is case insensitive (for example: pascal)
+            flags = QTextDocument::FindCaseSensitively;
+        }
+        cursor = document()->find(text, cursor, flags);
         if (!cursor.isNull()) {
             QTextEdit::ExtraSelection extra;
             extra.format = format;
@@ -1325,8 +1328,15 @@ void Qutepart::updateExtraSelections() {
             TextPosition(textCursor().block(), cursor.positionInBlock()));
     }
 
-    if (lastWordUnderCursor.length() > 2) {
-        selections += highlightWord(lastWordUnderCursor);
+    if (cursor.hasSelection() && getMarkCurrentWord()) {
+        auto selectedText = cursor.selectedText();
+        auto searches = highlightText(selectedText, false);
+        qDebug() << QString("Found selection %1 times").arg(searches.size());
+        selections += searches;
+    } else if (lastWordUnderCursor.length() > 2) {
+        auto searches = highlightText(lastWordUnderCursor, true);
+        qDebug() << QString("Found current word %1 times").arg(searches.size());
+        selections += searches;
 #if 0
         qDebug() << "Seacrching for word" << m_lastWordUnderCursor << "Found " << selections.size();
 #endif
