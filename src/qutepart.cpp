@@ -255,13 +255,19 @@ void Qutepart::setLineNumbersVisible(bool value) {
     updateViewport();
 }
 
-bool Qutepart::minimapVisible() const { return lineNumberArea_.get(); }
+bool Qutepart::minimapVisible() const { return lineNumberArea_ != nullptr; }
 
 void Qutepart::setMinimapVisible(bool value) {
-    if ((!value) && miniMap_) {
-        miniMap_.reset();
-    } else if (value && (!miniMap_)) {
-        miniMap_ = std::make_unique<Minimap>(this);
+    if ((miniMap_ != nullptr)  == value) {
+        return;
+    }
+
+    if (miniMap_) {
+        delete miniMap_;
+        miniMap_ = nullptr;
+    } else {
+        miniMap_ = new Minimap(this);
+        miniMap_->show();
     }
     updateViewport();
 }

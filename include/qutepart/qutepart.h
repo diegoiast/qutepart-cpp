@@ -433,7 +433,7 @@ class Qutepart : public QPlainTextEdit {
     std::unique_ptr<BracketHighlighter> bracketHighlighter_;
     std::unique_ptr<LineNumberArea> lineNumberArea_;
     std::unique_ptr<MarkArea> markArea_;
-    std::unique_ptr<Minimap> miniMap_;
+    Minimap* miniMap_ = nullptr;
     std::unique_ptr<Completer> completer_;
 
     bool drawIndentations_;
