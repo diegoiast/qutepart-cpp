@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2018-2023 Andrei Kopats
+ * Copyright (C) 2023-...  Diego Iastrubni <diegoiast@gmail.com>
+ * SPDX-License-Identifier: MIT
+ */
 
 #include <QColor>
 #include <QFile>
@@ -91,15 +96,11 @@ auto Theme::loadTheme(const QString &filename) -> bool {
     }
     metaData.name = metaDataObj["name"].toString();
     metaData.revision = metaDataObj["revision"].toInt();
-    metaData.author = metaDataObj["author"].toString();
     metaData.license = metaDataObj["license"].toString();
     metaData.description = metaDataObj["description"].toString();
 
     return true;
 }
 
-auto Theme::getEditorColors() const -> const QHash<QString, QColor> & { return editorColors; }
-
-auto Theme::getMetaData() const -> const ThemeMetaData & { return metaData; }
 
 } // namespace Qutepart

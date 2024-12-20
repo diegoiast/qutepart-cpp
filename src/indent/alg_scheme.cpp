@@ -1,8 +1,14 @@
 /*
+ * Copyright (C) 2018-2023 Andrei Kopats
+ * Copyright (C) 2023-...  Diego Iastrubni <diegoiast@gmail.com>
+ * SPDX-License-Identifier: MIT
+ */
+
+/*
 This indenter works according to
     http://community.schemewiki.org/?scheme-style
 
-TODO support (module
+TODO support (module)
  */
 
 #include <QDebug>

@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2018-2023 Andrei Kopats
+ * Copyright (C) 2023-...  Diego Iastrubni <diegoiast@gmail.com>
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "style.h"
 #include "theme.h"
 
@@ -5,7 +11,7 @@ namespace Qutepart {
 
 auto static applyTheme(QTextCharFormat &format, const Theme *theme, QStringView defStyle) -> void {
     auto fixedName = defStyle.toString().mid(2);
-    if (!theme->textStyles.contains(fixedName)) {
+    if (!theme->getTextStyles().contains(fixedName)) {
         return;
     }
 
@@ -14,7 +20,7 @@ auto static applyTheme(QTextCharFormat &format, const Theme *theme, QStringView 
         << "color:" << format.foreground().color().name(QColor::HexRgb) << " -> " << theme->textStyles[fixedName].value("text-color");
 #endif
 
-    auto styleProperties = theme->textStyles[fixedName];
+    auto styleProperties = theme->getTextStyles()[fixedName];
     for (auto it = styleProperties.constBegin(); it != styleProperties.constEnd(); ++it) {
         auto &key = it.key();
         auto &value = it.value();

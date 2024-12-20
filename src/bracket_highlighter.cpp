@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2018-2023 Andrei Kopats
+ * Copyright (C) 2023-...  Diego Iastrubni <diegoiast@gmail.com>
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <QDebug>
 #include <qutepart.h>
 
@@ -73,9 +79,9 @@ QTextEdit::ExtraSelection BracketHighlighter::makeMatchSelection(const TextPosit
 
     if (qpart) {
         if (auto theme = qpart->getTheme()) {
-            if (theme->editorColors.contains(Theme::Colors::BracketMatching)) {
-                matchedColor = theme->editorColors[Theme::Colors::BracketMatching];
-                nonMatchedColor = theme->editorColors[Theme::Colors::MarkError];
+            if (theme->getEditorColors().contains(Theme::Colors::BracketMatching)) {
+                matchedColor = theme->getEditorColors()[Theme::Colors::BracketMatching];
+                nonMatchedColor = theme->getEditorColors()[Theme::Colors::MarkError];
             }
         }
     }

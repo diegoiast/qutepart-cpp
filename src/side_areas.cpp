@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2018-2023 Andrei Kopats
+ * Copyright (C) 2023-...  Diego Iastrubni <diegoiast@gmail.com>
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <QDebug>
 #include <QIcon>
 #include <QPaintEvent>
@@ -71,12 +77,12 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
 
     if (qpart_) {
         if (auto theme = qpart_->getTheme()) {
-            if (theme->editorColors.contains(Theme::Colors::IconBorder)) {
-                background = theme->editorColors[Theme::Colors::IconBorder];
+            if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
+                background = theme->getEditorColors()[Theme::Colors::IconBorder];
                 wrapColor = background;
             }
-            if (theme->editorColors.contains(Theme::Colors::LineNumbers)) {
-                foreground = theme->editorColors[Theme::Colors::LineNumbers];
+            if (theme->getEditorColors().contains(Theme::Colors::LineNumbers)) {
+                foreground = theme->getEditorColors()[Theme::Colors::LineNumbers];
             }
         }
     }
@@ -160,8 +166,8 @@ void MarkArea::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     auto backgruoundColor = palette().color(QPalette::AlternateBase);
     if (auto theme = qpart_->getTheme()) {
-        if (theme->editorColors.contains(Theme::Colors::IconBorder)) {
-            backgruoundColor = theme->editorColors[Theme::Colors::IconBorder];
+        if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
+            backgruoundColor = theme->getEditorColors()[Theme::Colors::IconBorder];
         }
     }
 
@@ -246,8 +252,8 @@ void Minimap::paintEvent(QPaintEvent *event) {
     auto background = palette.color(QPalette::AlternateBase);
     if (qpart_) {
         if (auto theme = qpart_->getTheme()) {
-            if (theme->editorColors.contains(Theme::Colors::IconBorder)) {
-                background = theme->editorColors[Theme::Colors::IconBorder];
+            if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
+                background = theme->getEditorColors()[Theme::Colors::IconBorder];
             }
         }
     }
@@ -323,8 +329,8 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     auto minimapBackground = palette.color(QPalette::AlternateBase);
     if (qpart_) {
         if (auto theme = qpart_->getTheme()) {
-            if (theme->editorColors.contains(Theme::Colors::IconBorder)) {
-                minimapBackground = theme->editorColors[Theme::Colors::IconBorder];
+            if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
+                minimapBackground = theme->getEditorColors()[Theme::Colors::IconBorder];
             }
         }
     }

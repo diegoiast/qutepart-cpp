@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2018-2023 Andrei Kopats
+ * Copyright (C) 2023-...  Diego Iastrubni <diegoiast@gmail.com>
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <QAction>
 #include <QApplication>
 #include <QClipboard>
@@ -143,19 +149,19 @@ void Qutepart::setTheme(const Theme *newTheme) {
         return;
     }
 
-    lineNumberColor = theme->editorColors[Theme::Colors::LineNumbers];
-    currentLineNumberColor = theme->editorColors[Theme::Colors::CurrentLineNumber];
+    lineNumberColor = theme->getEditorColors()[Theme::Colors::LineNumbers];
+    currentLineNumberColor = theme->getEditorColors()[Theme::Colors::CurrentLineNumber];
 
-    lineLengthEdgeColor_ = theme->editorColors[Theme::Colors::WordWrapMarker];
-    currentLineColor_ = theme->editorColors[Theme::Colors::CurrentLine];
-    indentColor_ = theme->editorColors[Theme::Colors::IndentationLine];
-    whitespaceColor_ = theme->editorColors[Theme::Colors::IndentationLine];
+    lineLengthEdgeColor_ = theme->getEditorColors()[Theme::Colors::WordWrapMarker];
+    currentLineColor_ = theme->getEditorColors()[Theme::Colors::CurrentLine];
+    indentColor_ = theme->getEditorColors()[Theme::Colors::IndentationLine];
+    whitespaceColor_ = theme->getEditorColors()[Theme::Colors::IndentationLine];
 
-    if (theme->editorColors.contains(Theme::Colors::BackgroundColor) &&
-        theme->editorColors[Theme::Colors::BackgroundColor].isValid()) {
+    if (theme->getEditorColors().contains(Theme::Colors::BackgroundColor) &&
+        theme->getEditorColors()[Theme::Colors::BackgroundColor].isValid()) {
         QPalette p(palette());
-        p.setColor(QPalette::Base, theme->editorColors[Theme::Colors::BackgroundColor]);
-        p.setColor(QPalette::Text, theme->textStyles[QStringLiteral("Normal")]["text-color"]);
+        p.setColor(QPalette::Base, theme->getEditorColors()[Theme::Colors::BackgroundColor]);
+        p.setColor(QPalette::Text, theme->getTextStyles()[QStringLiteral("Normal")]["text-color"]);
         setPalette(p);
     }
     updateExtraSelections();

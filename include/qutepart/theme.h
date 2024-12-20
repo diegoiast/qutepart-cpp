@@ -1,26 +1,49 @@
 #pragma once
 
+/*
+ * Copyright (C) 2018-2023 Andrei Kopats
+ * Copyright (C) 2023-...  Diego Iastrubni <diegoiast@gmail.com>
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
+ * \file theme.h
+ * \brief Theme support for Qutepart
+ *
+ * See also qutepart.h for usages.
+ */
 #include <QColor>
 #include <QHash>
 #include <QJsonObject>
 #include <QString>
 
 class QSyntaxHighlighter;
+
 namespace Qutepart {
 
 typedef QHash<QString, QString> QStringHash;
 
+/**
+ * @brief Theme metadata.
+ *
+ * Each theme json file, contains some metadata (copyright, license, etc).
+ */
 struct ThemeMetaData {
+    /// Coprright of this theme (similar to license).
     QString copyright;
+    /// Copyright of this theme (similar to copyright).
     QString license;
+    /// Display name foe this theme
     QString name;
-    QString author;
+    /// Description (not all themes have this, might be empty).
     QString description;
+    /// Version of this theme
     int revision;
 };
 
 class Theme {
   public:
+    /// Constants used in the theme for defining colors1
     struct Colors {
         static constexpr const char *BackgroundColor = "BackgroundColor";
         static constexpr const char *BracketMatching = "BracketMatching";
@@ -53,13 +76,22 @@ class Theme {
     };
 
     Theme();
-    auto loadTheme(const QString &filename) -> bool;
-    auto getEditorColors() const -> const QHash<QString, QColor> &;
-    auto getMetaData() const -> const ThemeMetaData &;
 
-    // private:
-    QHash<QString, QHash<QString, QStringHash>> customStyles;
+    /// Loads a theme definition from a JSON file
+    auto loadTheme(const QString &filename) -> bool;
+
+    /// Get the list of colors definid in this theme, use the Colors struct as the keys
+    auto inline getEditorColors() const -> const QHash<QString, QColor> & { return editorColors; }
+
+    /// Returns a reference to the theme's meta data (name, copyright, version etc).
+    auto inline getMetaData() const -> const ThemeMetaData & { return metaData; }
+
+    /// Returns all text styles defined in this theme, text styles do not contain "df" prefix
+    auto inline getTextStyles() const -> const QHash<QString, QStringHash> & { return textStyles; }
+
+  private:
     QHash<QString, QColor> editorColors;
+    QHash<QString, QHash<QString, QStringHash>> customStyles;
     QHash<QString, QStringHash> textStyles;
     ThemeMetaData metaData;
 };

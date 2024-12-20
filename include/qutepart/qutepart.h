@@ -1,11 +1,17 @@
+#pragma once
+
+/*
+ * Copyright (C) 2018-2023 Andrei Kopats
+ * Copyright (C) 2023-...  Diego Iastrubni <diegoiast@gmail.com>
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
  * \file qutepart.h
  * \brief Main Qutepart header. Contains whole API.
  *
  * See also hl_factory.h if you need only syntax highlighter.
  */
-
-#pragma once
 
 #include <memory>
 
