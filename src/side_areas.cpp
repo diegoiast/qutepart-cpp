@@ -246,18 +246,21 @@ void Minimap::wheelEvent(QWheelEvent *event) {
 }
 
 void Minimap::paintEvent(QPaintEvent *event) {
+    if (!qpart_) {
+        QWidget::paintEvent(event);
+        return;
+    }
+
     QPainter painter(this);
     auto isLargeDocument = qpart_->document()->blockCount() > 10000;
     auto palette = this->palette();
     auto background = palette.color(QPalette::AlternateBase);
-    if (qpart_) {
-        if (auto theme = qpart_->getTheme()) {
-            if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
-                background = theme->getEditorColors()[Theme::Colors::IconBorder];
-            }
+    if (auto theme = qpart_->getTheme()) {
+        if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
+            background = theme->getEditorColors()[Theme::Colors::IconBorder];
         }
     }
-    painter.fillRect(event->rect(), background);
+    painter.fillRect(event->rect(), background);    
     drawMinimapText(&painter, isLargeDocument);
 }
 
@@ -293,6 +296,9 @@ void Minimap::updateScroll(const QPoint &pos) {
 }
 
 void Minimap::drawMinimapText(QPainter *painter, bool simple) {
+    if (!qpart_) {
+        return;
+    }
     auto minimapArea = rect();
     auto doc = qpart_->document();
     auto block = doc->firstBlock();
@@ -327,11 +333,9 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     auto textColor = palette.color(QPalette::Text);
 
     auto minimapBackground = palette.color(QPalette::AlternateBase);
-    if (qpart_) {
-        if (auto theme = qpart_->getTheme()) {
-            if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
-                minimapBackground = theme->getEditorColors()[Theme::Colors::IconBorder];
-            }
+    if (auto theme = qpart_->getTheme()) {
+        if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
+            minimapBackground = theme->getEditorColors()[Theme::Colors::IconBorder];
         }
     }
 
