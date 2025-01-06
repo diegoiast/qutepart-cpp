@@ -29,7 +29,6 @@
  * \brief doxygen comment
  * 
  * This shows how more complex comments are supported
- * \todo make a better demo
  */
 
 #if 0
