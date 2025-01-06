@@ -16,6 +16,7 @@
 #include "theme.h"
 
 #include "side_areas.h"
+#include "text_block_user_data.h"
 
 namespace Qutepart {
 
@@ -74,6 +75,7 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
     auto background = palette.color(QPalette::AlternateBase);
     auto foreground = palette.color(QPalette::Text);
     auto wrapColor = palette.color(QPalette::Dark);
+    auto modifiedColor = palette.color(QPalette::Accent);
 
     if (qpart_) {
         if (auto theme = qpart_->getTheme()) {
@@ -83,6 +85,9 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
             }
             if (theme->getEditorColors().contains(Theme::Colors::LineNumbers)) {
                 foreground = theme->getEditorColors()[Theme::Colors::LineNumbers];
+            }
+            if (theme->getEditorColors().contains(Theme::Colors::ModifiedLines)) {
+                modifiedColor = theme->getEditorColors()[Theme::Colors::ModifiedLines];
             }
         }
     }
@@ -123,7 +128,12 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
                 painter.setFont(font);
             }
         }
-
+        
+        auto data = static_cast<TextBlockUserData*>(block.userData());
+        if (!data || data->metaData.modified) {
+            painter.fillRect( width()-3, top, 2, availableHeight, modifiedColor);
+        }
+        
         block = block.next();
         boundingRect = qpart_->blockBoundingRect(block);
         top = bottom;

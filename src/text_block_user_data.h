@@ -17,6 +17,10 @@ class TextBlockUserData : public QTextBlockUserData {
     TextBlockUserData(const QString &textTypeMap, const ContextStack &contexts);
     QString textTypeMap;
     ContextStack contexts;
+
+    struct {
+        bool modified = false;
+    } metaData;
 };
 
 } // namespace Qutepart

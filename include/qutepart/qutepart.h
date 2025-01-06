@@ -362,7 +362,16 @@ class Qutepart : public QPlainTextEdit {
     inline QAction *toggleCommentAction() const { return toggleActionComment_; }
     /// Find matching bracket for this position
     inline QAction *findMatchingBracketAction() const { return findMatchingBracketAction_; }
-
+    
+    /// Returns the status of a line. A line is marked as modified when its changed via the user
+    bool isLineModified(int lineNumber) const;
+    /// Set the status of a line, modified or not
+    void setLineModified(int lineNumber, bool modified) const;
+    /// Set the status of a line, modified or not
+    void setLineModified(QTextBlock block, bool modified) const;
+    /// Clear modifications from all document.
+    void removeModifications();
+    
     // Convenience functions
     void resetSelection();
 

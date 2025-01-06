@@ -52,6 +52,10 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
         viewport()->update();
     });
 
+    connect(document(), &QTextDocument::contentsChange, this, [this](){
+        this->setLineModified(textCursor().block(), true);
+    });
+
     QTimer::singleShot(0, this, [this]() { updateViewport(); });
 }
 
@@ -339,6 +343,42 @@ bool Qutepart::completionEnabled() const { return completionEnabled_; }
 void Qutepart::setCompletionEnabled(bool val) { completionEnabled_ = val; }
 
 int Qutepart::completionThreshold() const { return completionThreshold_; }
+
+bool Qutepart::isLineModified(int lineNumber) const
+{
+    auto block = document()->findBlockByNumber(lineNumber);
+    auto data = static_cast<TextBlockUserData*>(block.userData());
+    if (data) {
+        return data->metaData.modified;
+    }
+    return false;
+}
+
+void Qutepart::setLineModified(int lineNumber, bool modified) const
+{
+    auto block = document()->findBlockByNumber(lineNumber);
+    setLineModified(block, modified);    
+}
+
+void Qutepart::setLineModified(QTextBlock block, bool modified) const
+{
+    auto data = static_cast<TextBlockUserData*>(block.userData());
+    if (!data) {
+        data = new TextBlockUserData({},{nullptr});
+        block.setUserData(data);
+    }
+    data->metaData.modified = modified;
+}
+
+void Qutepart::removeModifications()
+{
+    for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
+        auto data = static_cast<TextBlockUserData*>(block.userData());
+        if (data) {
+            data->metaData.modified = false;
+        }
+    }
+}
 
 void Qutepart::setCompletionThreshold(int val) { completionThreshold_ = val; }
 
