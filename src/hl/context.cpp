@@ -180,22 +180,23 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
     }
 
     while (!textToMatch.isEmpty()) {
-        QScopedPointer<MatchResult> matchRes(tryMatch(textToMatch));
+        auto matchRes = tryMatch(textToMatch);
 
-        if (!matchRes.isNull()) {
+        if (matchRes) {
             lineContinue = matchRes->lineContinue;
 
             if (matchRes->nextContext.isNull()) {
-                applyMatchResult(textToMatch, matchRes.data(), this, formats, textTypeMap);
+                applyMatchResult(textToMatch, matchRes, this, formats, textTypeMap);
                 textToMatch.shift(matchRes->length);
+                delete matchRes;
             } else {
                 ContextStack newContextStack =
                     contextStack.switchContext(matchRes->nextContext, matchRes->data);
 
-                applyMatchResult(textToMatch, matchRes.data(), newContextStack.currentContext(),
+                applyMatchResult(textToMatch, matchRes, newContextStack.currentContext(),
                                  formats, textTypeMap);
                 textToMatch.shift(matchRes->length);
-
+                delete matchRes;                    
                 return newContextStack;
             }
         } else {
@@ -203,13 +204,10 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
             if (!style.format().isNull()) {
                 appendFormat(formats, textToMatch.currentColumnIndex, 1, *style.format());
             }
-
             textTypeMap[textToMatch.currentColumnIndex] = style.textType();
-
             if (!this->fallthroughContext.isNull()) {
                 return contextStack.switchContext(this->fallthroughContext);
             }
-
             textToMatch.shiftOnce();
         }
     }

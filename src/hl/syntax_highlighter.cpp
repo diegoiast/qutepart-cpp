@@ -24,7 +24,7 @@ void SyntaxHighlighter::highlightBlock(const QString &) {
 
     int state = language->highlightBlock(currentBlock(), formats);
 
-    foreach (QTextLayout::FormatRange range, formats) {
+    foreach (const QTextLayout::FormatRange &range, formats) {
         setFormat(range.start, range.length, range.format);
     }
 
