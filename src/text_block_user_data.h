@@ -17,7 +17,6 @@ class TextBlockUserData : public QTextBlockUserData {
     TextBlockUserData(const QString &textTypeMap, const ContextStack &contexts);
     QString textTypeMap;
     ContextStack contexts;
-    QString lineEnding;
 };
 
 } // namespace Qutepart
