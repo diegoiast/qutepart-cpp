@@ -54,12 +54,6 @@ ContextStack ContextStack::switchContext(const ContextSwitcher &operation,
     }
 
     if (!operation.context().isNull()) {
-        QStringList dataToSave;
-
-        if (operation.context()->dynamic()) {
-            dataToSave = data;
-        }
-
         newItems.append(ContextStackItem(operation.context().data(), data));
     }
 
