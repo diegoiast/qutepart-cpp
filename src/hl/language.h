@@ -37,10 +37,10 @@ class Language {
     ContextPtr getContext(const QString &contextName) const;
     void setTheme(const Theme *theme);
 
-    inline QSet<QString> allLanguageKeywords() const { return allLanguageKeywords_; }
-    inline QString getStartMultilineComment() const { return startMultilineComment; }
-    inline QString getEndMultilineComment() const { return endMultilineComment; }
-    inline QString getSingleLineComment() const { return singleLineComment; }
+    inline const QSet<QString> &allLanguageKeywords() const { return allLanguageKeywords_; }
+    inline const QString &getStartMultilineComment() const { return startMultilineComment; }
+    inline const QString &getEndMultilineComment() const { return endMultilineComment; }
+    inline const QString &getSingleLineComment() const { return singleLineComment; }
 
   protected:
     QString name;
