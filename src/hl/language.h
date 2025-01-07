@@ -41,6 +41,9 @@ class Language {
     inline const QString &getStartMultilineComment() const { return startMultilineComment; }
     inline const QString &getEndMultilineComment() const { return endMultilineComment; }
     inline const QString &getSingleLineComment() const { return singleLineComment; }
+    inline const QString &getName() const { return name; }
+
+    QString fileName;
 
   protected:
     QString name;

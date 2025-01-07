@@ -101,6 +101,12 @@ Qutepart::~Qutepart() {}
 Lines Qutepart::lines() const { return Lines(document()); }
 
 void Qutepart::setHighlighter(const QString &languageId) {
+    if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
+        auto name = hl->getLanguage()->fileName;
+        if (name == languageId) {
+            return;
+        }
+    }
     highlighter_ = QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), languageId));
     indenter_->setLanguage(languageId);
 
