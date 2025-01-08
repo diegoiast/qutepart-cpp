@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <QApplication>
 #include <QDebug>
 #include <QIcon>
 #include <QPaintEvent>
@@ -164,10 +165,10 @@ MarkArea::MarkArea(Qutepart *textEdit) : SideArea(textEdit) {
 }
 
 QPixmap MarkArea::loadIcon(const QString &name) const {
-    QIcon icon = QIcon::fromTheme(name);
-    int size = qpart_->cursorRect(qpart_->document()->begin(), 0, 0).height() - 6;
-    return icon.pixmap(size,
-                       size); // This also works with Qt.AA_UseHighDpiPixmaps
+    auto icon = QIcon::fromTheme(name);
+    auto size = qpart_->cursorRect(qpart_->document()->begin(), 0, 0).height() - 6;
+    // This also works with Qt.AA_UseHighDpiPixmaps
+    return icon.pixmap(size, size); 
 }
 
 int MarkArea::widthHint() const { return MARK_MARGIN + bookmarkPixmap_.width() + MARK_MARGIN; }
@@ -180,29 +181,29 @@ void MarkArea::paintEvent(QPaintEvent *event) {
             backgruoundColor = theme->getEditorColors()[Theme::Colors::IconBorder];
         }
     }
-
     painter.fillRect(event->rect(), backgruoundColor);
 
-    QTextBlock block = qpart_->firstVisibleBlock();
-    QRectF blockBoundingGeometry =
+    auto block = qpart_->firstVisibleBlock();
+    auto blockBoundingGeometry =
         qpart_->blockBoundingGeometry(block).translated(qpart_->contentOffset());
-    int top = blockBoundingGeometry.top();
+    auto top = blockBoundingGeometry.top();
 
     while (block.isValid() && top <= event->rect().bottom()) {
-        int height = qpart_->blockBoundingGeometry(block).height();
-        int bottom = top + height;
+        auto height = qpart_->blockBoundingGeometry(block).height();
+        auto bottom = top + height;
 
         if (block.isVisible() && bottom >= event->rect().top()) {
-#if 0 // TODO linter marks
-            if block.blockNumber() in self.qpart_.lintMarks:
-                msgType, msgText = self.qpart_.lintMarks[block.blockNumber()]
-                pixMap = self._lintPixmaps[msgType]
-                yPos = top + ((height - pixMap.height()) / 2)  # centered
-                painter.drawPixmap(0, yPos, pixMap)
-#endif
+            if (auto data = dynamic_cast<TextBlockUserData*>(block.userData())) {
+                if (!data->metaData.extraIcon.isNull()) {
+                    // auto scaledIcon = data->metaData.extraIcon.pixmap(height, height);
+                    auto scaledSize = height - 6;
+                    auto scaledIcon = data->metaData.extraIcon.pixmap(scaledSize, scaledSize);
+                    auto yPos = top + ((height - scaledSize) / 2);
+                    painter.drawPixmap(0, yPos, scaledIcon);                }
+            }
 
             if (isBookmarked(block)) {
-                int yPos = top + ((height - bookmarkPixmap_.height()) / 2); // centered
+                auto  yPos = top + ((height - bookmarkPixmap_.height()) / 2); // centered
                 painter.drawPixmap(0, yPos, bookmarkPixmap_);
             }
         }

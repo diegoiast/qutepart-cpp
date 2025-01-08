@@ -386,6 +386,39 @@ void Qutepart::removeModifications()
     }
 }
 
+void Qutepart::removeExtraMessages()
+{
+    for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
+        auto data = static_cast<TextBlockUserData*>(block.userData());
+        if (data) {
+            data->metaData.extraIcon = {};
+            data->metaData.extraMessage.clear();
+        }
+    }
+}
+
+void Qutepart::setExtraMessage(int lineNumber, const QString &message)
+{
+    auto block = document()->findBlockByNumber(lineNumber);
+    auto data = static_cast<TextBlockUserData*>(block.userData());
+    if (!data) {
+        data = new TextBlockUserData({},{nullptr});
+        block.setUserData(data);
+    }
+    data->metaData.extraMessage = message;
+}
+
+void Qutepart::setExtraIcon(int lineNumber, QIcon icon)
+{
+    auto block = document()->findBlockByNumber(lineNumber);
+    auto data = static_cast<TextBlockUserData*>(block.userData());
+    if (!data) {
+        data = new TextBlockUserData({},{nullptr});
+        block.setUserData(data);
+    }
+    data->metaData.extraIcon = icon;
+}
+
 void Qutepart::setCompletionThreshold(int val) { completionThreshold_ = val; }
 
 void Qutepart::resetSelection() {

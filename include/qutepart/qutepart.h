@@ -372,6 +372,10 @@ class Qutepart : public QPlainTextEdit {
     /// Clear modifications from all document.
     void removeModifications();
     
+    void removeExtraMessages();
+    void setExtraMessage(int lineNumber, const QString &message);
+    void setExtraIcon(int lineNumber, QIcon icon);
+    
     // Convenience functions
     void resetSelection();
 

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <QIcon>
 #include <QTextBlockUserData>
 
 #include "context_stack.h"
@@ -20,6 +21,8 @@ class TextBlockUserData : public QTextBlockUserData {
 
     struct {
         bool modified = false;
+        QIcon extraIcon;
+        QString extraMessage;
     } metaData;
 };
 
