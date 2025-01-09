@@ -59,23 +59,94 @@ bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart) {
     return true;
 }
 
+auto countTrailingSpaces(const QString& str) -> int {
+    auto count = 0;
+    for (auto i = str.length(); i != 0; --i) {
+        if (str[i-1] == ' ') {
+            ++count;
+        } else {
+            break;
+        }
+    }
+    return count;
+}
+
+auto countLeadingSpaces(const QString& str) -> int {
+    auto count = 0;
+    for (auto i = 0; i < str.length(); ++i) {
+        if (str[i] == ' ') {
+            ++count;
+        } else {
+            break;
+        }
+    }
+    return count;
+}
+
 void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
     QMenu *editMenu = menuBar->addMenu("Edit");
     editMenu->addAction(qutepart->increaseIndentAction());
     editMenu->addAction(qutepart->decreaseIndentAction());
 
     QMenu *viewMenu = menuBar->addMenu("View");
-    viewMenu->addAction(qutepart->zoomInAction());
-    viewMenu->addAction(qutepart->zoomOutAction());
 
-    auto minimapAction = new QAction(viewMenu);
-    minimapAction->setText("Show/hide minimap");
-    minimapAction->setCheckable(true);
-    minimapAction->setChecked(qutepart->minimapVisible());
-    QObject::connect(
-        minimapAction, &QAction::triggered, minimapAction,
-        [minimapAction, qutepart]() { qutepart->setMinimapVisible(minimapAction->isChecked()); });
-    viewMenu->addAction(minimapAction);
+    viewMenu->addSection("Visuals");
+    {
+        auto minimapAction = new QAction(viewMenu);
+        minimapAction->setText("Show/hide minimap");
+        minimapAction->setCheckable(true);
+        minimapAction->setChecked(qutepart->minimapVisible());
+        QObject::connect(minimapAction, &QAction::triggered, minimapAction,
+            [minimapAction, qutepart]() { qutepart->setMinimapVisible(minimapAction->isChecked()); });
+        viewMenu->addAction(minimapAction);
+        viewMenu->addAction(minimapAction);
+        viewMenu->addAction(qutepart->zoomInAction());
+        viewMenu->addAction(qutepart->zoomOutAction());
+    }
+
+    viewMenu->addSection("File modifications");
+    {    
+        auto removeNotificationsAction = new QAction(viewMenu);
+        removeNotificationsAction->setText("Remove modifications markings");
+        QObject::connect(removeNotificationsAction, &QAction::triggered, removeNotificationsAction,
+            [qutepart]() { qutepart->removeModifications(); });
+        viewMenu->addAction(removeNotificationsAction);
+    }
+
+    viewMenu->addSection("Markings");
+    {
+        auto addMarkingsAction = new QAction(viewMenu);
+        addMarkingsAction->setText("Set markings on code");
+        QObject::connect( addMarkingsAction, &QAction::triggered, addMarkingsAction, [qutepart]() { 
+            for (auto line: qutepart->lines()) {
+                auto s1 = countLeadingSpaces(line.text());
+                auto s2 = countTrailingSpaces(line.text());
+                auto lineNumber = line.lineNumber();
+                
+                if ((s2 - s1) > 2) {
+                    qutepart->setExtraMessage(lineNumber, QString("Line %1 has %2 spaces at the end!!!!! That's too much!").arg(lineNumber).arg(s2));
+                    qutepart->setExtraIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::DialogError));
+                } if ((s1 - s2) > 2) {
+                    qutepart->setExtraMessage(lineNumber, QString("Line %1 has %2 spaces at the start").arg(lineNumber).arg(s1));
+                    qutepart->setExtraIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::DialogQuestion));
+                }
+                
+                if (lineNumber == 12) {
+                    qutepart->setExtraMessage(lineNumber, QString("Lucky 13"));
+                    qutepart->setExtraIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::Phone));                
+                }
+            }
+        });
+        viewMenu->addAction(addMarkingsAction);
+        
+        auto clearMarkingsAction = new QAction(viewMenu);
+        clearMarkingsAction->setText("Clear side markings");
+        QObject::connect(clearMarkingsAction, &QAction::triggered, clearMarkingsAction,
+            [clearMarkingsAction, qutepart]() { qutepart->removeExtraMessages(); });
+        viewMenu->addAction(clearMarkingsAction);
+    }
+
+
 
     QMenu *navMenu = menuBar->addMenu("Navigation");
     navMenu->addAction(qutepart->toggleBookmarkAction());
