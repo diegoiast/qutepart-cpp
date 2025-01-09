@@ -375,9 +375,10 @@ class Qutepart : public QPlainTextEdit {
     /// Clear modifications from all document.
     void removeModifications();
     
-    void removeExtraMessages();
-    void setExtraMessage(int lineNumber, const QString &message);
-    void setExtraIcon(int lineNumber, QIcon icon);
+    void removeMetaData();
+    void setMetaDataMessage(int lineNumber, const QString &message);
+    void setMetaDataIcon(int lineNumber, QIcon icon);
+    void setMetaDataBackground(int lineNumber, QColor color);
     
     // Convenience functions
     void resetSelection();
@@ -389,6 +390,8 @@ class Qutepart : public QPlainTextEdit {
     void changeEvent(QEvent *event) override;
 
   private:
+    QList<QTextEdit::ExtraSelection> persitentSelections;
+    
     void initActions();
     QAction *createAction(const QString &text, QKeySequence shortcut, const QString &iconFileName,
                           std::function<void()> const &handler);
@@ -471,7 +474,7 @@ class Qutepart : public QPlainTextEdit {
     QColor currentLineColor_;
     QColor indentColor_;
     QColor whitespaceColor_;
-
+    
     bool brakcetsQutoEnclose;
     bool completionEnabled_;
     int completionThreshold_;

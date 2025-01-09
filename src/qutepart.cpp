@@ -386,18 +386,20 @@ void Qutepart::removeModifications()
     }
 }
 
-void Qutepart::removeExtraMessages()
+void Qutepart::removeMetaData()
 {
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
         auto data = static_cast<TextBlockUserData*>(block.userData());
         if (data) {
-            data->metaData.extraIcon = {};
-            data->metaData.extraMessage.clear();
+            data->metaData.icon = {};
+            data->metaData.message.clear();
+            data->metaData.lineBackground = {};
         }
     }
+    persitentSelections.clear();
 }
 
-void Qutepart::setExtraMessage(int lineNumber, const QString &message)
+void Qutepart::setMetaDataMessage(int lineNumber, const QString &message)
 {
     auto block = document()->findBlockByNumber(lineNumber);
     auto data = static_cast<TextBlockUserData*>(block.userData());
@@ -405,10 +407,10 @@ void Qutepart::setExtraMessage(int lineNumber, const QString &message)
         data = new TextBlockUserData({},{nullptr});
         block.setUserData(data);
     }
-    data->metaData.extraMessage = message;
+    data->metaData.message = message;
 }
 
-void Qutepart::setExtraIcon(int lineNumber, QIcon icon)
+void Qutepart::setMetaDataIcon(int lineNumber, QIcon icon)
 {
     auto block = document()->findBlockByNumber(lineNumber);
     auto data = static_cast<TextBlockUserData*>(block.userData());
@@ -416,7 +418,26 @@ void Qutepart::setExtraIcon(int lineNumber, QIcon icon)
         data = new TextBlockUserData({},{nullptr});
         block.setUserData(data);
     }
-    data->metaData.extraIcon = icon;
+    data->metaData.icon = icon;
+}
+
+void Qutepart::setMetaDataBackground(int lineNumber, QColor color)
+{
+    auto block = document()->findBlockByNumber(lineNumber);
+    auto data = static_cast<TextBlockUserData*>(block.userData());
+    if (!data) {
+        data = new TextBlockUserData({},{nullptr});
+        block.setUserData(data);
+    }
+    data->metaData.lineBackground = color;    
+    
+    QTextEdit::ExtraSelection selection;
+    selection.format.setBackground(color);
+    selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+    selection.cursor = QTextCursor(block);
+    selection.cursor.clearSelection();
+    persitentSelections += selection;
+
 }
 
 void Qutepart::setCompletionThreshold(int val) { completionThreshold_ = val; }
@@ -1283,7 +1304,6 @@ void Qutepart::toggleComment() {
         }
 #endif
         if (!singleLineComment.isEmpty()) {
-            // Language has single-line comments
             if (text.startsWith(singleLineComment)) {
                 text = text.mid(singleLineComment.length());
                 originalPosition -= singleLineComment.length();
@@ -1292,7 +1312,6 @@ void Qutepart::toggleComment() {
                 originalPosition += singleLineComment.length();
             }
         } else if (!startComment.isEmpty() && !endComment.isEmpty()) {
-            // Language only has multi-line comments
             if (text.startsWith(startComment) && text.endsWith(endComment)) {
                 text = text.mid(startComment.length(),
                                 text.length() - startComment.length() - endComment.length());
@@ -1337,12 +1356,12 @@ void Qutepart::toggleComment() {
     };
 
     auto handleMultilineCommentSingleLines = [&]() {
-        int startBlock = cursor.document()->findBlock(selectionStart).blockNumber();
-        int endBlock = cursor.document()->findBlock(selectionEnd).blockNumber();
+        auto startBlock = cursor.document()->findBlock(selectionStart).blockNumber();
+        auto endBlock = cursor.document()->findBlock(selectionEnd).blockNumber();
 
-        bool allNonEmptyLinesCommented = true;
+        auto allNonEmptyLinesCommented = true;
         cursor.setPosition(selectionStart);
-        for (int i = startBlock; i <= endBlock; ++i) {
+        for (auto i = startBlock; i <= endBlock; ++i) {
             QString line = cursor.block().text().trimmed();
             if (!line.isEmpty() && !line.startsWith(singleLineComment)) {
                 allNonEmptyLinesCommented = false;
@@ -1352,7 +1371,7 @@ void Qutepart::toggleComment() {
         }
 
         cursor.setPosition(selectionStart);
-        for (int i = startBlock; i <= endBlock; ++i) {
+        for (auto i = startBlock; i <= endBlock; ++i) {
             cursor.movePosition(QTextCursor::StartOfLine);
             QString line = cursor.block().text();
             QString trimmedLine = line.trimmed();
@@ -1376,7 +1395,6 @@ void Qutepart::toggleComment() {
             }
         }
 
-        // Adjust selection
         cursor.setPosition(selectionStart);
         cursor.setPosition(selectionEnd, QTextCursor::KeepAnchor);
         QString newSelectedText = cursor.selectedText();
@@ -1389,12 +1407,10 @@ void Qutepart::toggleComment() {
             newSelectionEnd += singleLineComment.length() * (lineSeparatorCount + 1);
         }
 
-        // Restore selection
         cursor.setPosition(selectionStart);
         cursor.setPosition(newSelectionEnd, QTextCursor::KeepAnchor);
     };
 
-    // if has selecion
     if (selectionStart != selectionEnd) {
         if (startComment.isEmpty() && endComment.isEmpty()) {
             handleMultilineCommentSingleLines();
@@ -1410,10 +1426,10 @@ void Qutepart::toggleComment() {
 
 void Qutepart::updateExtraSelections() {
     QTextCursor cursor = textCursor();
-    QList<QTextEdit::ExtraSelection> selections;
+    QList<QTextEdit::ExtraSelection> selections = persitentSelections;
 
-    if (currentLineColor_ != QColor()) {
-        selections << currentLineExtraSelection();
+    if (currentLineColor_.isValid()) {
+        selections += currentLineExtraSelection();
     }
 
     if (bracketHighlighter_) {

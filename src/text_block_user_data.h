@@ -21,8 +21,9 @@ class TextBlockUserData : public QTextBlockUserData {
 
     struct {
         bool modified = false;
-        QIcon extraIcon;
-        QString extraMessage;
+        QIcon icon;
+        QString message;
+        QColor lineBackground;
     } metaData;
 };
 

@@ -124,16 +124,16 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
                 auto lineNumber = line.lineNumber();
                 
                 if ((s2 - s1) > 2) {
-                    qutepart->setExtraMessage(lineNumber, QString("Line %1 has %2 spaces at the end!!!!! That's too much!").arg(lineNumber).arg(s2));
-                    qutepart->setExtraIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::DialogError));
+                    qutepart->setMetaDataMessage(lineNumber, QString("Line %1 has %2 spaces at the end!!!!! That's too much!").arg(lineNumber).arg(s2));
+                    qutepart->setMetaDataIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::DialogError));
                 } if ((s1 - s2) > 2) {
-                    qutepart->setExtraMessage(lineNumber, QString("Line %1 has %2 spaces at the start").arg(lineNumber).arg(s1));
-                    qutepart->setExtraIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::DialogQuestion));
+                    qutepart->setMetaDataMessage(lineNumber, QString("Line %1 has %2 spaces at the start").arg(lineNumber).arg(s1));
+                    qutepart->setMetaDataIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::DialogQuestion));
                 }
                 
                 if (lineNumber == 12) {
-                    qutepart->setExtraMessage(lineNumber, QString("Lucky 13"));
-                    qutepart->setExtraIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::Phone));                
+                    qutepart->setMetaDataMessage(lineNumber, QString("Lucky 13"));
+                    qutepart->setMetaDataIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::Phone));                
                 }
             }
         });
@@ -142,7 +142,7 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
         auto clearMarkingsAction = new QAction(viewMenu);
         clearMarkingsAction->setText("Clear side markings");
         QObject::connect(clearMarkingsAction, &QAction::triggered, clearMarkingsAction,
-            [clearMarkingsAction, qutepart]() { qutepart->removeExtraMessages(); });
+            [clearMarkingsAction, qutepart]() { qutepart->removeMetaData(); });
         viewMenu->addAction(clearMarkingsAction);
     }
 

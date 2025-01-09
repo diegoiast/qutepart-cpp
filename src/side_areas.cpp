@@ -44,8 +44,8 @@ void SideArea::mouseMoveEvent(QMouseEvent *event) {
     if (line != this->lastHoeveredLine) {
         lastHoeveredLine = line;        
         if (auto data = dynamic_cast<TextBlockUserData*>(block.userData())) {
-            if (!data->metaData.extraMessage.isEmpty()) {
-                QToolTip::showText(event->globalPosition().toPoint(), data->metaData.extraMessage, qpart_);
+            if (!data->metaData.message.isEmpty()) {
+                QToolTip::showText(event->globalPosition().toPoint(), data->metaData.message, qpart_);
             } else {            
                 QToolTip::hideText();
             }
@@ -208,10 +208,10 @@ void MarkArea::paintEvent(QPaintEvent *event) {
 
         if (block.isVisible() && bottom >= event->rect().top()) {
             if (auto data = dynamic_cast<TextBlockUserData*>(block.userData())) {
-                if (!data->metaData.extraIcon.isNull()) {
+                if (!data->metaData.icon.isNull()) {
                     // auto scaledIcon = data->metaData.extraIcon.pixmap(height, height);
                     auto scaledSize = height - 6;
-                    auto scaledIcon = data->metaData.extraIcon.pixmap(scaledSize, scaledSize);
+                    auto scaledIcon = data->metaData.icon.pixmap(scaledSize, scaledSize);
                     auto yPos = top + ((height - scaledSize) / 2);
                     painter.drawPixmap(0, yPos, scaledIcon);                }
             }
