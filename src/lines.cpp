@@ -35,6 +35,11 @@ void Line::remove(int pos, int count) {
     cursor.removeSelectedText();
 }
 
+int Line::lineNumber() const
+{
+    return block_.blockNumber();
+}
+
 LineIterator::LineIterator(const QTextBlock &block) : block_(block) {}
 
 bool LineIterator::operator!=(const LineIterator &other) {

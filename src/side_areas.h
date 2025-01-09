@@ -21,9 +21,11 @@ class SideArea : public QWidget {
     void onTextEditUpdateRequest(const QRect &rect, int dy);
 
   protected:
-    Qutepart *qpart_;
+    virtual void mouseMoveEvent(QMouseEvent *event) override;
+    virtual void updateWidth() {}
 
-    virtual void updateWidth() {};
+    Qutepart *qpart_;
+    int lastHoeveredLine = -1;
 };
 
 class LineNumberArea : public SideArea {
@@ -41,8 +43,8 @@ class LineNumberArea : public SideArea {
     void updateWidth() override;
 
   private:
-    void paintEvent(QPaintEvent *event) override;
-    void changeEvent(QEvent *event) override;
+    virtual void paintEvent(QPaintEvent *event) override;
+    virtual void changeEvent(QEvent *event) override;
 
     int desiredWidth_;
 };
@@ -55,11 +57,7 @@ class MarkArea : public SideArea {
   private:
     QPixmap loadIcon(const QString &name) const;
 
-    void paintEvent(QPaintEvent *event) override;
-
-#if 0 // TODO
-    void mouseMoveEvent(QMouseEvent* event);
-#endif
+    virtual void paintEvent(QPaintEvent *event) override;
 
     QPixmap bookmarkPixmap_;
 };

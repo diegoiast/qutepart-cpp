@@ -118,6 +118,9 @@ class Line {
 
     /// Remove the line from the document
     void remove(int pos, int count);
+    
+    /// Get the line number
+    int lineNumber() const;
 
   private:
     QTextBlock block_;

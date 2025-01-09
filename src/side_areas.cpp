@@ -11,6 +11,7 @@
 #include <QPainter>
 #include <QScrollBar>
 #include <QTextBlock>
+#include <QToolTip>
 
 #include "qutepart.h"
 #include "text_block_flags.h"
@@ -34,6 +35,26 @@ SideArea::SideArea(Qutepart *textEdit) : QWidget(textEdit), qpart_(textEdit) {
     connect(textEdit, &Qutepart::updateRequest, this, &SideArea::onTextEditUpdateRequest);
 }
 
+void SideArea::mouseMoveEvent(QMouseEvent *event) {
+    QWidget::mouseMoveEvent(event);
+    auto cursor = qpart_->cursorForPosition(event->pos());
+    auto block = cursor.block();
+    auto line = block.blockNumber();
+    
+    if (line != this->lastHoeveredLine) {
+        lastHoeveredLine = line;        
+        if (auto data = dynamic_cast<TextBlockUserData*>(block.userData())) {
+            if (!data->metaData.extraMessage.isEmpty()) {
+                QToolTip::showText(event->globalPosition().toPoint(), data->metaData.extraMessage, qpart_);
+            } else {            
+                QToolTip::hideText();
+            }
+        } else {
+            QToolTip::hideText();
+        }
+    }
+}
+
 void SideArea::onTextEditUpdateRequest(const QRect &rect, int dy) {
     if (dy) {
         scroll(0, dy);
@@ -48,6 +69,7 @@ void SideArea::onTextEditUpdateRequest(const QRect &rect, int dy) {
 
 LineNumberArea::LineNumberArea(Qutepart *textEdit) : SideArea(textEdit) {
     resize(widthHint(), height());
+    setMouseTracking(true);
     connect(textEdit->document(), &QTextDocument::blockCountChanged, this,
             &LineNumberArea::updateWidth);
     updateWidth();
@@ -150,16 +172,8 @@ void LineNumberArea::changeEvent(QEvent *event) {
 }
 
 MarkArea::MarkArea(Qutepart *textEdit) : SideArea(textEdit) {
-#if 0
     setMouseTracking(true);
-#endif
-
     bookmarkPixmap_ = loadIcon("emblem-favorite");
-    // self._lintPixmaps = {qpart.LINT_ERROR: self._loadIcon('emblem-error'),
-    //                      qpart.LINT_WARNING:
-    //                      self._loadIcon('emblem-warning'), qpart.LINT_NOTE:
-    //                      self._loadIcon('emblem-information')}
-
     connect(textEdit->document(), &QTextDocument::blockCountChanged, [this] { this->update(); });
     connect(textEdit->verticalScrollBar(), &QScrollBar::valueChanged, [this] { this->update(); });
 }
@@ -212,19 +226,6 @@ void MarkArea::paintEvent(QPaintEvent *event) {
         block = block.next();
     }
 }
-
-#if 0 // TODO linter marks
-void MarkArea::mouseMoveEvent(QMouseEvent* event) {
-    blockNumber = self.qpart_.cursorForPosition(event.pos()).blockNumber()
-    if blockNumber in self.qpart_._lintMarks:
-        msgType, msgText = self.qpart_._lintMarks[blockNumber]
-        QToolTip.showText(event.globalPos(), msgText)
-    else:
-        QToolTip.hideText()
-
-    return QWidget::mouseMoveEvent(event);
-}
-#endif
 
 Minimap::Minimap(Qutepart *textEdit) : SideArea(textEdit) {
     // TODO?
