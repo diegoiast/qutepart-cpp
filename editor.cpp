@@ -21,20 +21,19 @@
 #include "theme.h"
 
 // a C comment
-/* 
+/*
  * multiline comment - other features
  */
 
 /**
  * \brief doxygen comment
- * 
+ *
  * This shows how more complex comments are supported
  */
 
 #if 0
 this will also be displayed as a comment
 #endif
-
 
 // note the minimap on the side
 
@@ -59,10 +58,10 @@ bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart) {
     return true;
 }
 
-auto countTrailingSpaces(const QString& str) -> int {
+auto countTrailingSpaces(const QString &str) -> int {
     auto count = 0;
     for (auto i = str.length(); i != 0; --i) {
-        if (str[i-1] == ' ') {
+        if (str[i - 1] == ' ') {
             ++count;
         } else {
             break;
@@ -71,7 +70,7 @@ auto countTrailingSpaces(const QString& str) -> int {
     return count;
 }
 
-auto countLeadingSpaces(const QString& str) -> int {
+auto countLeadingSpaces(const QString &str) -> int {
     auto count = 0;
     for (auto i = 0; i < str.length(); ++i) {
         if (str[i] == ' ') {
@@ -97,7 +96,9 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
         minimapAction->setCheckable(true);
         minimapAction->setChecked(qutepart->minimapVisible());
         QObject::connect(minimapAction, &QAction::triggered, minimapAction,
-            [minimapAction, qutepart]() { qutepart->setMinimapVisible(minimapAction->isChecked()); });
+                         [minimapAction, qutepart]() {
+                             qutepart->setMinimapVisible(minimapAction->isChecked());
+                         });
         viewMenu->addAction(minimapAction);
         viewMenu->addAction(minimapAction);
         viewMenu->addAction(qutepart->zoomInAction());
@@ -105,11 +106,11 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
     }
 
     viewMenu->addSection("File modifications");
-    {    
+    {
         auto removeNotificationsAction = new QAction(viewMenu);
         removeNotificationsAction->setText("Remove modifications markings");
         QObject::connect(removeNotificationsAction, &QAction::triggered, removeNotificationsAction,
-            [qutepart]() { qutepart->removeModifications(); });
+                         [qutepart]() { qutepart->removeModifications(); });
         viewMenu->addAction(removeNotificationsAction);
     }
 
@@ -117,23 +118,27 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
     {
         auto addMarkingsAction = new QAction(viewMenu);
         addMarkingsAction->setText("Set markings on code");
-        QObject::connect( addMarkingsAction, &QAction::triggered, addMarkingsAction, [qutepart]() { 
-            for (auto line: qutepart->lines()) {
+        QObject::connect(addMarkingsAction, &QAction::triggered, addMarkingsAction, [qutepart]() {
+            for (auto line : qutepart->lines()) {
                 auto s1 = countLeadingSpaces(line.text());
                 auto s2 = countTrailingSpaces(line.text());
                 auto lineNumber = line.lineNumber();
-                
+
                 if ((s2 - s1) > 2) {
                     qutepart->setLineWarning(lineNumber, true);
-                    qutepart->setLineMessage(lineNumber, QString("Line %1 has %2 spaces at the end!!!!! That's too much!").arg(lineNumber).arg(s2));
+                    qutepart->setLineMessage(
+                        lineNumber,
+                        QString("Line %1 has %2 spaces at the end!!!!! That's too much!")
+                            .arg(lineNumber)
+                            .arg(s2));
                     qutepart->repaint();
-                } 
+                }
                 // if ((s1 - s2) > 5) {
                 //     auto flags = qutepart->getLineFlags(lineNumber);
                 //     flags |= Qutepart::SidebarFlag::Error;
                 //     qutepart->setLineFlags(lineNumber, flags);
-                //     qutepart->setLineMessage(lineNumber, QString("Line %1 has %2 spaces at the start").arg(lineNumber).arg(s1));
-                //     qutepart->repaint();
+                //     qutepart->setLineMessage(lineNumber, QString("Line %1 has %2 spaces at the
+                //     start").arg(lineNumber).arg(s1)); qutepart->repaint();
                 // }
                 if (lineNumber == 10) {
                     qutepart->setLineWarning(lineNumber, true);
@@ -172,17 +177,15 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
             }
         });
         viewMenu->addAction(addMarkingsAction);
-        
+
         auto clearMarkingsAction = new QAction(viewMenu);
         clearMarkingsAction->setText("Clear side markings");
         QObject::connect(clearMarkingsAction, &QAction::triggered, clearMarkingsAction,
-            [clearMarkingsAction, qutepart]() { qutepart->removeMetaData(); });
+                         [clearMarkingsAction, qutepart]() { qutepart->removeMetaData(); });
         viewMenu->addAction(clearMarkingsAction);
-        
+
         addMarkingsAction->trigger();
     }
-
-
 
     QMenu *navMenu = menuBar->addMenu("Navigation");
     navMenu->addAction(qutepart->toggleBookmarkAction());
@@ -245,7 +248,7 @@ int main(int argc, char **argv) {
     // alt + arrow moves line
     font.setFamily("Monospace");
     qutepart.setFont(font);
-    
+
     // toggle comment a line, block
     auto filePath = QString(":/qutepart/syntax/c.xml");
     if (argc > 1) {

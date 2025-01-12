@@ -40,13 +40,13 @@ void SideArea::mouseMoveEvent(QMouseEvent *event) {
     auto cursor = qpart_->cursorForPosition(event->pos());
     auto block = cursor.block();
     auto line = block.blockNumber();
-    
+
     if (line != this->lastHoeveredLine) {
-        lastHoeveredLine = line;        
-        auto data = static_cast<TextBlockUserData*>(block.userData());
+        lastHoeveredLine = line;
+        auto data = static_cast<TextBlockUserData *>(block.userData());
         if (!data->metaData.message.isEmpty()) {
             QToolTip::showText(event->globalPosition().toPoint(), data->metaData.message, qpart_);
-        } else {            
+        } else {
             QToolTip::hideText();
         }
     }
@@ -148,11 +148,11 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
                 painter.setFont(font);
             }
         }
-        
+
         if (hasFlag(block, MODIFIED_BIT)) {
-            painter.fillRect( width()-3, top, 2, availableHeight, modifiedColor);
+            painter.fillRect(width() - 3, top, 2, availableHeight, modifiedColor);
         }
-        
+
         block = block.next();
         boundingRect = qpart_->blockBoundingRect(block);
         top = bottom;
@@ -178,7 +178,7 @@ QPixmap MarkArea::loadIcon(const QString &name) const {
     auto icon = QIcon::fromTheme(name);
     auto size = qpart_->cursorRect(qpart_->document()->begin(), 0, 0).height() - 6;
     // This also works with Qt.AA_UseHighDpiPixmaps
-    return icon.pixmap(size, size); 
+    return icon.pixmap(size, size);
 }
 
 int MarkArea::widthHint() const { return MARK_MARGIN + bookmarkPixmap_.width() + MARK_MARGIN; }
@@ -208,24 +208,24 @@ void MarkArea::paintEvent(QPaintEvent *event) {
                 auto scaledSize = height - 6;
                 auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
                 auto yPos = top + ((height - scaledSize) / 2);
-                painter.drawPixmap(0, yPos, scaledIcon);                            
+                painter.drawPixmap(0, yPos, scaledIcon);
             }
             if (hasFlag(block, WARNING_BIT)) {
                 auto icon = QIcon::fromTheme(QIcon::ThemeIcon::DialogWarning);
                 auto scaledSize = height - 6;
                 auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
                 auto yPos = top + ((height - scaledSize) / 2);
-                painter.drawPixmap(0, yPos, scaledIcon);                            
+                painter.drawPixmap(0, yPos, scaledIcon);
             }
             if (hasFlag(block, INFO_BIT)) {
                 auto icon = QIcon::fromTheme(QIcon::ThemeIcon::DialogInformation);
                 auto scaledSize = height - 6;
                 auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
                 auto yPos = top + ((height - scaledSize) / 2);
-                painter.drawPixmap(0, yPos, scaledIcon);                            
+                painter.drawPixmap(0, yPos, scaledIcon);
             }
             if (isBookmarked(block)) {
-                auto  yPos = top + ((height - bookmarkPixmap_.height()) / 2); // centered
+                auto yPos = top + ((height - bookmarkPixmap_.height()) / 2); // centered
                 painter.drawPixmap(0, yPos, bookmarkPixmap_);
             }
         }
@@ -280,7 +280,7 @@ void Minimap::paintEvent(QPaintEvent *event) {
             background = theme->getEditorColors()[Theme::Colors::IconBorder];
         }
     }
-    painter.fillRect(event->rect(), background);    
+    painter.fillRect(event->rect(), background);
     drawMinimapText(&painter, isLargeDocument);
 }
 

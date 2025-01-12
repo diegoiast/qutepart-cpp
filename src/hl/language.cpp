@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <algorithm>
 #include <QDebug>
+#include <algorithm>
 
 #include "context_switcher.h"
+#include "language.h"
 #include "text_block_user_data.h"
 #include "text_to_match.h"
-#include "language.h"
 
 namespace Qutepart {
 
@@ -51,7 +51,7 @@ void Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange
     TextToMatch textToMatch(block.text(), contextStack.currentData());
     QString textTypeMap(textToMatch.text.length(), ' ');
     auto lineContinue = false;
-    auto data = static_cast<TextBlockUserData*>(block.userData());
+    auto data = static_cast<TextBlockUserData *>(block.userData());
     if (!data) {
         data = new TextBlockUserData(textTypeMap, contextStack);
         block.setUserData(data);
@@ -73,10 +73,9 @@ void Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange
 }
 
 ContextPtr Language::getContext(const QString &contextName) const {
-    auto it = std::find_if(contexts.begin(), contexts.end(), 
-                           [&contextName](const ContextPtr& ctx) {
-                               return ctx->name() == contextName;
-                           });
+    auto it = std::find_if(contexts.begin(), contexts.end(), [&contextName](const ContextPtr &ctx) {
+        return ctx->name() == contextName;
+    });
 
     if (it != contexts.end()) {
         return *it;

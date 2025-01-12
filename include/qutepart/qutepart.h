@@ -118,7 +118,7 @@ class Line {
 
     /// Remove the line from the document
     void remove(int pos, int count);
-    
+
     /// Get the line number
     int lineNumber() const;
 
@@ -336,7 +336,7 @@ class Qutepart : public QPlainTextEdit {
     bool completionEnabled() const;
     void setCompletionThreshold(int);
     int completionThreshold() const;
-    
+
     void removeMetaData();
 
     /// Returns the status of a line. A line is marked as modified when its changed via the user
@@ -347,11 +347,11 @@ class Qutepart : public QPlainTextEdit {
     void setLineModified(QTextBlock &block, bool modified) const;
     /// Clear modifications from all document.
     void removeModifications();
-    
+
     // Markings
     void modifyBlockFlag(int lineNumber, int bit, bool status, QColor background);
     bool getBlockFlag(int lineNumber, int bit) const;
-    
+
     bool getLineBookmark(int lineNumber) const;
     void setLineBookmark(int lineNumber, bool status);
     bool getLineWarning(int lineNumber) const;
@@ -393,7 +393,7 @@ class Qutepart : public QPlainTextEdit {
     inline QAction *toggleCommentAction() const { return toggleActionComment_; }
     /// Find matching bracket for this position
     inline QAction *findMatchingBracketAction() const { return findMatchingBracketAction_; }
-            
+
     // Convenience functions
     void resetSelection();
 
@@ -405,7 +405,7 @@ class Qutepart : public QPlainTextEdit {
 
   private:
     QList<QTextEdit::ExtraSelection> persitentSelections;
-    
+
     void initActions();
     QAction *createAction(const QString &text, QKeySequence shortcut, const QString &iconFileName,
                           std::function<void()> const &handler);
@@ -472,7 +472,7 @@ class Qutepart : public QPlainTextEdit {
     std::unique_ptr<BracketHighlighter> bracketHighlighter_;
     std::unique_ptr<LineNumberArea> lineNumberArea_;
     std::unique_ptr<MarkArea> markArea_;
-    Minimap* miniMap_ = nullptr;
+    Minimap *miniMap_ = nullptr;
     std::unique_ptr<Completer> completer_;
 
     bool drawIndentations_;
@@ -488,7 +488,7 @@ class Qutepart : public QPlainTextEdit {
     QColor currentLineColor_;
     QColor indentColor_;
     QColor whitespaceColor_;
-    
+
     bool brakcetsQutoEnclose;
     bool completionEnabled_;
     int completionThreshold_;
