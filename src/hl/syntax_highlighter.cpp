@@ -21,15 +21,11 @@ SyntaxHighlighter::SyntaxHighlighter(QObject *parent, QSharedPointer<Language> l
 
 void SyntaxHighlighter::highlightBlock(const QString &) {
     QVector<QTextLayout::FormatRange> formats;
-
-    int state = language->highlightBlock(currentBlock(), formats);
-
+    
+    language->highlightBlock(currentBlock(), formats);
     foreach (const QTextLayout::FormatRange &range, formats) {
         setFormat(range.start, range.length, range.format);
     }
-
-    // Qt needs state to know if next line shall be highlighted
-    setCurrentBlockState(state);
 }
 
 } // namespace Qutepart

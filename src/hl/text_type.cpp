@@ -12,13 +12,8 @@ namespace Qutepart {
 
 namespace {
 
-TextBlockUserData *getData(const QTextBlock &block) {
-    QTextBlockUserData *data = block.userData();
-    if (data == nullptr) {
-        return nullptr;
-    }
-
-    return dynamic_cast<TextBlockUserData *>(data);
+static inline TextBlockUserData *getData(const QTextBlock &block) {
+    return static_cast<TextBlockUserData *>(block.userData());
 }
 
 QChar getTextType(const QTextBlock &block, int column) {
@@ -33,7 +28,7 @@ QChar getTextType(const QTextBlock &block, int column) {
 } // namespace
 
 QString textTypeMap(const QTextBlock &block) {
-    TextBlockUserData *data = getData(block);
+    const TextBlockUserData *data = getData(block);
     if (data == nullptr) {
         return QString().fill(' ', block.text().length());
     }
