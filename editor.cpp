@@ -124,16 +124,50 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
                 auto lineNumber = line.lineNumber();
                 
                 if ((s2 - s1) > 2) {
-                    qutepart->setMetaDataMessage(lineNumber, QString("Line %1 has %2 spaces at the end!!!!! That's too much!").arg(lineNumber).arg(s2));
-                    qutepart->setMetaDataIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::DialogError));
-                } if ((s1 - s2) > 2) {
-                    qutepart->setMetaDataMessage(lineNumber, QString("Line %1 has %2 spaces at the start").arg(lineNumber).arg(s1));
-                    qutepart->setMetaDataIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::DialogQuestion));
+                    qutepart->setLineWarning(lineNumber, true);
+                    qutepart->setLineMessage(lineNumber, QString("Line %1 has %2 spaces at the end!!!!! That's too much!").arg(lineNumber).arg(s2));
+                    qutepart->repaint();
+                } 
+                // if ((s1 - s2) > 5) {
+                //     auto flags = qutepart->getLineFlags(lineNumber);
+                //     flags |= Qutepart::SidebarFlag::Error;
+                //     qutepart->setLineFlags(lineNumber, flags);
+                //     qutepart->setLineMessage(lineNumber, QString("Line %1 has %2 spaces at the start").arg(lineNumber).arg(s1));
+                //     qutepart->repaint();
+                // }
+                if (lineNumber == 10) {
+                    qutepart->setLineWarning(lineNumber, true);
+                    qutepart->setLineMessage(lineNumber, QString("This is an warning message"));
+                    qutepart->repaint();
                 }
-                
+                if (lineNumber == 11) {
+                    qutepart->setLineError(lineNumber, true);
+                    qutepart->setLineMessage(lineNumber, QString("This is an error message"));
+                    qutepart->repaint();
+                }
                 if (lineNumber == 12) {
-                    qutepart->setMetaDataMessage(lineNumber, QString("Lucky 13"));
-                    qutepart->setMetaDataIcon(lineNumber, QIcon::fromTheme(QIcon::ThemeIcon::Phone));                
+                    qutepart->setLineInfo(lineNumber, true);
+                    qutepart->setLineMessage(lineNumber, QString("Lucky 13 (this is info)"));
+                    qutepart->repaint();
+                }
+
+                if (lineNumber == 19) {
+                    qutepart->setLineWarning(lineNumber, true);
+                    qutepart->setLineInfo(lineNumber, true);
+                    qutepart->setLineMessage(lineNumber, QString("This is warning+info"));
+                    qutepart->repaint();
+                }
+                if (lineNumber == 22) {
+                    qutepart->setLineWarning(lineNumber, true);
+                    qutepart->setLineError(lineNumber, true);
+                    qutepart->setLineMessage(lineNumber, QString("This is warning+error"));
+                    qutepart->repaint();
+                }
+                if (lineNumber == 29) {
+                    qutepart->setLineError(lineNumber, true);
+                    qutepart->setLineInfo(lineNumber, true);
+                    qutepart->setLineMessage(lineNumber, QString("This is info+error"));
+                    qutepart->repaint();
                 }
             }
         });
@@ -144,6 +178,8 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
         QObject::connect(clearMarkingsAction, &QAction::triggered, clearMarkingsAction,
             [clearMarkingsAction, qutepart]() { qutepart->removeMetaData(); });
         viewMenu->addAction(clearMarkingsAction);
+        
+        addMarkingsAction->trigger();
     }
 
 

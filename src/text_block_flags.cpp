@@ -8,21 +8,21 @@
 
 namespace Qutepart {
 
-bool isBookmarked(const QTextBlock &block) {
+bool hasFlag(const QTextBlock &block, int flag) {
     int state = block.userState();
-    return state != -1 && state & BOOMARK_BIT;
+    return state != -1 && state & flag;
 }
 
-void setBookmarked(QTextBlock &block, bool value) {
+void setFlag(QTextBlock &block, int flag, bool value) {
     int state = block.userState();
     if (state == -1) {
         state = 0;
     }
 
     if (value) {
-        state |= BOOMARK_BIT;
+        state |= flag;
     } else {
-        state &= (~BOOMARK_BIT);
+        state &= (~flag);
     }
 
     block.setUserState(state);

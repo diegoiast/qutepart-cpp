@@ -53,7 +53,13 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     });
 
     connect(document(), &QTextDocument::contentsChange, this, [this](){
-        this->setLineModified(textCursor().block(), true);
+        auto block = textCursor().block();
+        this->setLineModified(block, true);
+
+        // Event is fired when destructing as well
+        if (markArea_) {
+            markArea_->update();
+        }
     });
 
     QTimer::singleShot(0, this, [this]() { updateViewport(); });
@@ -353,11 +359,10 @@ int Qutepart::completionThreshold() const { return completionThreshold_; }
 bool Qutepart::isLineModified(int lineNumber) const
 {
     auto block = document()->findBlockByNumber(lineNumber);
-    auto data = static_cast<TextBlockUserData*>(block.userData());
-    if (data) {
-        return data->metaData.modified;
+    if (!block.isValid()) {
+        return false;
     }
-    return false;
+    return hasFlag(block, MODIFIED_BIT);
 }
 
 void Qutepart::setLineModified(int lineNumber, bool modified) const
@@ -366,24 +371,103 @@ void Qutepart::setLineModified(int lineNumber, bool modified) const
     setLineModified(block, modified);    
 }
 
-void Qutepart::setLineModified(QTextBlock block, bool modified) const
+void Qutepart::setLineModified(QTextBlock &block, bool modified) const
 {
-    auto data = static_cast<TextBlockUserData*>(block.userData());
-    if (!data) {
-        data = new TextBlockUserData({},{nullptr});
-        block.setUserData(data);
+    setFlag(block, MODIFIED_BIT, modified);
+    if (markArea_) {
+        markArea_->update();
     }
-    data->metaData.modified = modified;
 }
 
 void Qutepart::removeModifications()
 {
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
-        auto data = static_cast<TextBlockUserData*>(block.userData());
-        if (data) {
-            data->metaData.modified = false;
-        }
+        setFlag(block, MODIFIED_BIT, false);
     }
+}
+
+auto Qutepart::modifyBlockFlag(int lineNumber, int bit, bool status, QColor background) -> void {
+    auto block = document()->findBlockByNumber(lineNumber);
+    setFlag(block, bit, status);
+    
+    if (background != Qt::transparent) {
+        QTextEdit::ExtraSelection selection;
+        selection.format.setBackground(background);
+        selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+        selection.cursor = QTextCursor(block);
+        selection.cursor.clearSelection();
+        persitentSelections.append(selection);
+        updateExtraSelections();
+    }
+    if (markArea_) {
+        markArea_->update();
+    }
+}
+
+bool Qutepart::getBlockFlag(int lineNumber, int bit) const {
+    auto block = document()->findBlockByNumber(lineNumber);
+    return hasFlag(block, bit);
+}
+
+
+bool Qutepart::getLineBookmark(int lineNumber) const
+{
+    return getBlockFlag(lineNumber, BOOMARK_BIT);
+}
+
+void Qutepart::setLineBookmark(int lineNumber, bool status)
+{
+    modifyBlockFlag(lineNumber, BOOMARK_BIT, status, Qt::transparent);
+}
+
+bool Qutepart::getLineWarning(int lineNumber) const
+{
+    return getBlockFlag(lineNumber, WARNING_BIT);    
+}
+
+void Qutepart::setLineWarning(int lineNumber, bool status)
+{
+    modifyBlockFlag(lineNumber, WARNING_BIT, status, Qt::yellow);
+}
+
+bool Qutepart::getLineError(int lineNumber) const
+{
+    return getBlockFlag(lineNumber, ERRROR_BIT);
+}
+
+void Qutepart::setLineError(int lineNumber, bool status)
+{
+    modifyBlockFlag(lineNumber, ERRROR_BIT, status, Qt::red);
+}
+
+bool Qutepart::getLineInfo(int lineNumber) const
+{
+    return getBlockFlag(lineNumber, INFO_BIT);
+}
+
+void Qutepart::setLineInfo(int lineNumber, bool status)
+{
+    modifyBlockFlag(lineNumber, INFO_BIT, status, Qt::cyan);
+}
+
+bool Qutepart::getLineBreakpoint(int lineNumber) const
+{
+    return getBlockFlag(lineNumber, BREAKPOINT_BIT);
+}
+
+void Qutepart::setLineBreakpoint(int lineNumber, bool status)
+{
+    modifyBlockFlag(lineNumber, BREAKPOINT_BIT, status, Qt::green);
+}
+
+bool Qutepart::getLineExecuting(int lineNumber) const
+{
+    return getBlockFlag(lineNumber, EXECUTING_BIT);
+}
+
+void Qutepart::setLineExecuting(int lineNumber, bool status)
+{
+    modifyBlockFlag(lineNumber, EXECUTING_BIT, status, Qt::blue);
 }
 
 void Qutepart::removeMetaData()
@@ -391,15 +475,14 @@ void Qutepart::removeMetaData()
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
         auto data = static_cast<TextBlockUserData*>(block.userData());
         if (data) {
-            data->metaData.icon = {};
             data->metaData.message.clear();
-            data->metaData.lineBackground = {};
+            block.setUserState(0);
         }
     }
     persitentSelections.clear();
 }
 
-void Qutepart::setMetaDataMessage(int lineNumber, const QString &message)
+void Qutepart::setLineMessage(int lineNumber, const QString &message)
 {
     auto block = document()->findBlockByNumber(lineNumber);
     auto data = static_cast<TextBlockUserData*>(block.userData());
@@ -410,26 +493,41 @@ void Qutepart::setMetaDataMessage(int lineNumber, const QString &message)
     data->metaData.message = message;
 }
 
-void Qutepart::setMetaDataIcon(int lineNumber, QIcon icon)
-{
-    auto block = document()->findBlockByNumber(lineNumber);
-    auto data = static_cast<TextBlockUserData*>(block.userData());
-    if (!data) {
-        data = new TextBlockUserData({},{nullptr});
-        block.setUserData(data);
+/*
+auto static BlendColors(const QColor &color1, const QColor & color2, float r = 0.5) -> QColor {
+    if (!color2.isValid()) {
+        return color1;
     }
-    data->metaData.icon = icon;
+    if (!color1.isValid()) {
+        return color2;
+    }
+    return QColor(
+        (1-r) * color1.red()  + color2.red() * r,
+        (1-r) * color1.green()  + color2.green() * r,
+        (1-r) * color1.blue()  + color2.blue() * r,
+    255);
 }
 
-void Qutepart::setMetaDataBackground(int lineNumber, QColor color)
+void Qutepart::setLineFlags(int lineNumber, SidebarFlags newflags)
 {
     auto block = document()->findBlockByNumber(lineNumber);
     auto data = static_cast<TextBlockUserData*>(block.userData());
     if (!data) {
-        data = new TextBlockUserData({},{nullptr});
+    data = new TextBlockUserData({},{nullptr});
         block.setUserData(data);
     }
-    data->metaData.lineBackground = color;    
+    data->metaData.flags = newflags;
+    
+    QColor color;
+    if (newflags & SidebarFlag::Info) {
+        color =  BlendColors(color, 0xDBDF93);
+    }
+    if (newflags & SidebarFlag::Warning) {
+        color = QColor(0xE5EDFE);
+    }
+    if (newflags & SidebarFlag::Error) {
+        color = BlendColors(color, QColor(0xFCE3E3));
+    }
     
     QTextEdit::ExtraSelection selection;
     selection.format.setBackground(color);
@@ -438,7 +536,21 @@ void Qutepart::setMetaDataBackground(int lineNumber, QColor color)
     selection.cursor.clearSelection();
     persitentSelections += selection;
 
+    newflags.to
+    update();
 }
+
+SidebarFlags Qutepart::getLineFlags(int lineNumber) const
+{
+    auto block = document()->findBlockByNumber(lineNumber);
+    auto data = static_cast<TextBlockUserData*>(block.userData());
+    if (!data) {
+        return SidebarFlag::Nothing;
+    }
+    return data->metaData.flags;    
+}
+
+*/
 
 void Qutepart::setCompletionThreshold(int val) { completionThreshold_ = val; }
 
@@ -1483,9 +1595,9 @@ void Qutepart::onShortcutEnd(QTextCursor::MoveMode moveMode) {
 }
 
 void Qutepart::onShortcutToggleBookmark() {
-    QTextBlock block = textCursor().block();
-    bool value = !isBookmarked(block);
-    setBookmarked(block, value);
+    auto block = textCursor().block();
+    auto value = hasFlag(block, BOOMARK_BIT);
+    setFlag(block, BOOMARK_BIT, !value); 
     markArea_->update();
 }
 

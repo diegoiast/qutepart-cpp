@@ -20,10 +20,8 @@ class TextBlockUserData : public QTextBlockUserData {
     ContextStack contexts;
 
     struct {
-        bool modified = false;
-        QIcon icon;
+        // bool modified = false;
         QString message;
-        QColor lineBackground;
     } metaData;
 };
 

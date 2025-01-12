@@ -43,13 +43,10 @@ void SideArea::mouseMoveEvent(QMouseEvent *event) {
     
     if (line != this->lastHoeveredLine) {
         lastHoeveredLine = line;        
-        if (auto data = dynamic_cast<TextBlockUserData*>(block.userData())) {
-            if (!data->metaData.message.isEmpty()) {
-                QToolTip::showText(event->globalPosition().toPoint(), data->metaData.message, qpart_);
-            } else {            
-                QToolTip::hideText();
-            }
-        } else {
+        auto data = static_cast<TextBlockUserData*>(block.userData());
+        if (!data->metaData.message.isEmpty()) {
+            QToolTip::showText(event->globalPosition().toPoint(), data->metaData.message, qpart_);
+        } else {            
             QToolTip::hideText();
         }
     }
@@ -152,8 +149,7 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
             }
         }
         
-        auto data = static_cast<TextBlockUserData*>(block.userData());
-        if (!data || data->metaData.modified) {
+        if (hasFlag(block, MODIFIED_BIT)) {
             painter.fillRect( width()-3, top, 2, availableHeight, modifiedColor);
         }
         
@@ -207,15 +203,27 @@ void MarkArea::paintEvent(QPaintEvent *event) {
         auto bottom = top + height;
 
         if (block.isVisible() && bottom >= event->rect().top()) {
-            if (auto data = dynamic_cast<TextBlockUserData*>(block.userData())) {
-                if (!data->metaData.icon.isNull()) {
-                    // auto scaledIcon = data->metaData.extraIcon.pixmap(height, height);
-                    auto scaledSize = height - 6;
-                    auto scaledIcon = data->metaData.icon.pixmap(scaledSize, scaledSize);
-                    auto yPos = top + ((height - scaledSize) / 2);
-                    painter.drawPixmap(0, yPos, scaledIcon);                }
+            if (hasFlag(block, ERRROR_BIT)) {
+                auto icon = QIcon::fromTheme(QIcon::ThemeIcon::DialogError);
+                auto scaledSize = height - 6;
+                auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
+                auto yPos = top + ((height - scaledSize) / 2);
+                painter.drawPixmap(0, yPos, scaledIcon);                            
             }
-
+            if (hasFlag(block, WARNING_BIT)) {
+                auto icon = QIcon::fromTheme(QIcon::ThemeIcon::DialogWarning);
+                auto scaledSize = height - 6;
+                auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
+                auto yPos = top + ((height - scaledSize) / 2);
+                painter.drawPixmap(0, yPos, scaledIcon);                            
+            }
+            if (hasFlag(block, INFO_BIT)) {
+                auto icon = QIcon::fromTheme(QIcon::ThemeIcon::DialogInformation);
+                auto scaledSize = height - 6;
+                auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
+                auto yPos = top + ((height - scaledSize) / 2);
+                painter.drawPixmap(0, yPos, scaledIcon);                            
+            }
             if (isBookmarked(block)) {
                 auto  yPos = top + ((height - bookmarkPixmap_.height()) / 2); // centered
                 painter.drawPixmap(0, yPos, bookmarkPixmap_);
