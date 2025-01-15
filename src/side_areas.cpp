@@ -26,8 +26,22 @@ namespace {
 
 const int LEFT_LINE_NUM_MARGIN = 5;
 const int RIGHT_LINE_NUM_MARGIN = 3;
-
 const int MARK_MARGIN = 1;
+
+auto static blendColors(const QColor &color1, const QColor & color2, float r = 0.5) -> QColor {
+    if (!color2.isValid()) {
+        return color1;
+    }
+    if (!color1.isValid()) {
+        return color2;
+    }
+    return QColor(
+        (1-r) * color1.red()  + color2.red() * r,
+        (1-r) * color1.green()  + color2.green() * r,
+        (1-r) * color1.blue()  + color2.blue() * r,
+    255);
+}
+
 
 } // namespace
 
@@ -381,9 +395,31 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
         if (y >= minimapArea.height()) {
             break;
         }
+        
+        auto backgronud = QColor(Qt::transparent);
+        int flags[] = {
+            BOOMARK_BIT, 
+            MODIFIED_BIT,
+            WARNING_BIT,
+            ERROR_BIT,
+            INFO_BIT,
+            BREAKPOINT_BIT,
+            EXECUTING_BIT     
+        };
         if (lineNumber == currentLineNumber) {
+            backgronud = qpart_->currentLineColor();
+        }
+        for (auto flag : flags) {
+            if (hasFlag(block, flag)) {
+                auto color = qpart_->getColorForLineFlag(flag);
+                if (color.alpha() != 0) {
+                    backgronud = blendColors(color, backgronud);
+                }
+            }
+        }
+        if (backgronud.alpha() != 0) {
             painter->setPen(Qt::NoPen);
-            painter->setBrush(qpart_->currentLineColor());
+            painter->setBrush(backgronud);
             painter->drawRect(minimapArea.left(), y, minimapArea.width(), lineHeight);
         }
         painter->setPen(textColor);

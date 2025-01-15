@@ -399,6 +399,9 @@ auto Qutepart::modifyBlockFlag(int lineNumber, int bit, bool status, QColor back
     if (markArea_) {
         markArea_->update();
     }
+    if (miniMap_) {
+        miniMap_->update();
+    }
 }
 
 bool Qutepart::getBlockFlag(int lineNumber, int bit) const {
