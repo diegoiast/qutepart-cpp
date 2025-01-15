@@ -4,12 +4,14 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <QApplication>
 #include <QDebug>
 #include <QIcon>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QScrollBar>
 #include <QTextBlock>
+#include <QToolTip>
 
 #include "qutepart.h"
 #include "text_block_flags.h"
@@ -24,13 +26,41 @@ namespace {
 
 const int LEFT_LINE_NUM_MARGIN = 5;
 const int RIGHT_LINE_NUM_MARGIN = 3;
-
 const int MARK_MARGIN = 1;
+
+auto static blendColors(const QColor &color1, const QColor &color2, float r = 0.5) -> QColor {
+    if (!color2.isValid()) {
+        return color1;
+    }
+    if (!color1.isValid()) {
+        return color2;
+    }
+    return QColor((1 - r) * color1.red() + color2.red() * r,
+                  (1 - r) * color1.green() + color2.green() * r,
+                  (1 - r) * color1.blue() + color2.blue() * r, 255);
+}
 
 } // namespace
 
 SideArea::SideArea(Qutepart *textEdit) : QWidget(textEdit), qpart_(textEdit) {
     connect(textEdit, &Qutepart::updateRequest, this, &SideArea::onTextEditUpdateRequest);
+}
+
+void SideArea::mouseMoveEvent(QMouseEvent *event) {
+    QWidget::mouseMoveEvent(event);
+    auto cursor = qpart_->cursorForPosition(event->pos());
+    auto block = cursor.block();
+    auto line = block.blockNumber();
+
+    if (line != this->lastHoeveredLine) {
+        lastHoeveredLine = line;
+        auto data = static_cast<TextBlockUserData *>(block.userData());
+        if (!data->metaData.message.isEmpty()) {
+            QToolTip::showText(event->globalPosition().toPoint(), data->metaData.message, qpart_);
+        } else {
+            QToolTip::hideText();
+        }
+    }
 }
 
 void SideArea::onTextEditUpdateRequest(const QRect &rect, int dy) {
@@ -47,6 +77,7 @@ void SideArea::onTextEditUpdateRequest(const QRect &rect, int dy) {
 
 LineNumberArea::LineNumberArea(Qutepart *textEdit) : SideArea(textEdit) {
     resize(widthHint(), height());
+    setMouseTracking(true);
     connect(textEdit->document(), &QTextDocument::blockCountChanged, this,
             &LineNumberArea::updateWidth);
     updateWidth();
@@ -128,12 +159,11 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
                 painter.setFont(font);
             }
         }
-        
-        auto data = static_cast<TextBlockUserData*>(block.userData());
-        if (!data || data->metaData.modified) {
-            painter.fillRect( width()-3, top, 2, availableHeight, modifiedColor);
+
+        if (hasFlag(block, MODIFIED_BIT)) {
+            painter.fillRect(width() - 3, top, 2, availableHeight, modifiedColor);
         }
-        
+
         block = block.next();
         boundingRect = qpart_->blockBoundingRect(block);
         top = bottom;
@@ -149,25 +179,17 @@ void LineNumberArea::changeEvent(QEvent *event) {
 }
 
 MarkArea::MarkArea(Qutepart *textEdit) : SideArea(textEdit) {
-#if 0
     setMouseTracking(true);
-#endif
-
     bookmarkPixmap_ = loadIcon("emblem-favorite");
-    // self._lintPixmaps = {qpart.LINT_ERROR: self._loadIcon('emblem-error'),
-    //                      qpart.LINT_WARNING:
-    //                      self._loadIcon('emblem-warning'), qpart.LINT_NOTE:
-    //                      self._loadIcon('emblem-information')}
-
     connect(textEdit->document(), &QTextDocument::blockCountChanged, [this] { this->update(); });
     connect(textEdit->verticalScrollBar(), &QScrollBar::valueChanged, [this] { this->update(); });
 }
 
 QPixmap MarkArea::loadIcon(const QString &name) const {
-    QIcon icon = QIcon::fromTheme(name);
-    int size = qpart_->cursorRect(qpart_->document()->begin(), 0, 0).height() - 6;
-    return icon.pixmap(size,
-                       size); // This also works with Qt.AA_UseHighDpiPixmaps
+    auto icon = QIcon::fromTheme(name);
+    auto size = qpart_->cursorRect(qpart_->document()->begin(), 0, 0).height() - 6;
+    // This also works with Qt.AA_UseHighDpiPixmaps
+    return icon.pixmap(size, size);
 }
 
 int MarkArea::widthHint() const { return MARK_MARGIN + bookmarkPixmap_.width() + MARK_MARGIN; }
@@ -180,29 +202,41 @@ void MarkArea::paintEvent(QPaintEvent *event) {
             backgruoundColor = theme->getEditorColors()[Theme::Colors::IconBorder];
         }
     }
-
     painter.fillRect(event->rect(), backgruoundColor);
 
-    QTextBlock block = qpart_->firstVisibleBlock();
-    QRectF blockBoundingGeometry =
+    auto block = qpart_->firstVisibleBlock();
+    auto blockBoundingGeometry =
         qpart_->blockBoundingGeometry(block).translated(qpart_->contentOffset());
-    int top = blockBoundingGeometry.top();
+    auto top = blockBoundingGeometry.top();
 
     while (block.isValid() && top <= event->rect().bottom()) {
-        int height = qpart_->blockBoundingGeometry(block).height();
-        int bottom = top + height;
+        auto height = qpart_->blockBoundingGeometry(block).height();
+        auto bottom = top + height;
 
         if (block.isVisible() && bottom >= event->rect().top()) {
-#if 0 // TODO linter marks
-            if block.blockNumber() in self.qpart_.lintMarks:
-                msgType, msgText = self.qpart_.lintMarks[block.blockNumber()]
-                pixMap = self._lintPixmaps[msgType]
-                yPos = top + ((height - pixMap.height()) / 2)  # centered
-                painter.drawPixmap(0, yPos, pixMap)
-#endif
-
+            if (hasFlag(block, ERROR_BIT)) {
+                auto icon = iconForStatus(ERROR_BIT);
+                auto scaledSize = height - 4;
+                auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
+                auto yPos = top + ((height - scaledSize) / 2);
+                painter.drawPixmap(0, yPos, scaledIcon);
+            }
+            if (hasFlag(block, WARNING_BIT)) {
+                auto icon = iconForStatus(WARNING_BIT);
+                auto scaledSize = height - 4;
+                auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
+                auto yPos = top + ((height - scaledSize) / 2);
+                painter.drawPixmap(0, yPos, scaledIcon);
+            }
+            if (hasFlag(block, INFO_BIT)) {
+                auto icon = iconForStatus(INFO_BIT);
+                auto scaledSize = height - 4;
+                auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
+                auto yPos = top + ((height - scaledSize) / 2);
+                painter.drawPixmap(0, yPos, scaledIcon);
+            }
             if (isBookmarked(block)) {
-                int yPos = top + ((height - bookmarkPixmap_.height()) / 2); // centered
+                auto yPos = top + ((height - bookmarkPixmap_.height()) / 2); // centered
                 painter.drawPixmap(0, yPos, bookmarkPixmap_);
             }
         }
@@ -211,19 +245,6 @@ void MarkArea::paintEvent(QPaintEvent *event) {
         block = block.next();
     }
 }
-
-#if 0 // TODO linter marks
-void MarkArea::mouseMoveEvent(QMouseEvent* event) {
-    blockNumber = self.qpart_.cursorForPosition(event.pos()).blockNumber()
-    if blockNumber in self.qpart_._lintMarks:
-        msgType, msgText = self.qpart_._lintMarks[blockNumber]
-        QToolTip.showText(event.globalPos(), msgText)
-    else:
-        QToolTip.hideText()
-
-    return QWidget::mouseMoveEvent(event);
-}
-#endif
 
 Minimap::Minimap(Qutepart *textEdit) : SideArea(textEdit) {
     // TODO?
@@ -270,7 +291,7 @@ void Minimap::paintEvent(QPaintEvent *event) {
             background = theme->getEditorColors()[Theme::Colors::IconBorder];
         }
     }
-    painter.fillRect(event->rect(), background);    
+    painter.fillRect(event->rect(), background);
     drawMinimapText(&painter, isLargeDocument);
 }
 
@@ -371,9 +392,24 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
         if (y >= minimapArea.height()) {
             break;
         }
+
+        auto backgronud = QColor(Qt::transparent);
+        int flags[] = {BOOMARK_BIT, MODIFIED_BIT,   WARNING_BIT,  ERROR_BIT,
+                       INFO_BIT,    BREAKPOINT_BIT, EXECUTING_BIT};
         if (lineNumber == currentLineNumber) {
+            backgronud = qpart_->currentLineColor();
+        }
+        for (auto flag : flags) {
+            if (hasFlag(block, flag)) {
+                auto color = qpart_->getColorForLineFlag(flag);
+                if (color.alpha() != 0) {
+                    backgronud = blendColors(color, backgronud);
+                }
+            }
+        }
+        if (backgronud.alpha() != 0) {
             painter->setPen(Qt::NoPen);
-            painter->setBrush(qpart_->currentLineColor());
+            painter->setBrush(backgronud);
             painter->drawRect(minimapArea.left(), y, minimapArea.width(), lineHeight);
         }
         painter->setPen(textColor);

@@ -21,7 +21,7 @@ SyntaxHighlighter::SyntaxHighlighter(QObject *parent, QSharedPointer<Language> l
 
 void SyntaxHighlighter::highlightBlock(const QString &) {
     QVector<QTextLayout::FormatRange> formats;
-    
+
     language->highlightBlock(currentBlock(), formats);
     foreach (const QTextLayout::FormatRange &range, formats) {
         setFormat(range.start, range.length, range.format);

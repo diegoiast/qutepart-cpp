@@ -10,9 +10,10 @@
 
 namespace Qutepart {
 
-const int BOOMARK_BIT = 0x1;
+bool hasFlag(const QTextBlock &block, int flag);
+void setFlag(QTextBlock &block, int flag, bool value);
 
-bool isBookmarked(const QTextBlock &block);
-void setBookmarked(QTextBlock &block, bool value);
+inline bool isBookmarked(const QTextBlock &block) { return hasFlag(block, BOOMARK_BIT); }
+inline void setBookmarked(QTextBlock &block, bool value) { setFlag(block, BOOMARK_BIT, value); }
 
 } // namespace Qutepart

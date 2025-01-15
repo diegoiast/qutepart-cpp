@@ -23,6 +23,29 @@
 
 namespace Qutepart {
 
+// clang-format off
+const int BOOMARK_BIT       = 1 << 0;
+const int MODIFIED_BIT      = 1 << 1;
+const int WARNING_BIT       = 1 << 2;
+const int ERROR_BIT         = 1 << 3;
+const int INFO_BIT          = 1 << 4;
+const int BREAKPOINT_BIT    = 1 << 5;
+const int EXECUTING_BIT     = 1 << 6;
+
+// Future expansion
+const int UNUSED9_BIT  = 1 << 7;
+const int UNUSED8_BIT  = 1 << 8;
+const int UNUSED7_BIT  = 1 << 9;
+const int UNUSED6_BIT  = 1 << 10;
+const int UNUSED5_BIT  = 1 << 11;
+const int UNUSED4_BIT  = 1 << 12;
+const int UNUSED3_BIT  = 1 << 13;
+const int UNUSED2_BIT  = 1 << 14;
+const int UNUSED1_BIT  = 1 << 15;
+// clang-format on
+
+QIcon iconForStatus(int status);
+
 /**
  * \enum IndentAlg
  * \brief Indentation algorithm.
@@ -118,6 +141,9 @@ class Line {
 
     /// Remove the line from the document
     void remove(int pos, int count);
+
+    /// Get the line number
+    int lineNumber() const;
 
   private:
     QTextBlock block_;
@@ -331,9 +357,40 @@ class Qutepart : public QPlainTextEdit {
     // Autocompletion
     void setCompletionEnabled(bool);
     bool completionEnabled() const;
-
     void setCompletionThreshold(int);
     int completionThreshold() const;
+
+    void removeMetaData();
+
+    /// Returns the status of a line. A line is marked as modified when its changed via the user
+    bool isLineModified(int lineNumber) const;
+    /// Set the status of a line, modified or not
+    void setLineModified(int lineNumber, bool modified) const;
+    /// Set the status of a line, modified or not
+    void setLineModified(QTextBlock &block, bool modified) const;
+    /// Clear modifications from all document.
+    void removeModifications();
+
+    // Markings
+    void modifyBlockFlag(int lineNumber, int bit, bool status, QColor background);
+    bool getBlockFlag(int lineNumber, int bit) const;
+
+    bool getLineBookmark(int lineNumber) const;
+    void setLineBookmark(int lineNumber, bool status);
+    bool getLineWarning(int lineNumber) const;
+    void setLineWarning(int lineNumber, bool status);
+    bool getLineError(int lineNumber) const;
+    void setLineError(int lineNumber, bool status);
+    bool getLineInfo(int lineNumber) const;
+    void setLineInfo(int lineNumber, bool status);
+    bool getLineBreakpoint(int lineNumber) const;
+    void setLineBreakpoint(int lineNumber, bool status);
+    bool getLineExecuting(int lineNumber) const;
+    void setLineExecuting(int lineNumber, bool status);
+    void setLineMessage(int lineNumber, const QString &message);
+
+    auto getColorForLineFlag(int flag) -> QColor;
+    auto fixLineFlagColors() -> void;
 
     // Actions
     inline QAction *increaseIndentAction() const { return increaseIndentAction_; }
@@ -362,16 +419,7 @@ class Qutepart : public QPlainTextEdit {
     inline QAction *toggleCommentAction() const { return toggleActionComment_; }
     /// Find matching bracket for this position
     inline QAction *findMatchingBracketAction() const { return findMatchingBracketAction_; }
-    
-    /// Returns the status of a line. A line is marked as modified when its changed via the user
-    bool isLineModified(int lineNumber) const;
-    /// Set the status of a line, modified or not
-    void setLineModified(int lineNumber, bool modified) const;
-    /// Set the status of a line, modified or not
-    void setLineModified(QTextBlock block, bool modified) const;
-    /// Clear modifications from all document.
-    void removeModifications();
-    
+
     // Convenience functions
     void resetSelection();
 
@@ -382,6 +430,8 @@ class Qutepart : public QPlainTextEdit {
     void changeEvent(QEvent *event) override;
 
   private:
+    QList<QTextEdit::ExtraSelection> persitentSelections;
+
     void initActions();
     QAction *createAction(const QString &text, QKeySequence shortcut, const QString &iconFileName,
                           std::function<void()> const &handler);
@@ -448,7 +498,7 @@ class Qutepart : public QPlainTextEdit {
     std::unique_ptr<BracketHighlighter> bracketHighlighter_;
     std::unique_ptr<LineNumberArea> lineNumberArea_;
     std::unique_ptr<MarkArea> markArea_;
-    Minimap* miniMap_ = nullptr;
+    Minimap *miniMap_ = nullptr;
     std::unique_ptr<Completer> completer_;
 
     bool drawIndentations_;

@@ -57,7 +57,7 @@ class Theme {
         static constexpr const char *MarkBreakpointActive = "MarkBreakpointActive";
         static constexpr const char *MarkBreakpointDisabled = "MarkBreakpointDisabled";
         static constexpr const char *MarkBreakpointReached = "MarkBreakpointReached";
-        static constexpr const char *MarkError = "MarkError ";
+        static constexpr const char *MarkError = "MarkError";
         static constexpr const char *MarkExecution = "MarkExecution";
         static constexpr const char *MarkWarning = "MarkWarning";
         static constexpr const char *ModifiedLines = "ModifiedLines";

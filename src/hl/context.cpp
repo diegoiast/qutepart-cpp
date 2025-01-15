@@ -193,10 +193,10 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
                 ContextStack newContextStack =
                     contextStack.switchContext(matchRes->nextContext, matchRes->data);
 
-                applyMatchResult(textToMatch, matchRes, newContextStack.currentContext(),
-                                 formats, textTypeMap);
+                applyMatchResult(textToMatch, matchRes, newContextStack.currentContext(), formats,
+                                 textTypeMap);
                 textToMatch.shift(matchRes->length);
-                delete matchRes;                    
+                delete matchRes;
                 return newContextStack;
             }
         } else {

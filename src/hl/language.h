@@ -26,11 +26,6 @@ class Language {
              const QSet<QString> &allLanguageKeywords, const QList<ContextPtr> &contexts);
 
     void printDescription(QTextStream &out) const;
-
-    /* Highlight block and return a state.
-    State is a pointer to current context. It can be used to check
-    if state changed between runs but not to extract any other data
-    */
     void highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats);
 
     inline ContextPtr defaultContext() const { return contexts.first(); }

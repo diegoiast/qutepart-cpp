@@ -102,5 +102,4 @@ auto Theme::loadTheme(const QString &filename) -> bool {
     return true;
 }
 
-
 } // namespace Qutepart
