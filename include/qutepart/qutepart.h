@@ -388,6 +388,9 @@ class Qutepart : public QPlainTextEdit {
     bool getLineExecuting(int lineNumber) const;
     void setLineExecuting(int lineNumber, bool status);
     void setLineMessage(int lineNumber, const QString &message);
+    
+    auto getColorForLineFlag(int flag) -> QColor;
+    auto fixLineFlagColors() -> void;
 
     // Actions
     inline QAction *increaseIndentAction() const { return increaseIndentAction_; }

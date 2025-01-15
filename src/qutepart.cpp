@@ -157,6 +157,7 @@ void Qutepart::setTheme(const Theme *newTheme) {
         highlighter_->rehighlight();
     }
 
+    fixLineFlagColors();
     if (!newTheme) {
         setPalette(style()->standardPalette());
         setDefaultColors();
@@ -418,19 +419,19 @@ bool Qutepart::getLineWarning(int lineNumber) const {
 }
 
 void Qutepart::setLineWarning(int lineNumber, bool status) {
-    modifyBlockFlag(lineNumber, WARNING_BIT, status, Qt::yellow);
+    modifyBlockFlag(lineNumber, WARNING_BIT, status, getColorForLineFlag(WARNING_BIT));
 }
 
 bool Qutepart::getLineError(int lineNumber) const { return getBlockFlag(lineNumber, ERROR_BIT); }
 
 void Qutepart::setLineError(int lineNumber, bool status) {
-    modifyBlockFlag(lineNumber, ERROR_BIT, status, Qt::red);
+    modifyBlockFlag(lineNumber, ERROR_BIT, status, getColorForLineFlag(ERROR_BIT));
 }
 
 bool Qutepart::getLineInfo(int lineNumber) const { return getBlockFlag(lineNumber, INFO_BIT); }
 
 void Qutepart::setLineInfo(int lineNumber, bool status) {
-    modifyBlockFlag(lineNumber, INFO_BIT, status, Qt::cyan);
+    modifyBlockFlag(lineNumber, INFO_BIT, status, getColorForLineFlag(INFO_BIT));
 }
 
 bool Qutepart::getLineBreakpoint(int lineNumber) const {
@@ -438,7 +439,7 @@ bool Qutepart::getLineBreakpoint(int lineNumber) const {
 }
 
 void Qutepart::setLineBreakpoint(int lineNumber, bool status) {
-    modifyBlockFlag(lineNumber, BREAKPOINT_BIT, status, Qt::green);
+    modifyBlockFlag(lineNumber, BREAKPOINT_BIT, status, getColorForLineFlag(BREAKPOINT_BIT));
 }
 
 bool Qutepart::getLineExecuting(int lineNumber) const {
@@ -446,7 +447,7 @@ bool Qutepart::getLineExecuting(int lineNumber) const {
 }
 
 void Qutepart::setLineExecuting(int lineNumber, bool status) {
-    modifyBlockFlag(lineNumber, EXECUTING_BIT, status, Qt::blue);
+    modifyBlockFlag(lineNumber, EXECUTING_BIT, status, getColorForLineFlag(EXECUTING_BIT));
 }
 
 void Qutepart::removeMetaData() {
@@ -470,64 +471,83 @@ void Qutepart::setLineMessage(int lineNumber, const QString &message) {
     data->metaData.message = message;
 }
 
-/*
-auto static BlendColors(const QColor &color1, const QColor & color2, float r = 0.5) -> QColor {
-    if (!color2.isValid()) {
-        return color1;
-    }
-    if (!color1.isValid()) {
-        return color2;
-    }
-    return QColor(
-        (1-r) * color1.red()  + color2.red() * r,
-        (1-r) * color1.green()  + color2.green() * r,
-        (1-r) * color1.blue()  + color2.blue() * r,
-    255);
-}
-
-void Qutepart::setLineFlags(int lineNumber, SidebarFlags newflags)
+auto Qutepart::getColorForLineFlag(int flag) -> QColor 
 {
-    auto block = document()->findBlockByNumber(lineNumber);
-    auto data = static_cast<TextBlockUserData*>(block.userData());
-    if (!data) {
-    data = new TextBlockUserData({},{nullptr});
-        block.setUserData(data);
+    // https://www.color-hex.com/color-palette/5361
+    auto color = QColor(Qt::transparent);
+    switch (flag) {
+    case INFO_BIT:
+        color = QColor(0xbae1ff);
+        break;
+    case WARNING_BIT:
+        if (theme && theme->getEditorColors().contains(Theme::Colors::MarkWarning)) {
+            color = theme->getEditorColors().value(Theme::Colors::MarkWarning);
+        } else {
+            color = QColor(0xffffba);
+        }
+        break;
+    case ERROR_BIT:
+        if (theme && theme->getEditorColors().contains(Theme::Colors::MarkError)) {
+            color = theme->getEditorColors().value(Theme::Colors::MarkError);
+        } else {
+            color = QColor(0xffb3ba);
+        }
+        break;
+        
+    // not tested yet
+    case EXECUTING_BIT:
+        if (theme && theme->getEditorColors().contains(Theme::Colors::MarkExecution)) {
+            color = theme->getEditorColors().value(Theme::Colors::MarkExecution);
+        } else {
+            color = QColor(Qt::blue);
+        }
+        break;
+    case BREAKPOINT_BIT:
+        if (theme && theme->getEditorColors().contains(Theme::Colors::MarkBreakpointActive)) {
+            color = theme->getEditorColors().value(Theme::Colors::MarkBreakpointActive);
+        } else {
+            color = QColor(Qt::magenta);
+        }
+        break;
+    default:
+        break;
     }
-    data->metaData.flags = newflags;
-
-    QColor color;
-    if (newflags & SidebarFlag::Info) {
-        color =  BlendColors(color, 0xDBDF93);
-    }
-    if (newflags & SidebarFlag::Warning) {
-        color = QColor(0xE5EDFE);
-    }
-    if (newflags & SidebarFlag::Error) {
-        color = BlendColors(color, QColor(0xFCE3E3));
-    }
-
-    QTextEdit::ExtraSelection selection;
-    selection.format.setBackground(color);
-    selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-    selection.cursor = QTextCursor(block);
-    selection.cursor.clearSelection();
-    persitentSelections += selection;
-
-    newflags.to
-    update();
+    return color;
 }
 
-SidebarFlags Qutepart::getLineFlags(int lineNumber) const
-{
-    auto block = document()->findBlockByNumber(lineNumber);
-    auto data = static_cast<TextBlockUserData*>(block.userData());
-    if (!data) {
-        return SidebarFlag::Nothing;
-    }
-    return data->metaData.flags;
-}
+auto Qutepart::fixLineFlagColors() -> void {
+    persitentSelections.clear();
 
-*/
+    auto block = document()->firstBlock();
+    while (block.isValid()) {
+        QTextEdit::ExtraSelection selection;
+        QTextCursor cursor(block);
+        cursor.clearSelection();
+        selection.cursor = cursor;
+        selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+        
+        int flags[] = {
+            BOOMARK_BIT, 
+            MODIFIED_BIT,
+            WARNING_BIT,
+            ERROR_BIT,
+            INFO_BIT,
+            BREAKPOINT_BIT,
+            EXECUTING_BIT     
+        };
+        for (int flag : flags) {
+            if (hasFlag(block, flag)) {
+                auto color = getColorForLineFlag(flag);
+                if (color != Qt::transparent) {
+                    selection.format.setBackground(color);
+                    persitentSelections.append(selection);
+                }
+            }
+        }
+        block = block.next();
+    }
+    updateExtraSelections();
+}
 
 void Qutepart::setCompletionThreshold(int val) { completionThreshold_ = val; }
 
