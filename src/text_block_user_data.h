@@ -20,7 +20,6 @@ class TextBlockUserData : public QTextBlockUserData {
     ContextStack contexts;
 
     struct {
-        // bool modified = false;
         QString message;
     } metaData;
 };

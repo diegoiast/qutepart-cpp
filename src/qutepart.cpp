@@ -1697,7 +1697,7 @@ QIcon iconForStatus(int status) {
         return getStatusIconImpl("data-information", QStyle::SP_MessageBoxInformation);
     }
     /*
-    if (status & WARNING_BIT) {
+    if (status & OTHER_BIT) {
         return getStatusIconImpl("data-question", QStyle::SP_MessageBoxQuestion);
     }
     */
