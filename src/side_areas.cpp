@@ -203,23 +203,23 @@ void MarkArea::paintEvent(QPaintEvent *event) {
         auto bottom = top + height;
 
         if (block.isVisible() && bottom >= event->rect().top()) {
-            if (hasFlag(block, ERRROR_BIT)) {
-                auto icon = QIcon::fromTheme(QIcon::ThemeIcon::DialogError);
-                auto scaledSize = height - 6;
+            if (hasFlag(block, ERROR_BIT)) {
+                auto icon = iconForStatus(ERROR_BIT);
+                auto scaledSize = height - 4;
                 auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
                 auto yPos = top + ((height - scaledSize) / 2);
                 painter.drawPixmap(0, yPos, scaledIcon);
             }
             if (hasFlag(block, WARNING_BIT)) {
-                auto icon = QIcon::fromTheme(QIcon::ThemeIcon::DialogWarning);
-                auto scaledSize = height - 6;
+                auto icon = iconForStatus(WARNING_BIT);
+                auto scaledSize = height - 4;
                 auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
                 auto yPos = top + ((height - scaledSize) / 2);
                 painter.drawPixmap(0, yPos, scaledIcon);
             }
             if (hasFlag(block, INFO_BIT)) {
-                auto icon = QIcon::fromTheme(QIcon::ThemeIcon::DialogInformation);
-                auto scaledSize = height - 6;
+                auto icon = iconForStatus(INFO_BIT);
+                auto scaledSize = height - 4;
                 auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
                 auto yPos = top + ((height - scaledSize) / 2);
                 painter.drawPixmap(0, yPos, scaledIcon);

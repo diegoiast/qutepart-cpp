@@ -421,10 +421,10 @@ void Qutepart::setLineWarning(int lineNumber, bool status) {
     modifyBlockFlag(lineNumber, WARNING_BIT, status, Qt::yellow);
 }
 
-bool Qutepart::getLineError(int lineNumber) const { return getBlockFlag(lineNumber, ERRROR_BIT); }
+bool Qutepart::getLineError(int lineNumber) const { return getBlockFlag(lineNumber, ERROR_BIT); }
 
 void Qutepart::setLineError(int lineNumber, bool status) {
-    modifyBlockFlag(lineNumber, ERRROR_BIT, status, Qt::red);
+    modifyBlockFlag(lineNumber, ERROR_BIT, status, Qt::red);
 }
 
 bool Qutepart::getLineInfo(int lineNumber) const { return getBlockFlag(lineNumber, INFO_BIT); }
@@ -1663,5 +1663,32 @@ AtomicEditOperation::AtomicEditOperation(Qutepart *qutepart) : qutepart_(qutepar
 }
 
 AtomicEditOperation::~AtomicEditOperation() { qutepart_->textCursor().endEditBlock(); }
+
+
+static QIcon getStatusIconImpl(const QString &name, QStyle::StandardPixmap backup) { 
+    if (QIcon::hasThemeIcon(name)) {
+        return QIcon::fromTheme(name);    
+    }
+    return qApp->style()->standardIcon(backup);
+}
+
+QIcon iconForStatus(int status)
+{   
+    if (status & WARNING_BIT) {
+        return getStatusIconImpl("data-warning", QStyle::SP_MessageBoxWarning);
+    }
+    if (status & ERROR_BIT) {
+        return getStatusIconImpl("data-error", QStyle::SP_MessageBoxCritical);
+    }
+    if (status & INFO_BIT) {
+        return getStatusIconImpl("data-information", QStyle::SP_MessageBoxInformation);
+    }
+    /*
+    if (status & WARNING_BIT) {
+        return getStatusIconImpl("data-question", QStyle::SP_MessageBoxQuestion);
+    }
+    */
+    return {};    
+}
 
 } // namespace Qutepart
