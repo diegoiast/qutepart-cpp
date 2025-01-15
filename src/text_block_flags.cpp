@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "qutepart.h"
 #include "text_block_flags.h"
+#include "qutepart.h"
 
 namespace Qutepart {
 

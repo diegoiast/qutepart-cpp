@@ -474,8 +474,7 @@ void Qutepart::setLineMessage(int lineNumber, const QString &message) {
     data->metaData.message = message;
 }
 
-auto Qutepart::getColorForLineFlag(int flag) -> QColor 
-{
+auto Qutepart::getColorForLineFlag(int flag) -> QColor {
     // https://www.color-hex.com/color-palette/5361
     auto color = QColor(Qt::transparent);
     switch (flag) {
@@ -496,7 +495,7 @@ auto Qutepart::getColorForLineFlag(int flag) -> QColor
             color = QColor(0xffb3ba);
         }
         break;
-        
+
     // not tested yet
     case EXECUTING_BIT:
         if (theme && theme->getEditorColors().contains(Theme::Colors::MarkExecution)) {
@@ -528,16 +527,9 @@ auto Qutepart::fixLineFlagColors() -> void {
         cursor.clearSelection();
         selection.cursor = cursor;
         selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-        
-        int flags[] = {
-            BOOMARK_BIT, 
-            MODIFIED_BIT,
-            WARNING_BIT,
-            ERROR_BIT,
-            INFO_BIT,
-            BREAKPOINT_BIT,
-            EXECUTING_BIT     
-        };
+
+        int flags[] = {BOOMARK_BIT, MODIFIED_BIT,   WARNING_BIT,  ERROR_BIT,
+                       INFO_BIT,    BREAKPOINT_BIT, EXECUTING_BIT};
         for (int flag : flags) {
             if (hasFlag(block, flag)) {
                 auto color = getColorForLineFlag(flag);
@@ -1687,16 +1679,14 @@ AtomicEditOperation::AtomicEditOperation(Qutepart *qutepart) : qutepart_(qutepar
 
 AtomicEditOperation::~AtomicEditOperation() { qutepart_->textCursor().endEditBlock(); }
 
-
-static QIcon getStatusIconImpl(const QString &name, QStyle::StandardPixmap backup) { 
+static QIcon getStatusIconImpl(const QString &name, QStyle::StandardPixmap backup) {
     if (QIcon::hasThemeIcon(name)) {
-        return QIcon::fromTheme(name);    
+        return QIcon::fromTheme(name);
     }
     return qApp->style()->standardIcon(backup);
 }
 
-QIcon iconForStatus(int status)
-{   
+QIcon iconForStatus(int status) {
     if (status & WARNING_BIT) {
         return getStatusIconImpl("data-warning", QStyle::SP_MessageBoxWarning);
     }
@@ -1711,7 +1701,7 @@ QIcon iconForStatus(int status)
         return getStatusIconImpl("data-question", QStyle::SP_MessageBoxQuestion);
     }
     */
-    return {};    
+    return {};
 }
 
 } // namespace Qutepart
