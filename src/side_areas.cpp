@@ -55,7 +55,7 @@ void SideArea::mouseMoveEvent(QMouseEvent *event) {
     if (line != this->lastHoeveredLine) {
         lastHoeveredLine = line;
         auto data = static_cast<TextBlockUserData *>(block.userData());
-        if (!data->metaData.message.isEmpty()) {
+        if (data && !data->metaData.message.isEmpty()) {
             QToolTip::showText(event->globalPosition().toPoint(), data->metaData.message, qpart_);
         } else {
             QToolTip::hideText();
