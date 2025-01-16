@@ -385,6 +385,10 @@ void Qutepart::removeModifications() {
 
 auto Qutepart::modifyBlockFlag(int lineNumber, int bit, bool status, QColor background) -> void {
     auto block = document()->findBlockByNumber(lineNumber);
+    if (!block.isValid()) {
+        qDebug() << "Invalid line " << lineNumber << "cannot set status" << bit;
+        return;
+    }
     setFlag(block, bit, status);
 
     if (background != Qt::transparent) {
