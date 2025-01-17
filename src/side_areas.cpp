@@ -56,7 +56,18 @@ void SideArea::mouseMoveEvent(QMouseEvent *event) {
         lastHoeveredLine = line;
         auto data = static_cast<TextBlockUserData *>(block.userData());
         if (data && !data->metaData.message.isEmpty()) {
-            QToolTip::showText(event->globalPosition().toPoint(), data->metaData.message, qpart_);
+    
+            auto lines = QStringList();
+            auto lineLength = 100;
+            for (auto &s: data->metaData.message.split("\n")) {
+                for (auto i = 0u; i < s.length(); i += lineLength) {
+                    lines.append(s.mid(i, lineLength));
+                }                   
+            }
+            auto message = lines.join("\n");
+            auto fixedMessage = QString("<pre><p style='white-space:pre'>%1</p></pre>").arg(message.replace("\n", "<br>"));
+            QToolTip::showText(event->globalPosition().toPoint(), fixedMessage, qpart_);
+            
         } else {
             QToolTip::hideText();
         }
