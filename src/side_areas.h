@@ -21,6 +21,7 @@ class SideArea : public QWidget {
     void onTextEditUpdateRequest(const QRect &rect, int dy);
 
   protected:
+    virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void updateWidth() {}
 
@@ -68,13 +69,13 @@ class Minimap : public SideArea {
 
     int widthHint() const;
 
-  private:
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-    void wheelEvent(QWheelEvent *event) override;
-    void paintEvent(QPaintEvent *event) override;
+  protected:
+    virtual void mouseMoveEvent(QMouseEvent *event) override;
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseReleaseEvent(QMouseEvent *event) override;
+    virtual void paintEvent(QPaintEvent *event) override;
 
+  private:
     QFont minimapFont() const;
     void updateScroll(const QPoint &pos);
     void drawMinimapText(QPainter *painter, bool simple);

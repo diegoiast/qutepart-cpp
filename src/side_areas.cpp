@@ -46,6 +46,17 @@ SideArea::SideArea(Qutepart *textEdit) : QWidget(textEdit), qpart_(textEdit) {
     connect(textEdit, &Qutepart::updateRequest, this, &SideArea::onTextEditUpdateRequest);
 }
 
+void SideArea::wheelEvent(QWheelEvent *event) {
+    auto totalLines = qpart_->document()->blockCount();
+    auto delta = event->angleDelta().y();
+    auto linesToScroll = delta / 120;
+    auto currentLine = qpart_->verticalScrollBar()->value();
+    auto newLine = qBound(0, currentLine - linesToScroll, totalLines - 1);
+
+    qpart_->verticalScrollBar()->setValue(newLine);
+    event->accept();
+}
+
 void SideArea::mouseMoveEvent(QMouseEvent *event) {
     QWidget::mouseMoveEvent(event);
     auto cursor = qpart_->cursorForPosition(event->pos());
@@ -275,17 +286,6 @@ void Minimap::mousePressEvent(QMouseEvent *event) {
 }
 
 void Minimap::mouseReleaseEvent(QMouseEvent *) { isDragging = false; }
-
-void Minimap::wheelEvent(QWheelEvent *event) {
-    auto totalLines = qpart_->document()->blockCount();
-    auto delta = event->angleDelta().y();
-    auto linesToScroll = delta / 120;
-    auto currentLine = qpart_->verticalScrollBar()->value();
-    auto newLine = qBound(0, currentLine - linesToScroll, totalLines - 1);
-
-    qpart_->verticalScrollBar()->setValue(newLine);
-    event->accept();
-}
 
 void Minimap::paintEvent(QPaintEvent *event) {
     if (!qpart_) {
