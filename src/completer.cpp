@@ -421,12 +421,11 @@ bool Completer::shouldShowModel(CompletionModel *model, bool forceShow) {
 }
 
 void Completer::createWidget(CompletionModel *model) {
-    widget_ = std::make_unique<CompletionList>(qpart_, model);
-    connect(widget_.get(), &CompletionList::closeMe, this, &Completer::closeCompletion);
-    connect(widget_.get(), &CompletionList::itemSelected, this,
-            &Completer::onCompletionListItemSelected);
-    connect(widget_.get(), &CompletionList::tabPressed, this,
-            &Completer::onCompletionListTabPressed);
+    delete widget_;
+    widget_ = new CompletionList(qpart_, model);
+    connect(widget_, &CompletionList::closeMe, this, &Completer::closeCompletion);
+    connect(widget_, &CompletionList::itemSelected, this, &Completer::onCompletionListItemSelected);
+    connect(widget_, &CompletionList::tabPressed, this, &Completer::onCompletionListTabPressed);
 }
 
 /* Invoke completion, if available. Called after text has been typed in qpart
@@ -467,8 +466,9 @@ bool Completer::invokeCompletionIfAvailable(bool requestedByUser) {
 Delete widget
 */
 void Completer::closeCompletion() {
-    if (bool(widget_)) {
-        widget_.reset();
+    if (widget_) {
+        delete widget_;
+        widget_ = nullptr;
         completionOpenedManually_ = false;
     }
 }

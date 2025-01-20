@@ -494,12 +494,12 @@ class Qutepart : public QPlainTextEdit {
     QString lastWordUnderCursor;
 
     QSyntaxHighlighter *highlighter_ = nullptr;
-    std::unique_ptr<Indenter> indenter_;
+    Indenter *indenter_;
     BracketHighlighter *bracketHighlighter_ = nullptr;
     LineNumberArea *lineNumberArea_ = nullptr;
     MarkArea *markArea_ = nullptr;
     Minimap *miniMap_ = nullptr;
-    std::unique_ptr<Completer> completer_;
+    Completer *completer_;
 
     bool drawIndentations_;
     bool drawAnyWhitespace_;

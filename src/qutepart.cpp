@@ -28,8 +28,8 @@
 namespace Qutepart {
 
 Qutepart::Qutepart(QWidget *parent, const QString &text)
-    : QPlainTextEdit(text, parent), indenter_(std::make_unique<Indenter>()),
-      markArea_(new MarkArea(this)), completer_(std::make_unique<Completer>(this)),
+    : QPlainTextEdit(text, parent), indenter_(new Indenter(this)),
+      markArea_(new MarkArea(this)), completer_(new Completer(this)),
       drawIndentations_(true), drawAnyWhitespace_(false), drawIncorrectIndentation_(true),
       drawSolidEdge_(true), enableSmartHomeEnd_(true), lineLengthEdge_(80),
       brakcetsQutoEnclose(true), completionEnabled_(true), completionThreshold_(3),

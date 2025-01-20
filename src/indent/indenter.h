@@ -20,7 +20,8 @@ namespace Qutepart {
 
 class Indenter : public QObject {
   public:
-    Indenter();
+    Indenter(QObject *parent);
+    ~Indenter();
 
     void setAlgorithm(IndentAlg alg);
 
@@ -46,7 +47,7 @@ class Indenter : public QObject {
     void onShortcutUnindentWithBackspace(QTextCursor &cursor) const;
 
   private:
-    std::unique_ptr<IndentAlgImpl> alg_;
+    IndentAlgImpl *alg_;
     bool useTabs_;
     int width_;
     QString language_;

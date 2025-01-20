@@ -38,36 +38,48 @@ class IndentAlgNormal : public IndentAlgImpl {
 
 } // namespace
 
-Indenter::Indenter() : alg_(std::make_unique<IndentAlgNormal>()), useTabs_(false), width_(4) {
+Indenter::Indenter(QObject *parent) : QObject(parent), alg_(new IndentAlgNormal()), useTabs_(false), width_(4) {
     alg_->setConfig(width_, useTabs_);
     alg_->setLanguage(language_);
+}
+
+Indenter::~Indenter() {
+    delete alg_;
 }
 
 void Indenter::setAlgorithm(IndentAlg alg) {
     switch (alg) {
     case INDENT_ALG_NONE:
-        alg_ = std::make_unique<IndentAlgNone>();
+        delete alg_;
+        alg_ = new IndentAlgNone();
         break;
     case INDENT_ALG_NORMAL:
-        alg_ = std::make_unique<IndentAlgNormal>();
+        delete alg_;
+        alg_ = new IndentAlgNormal();
         break;
     case INDENT_ALG_LISP:
-        alg_ = std::make_unique<IndentAlgLisp>();
+        delete alg_;
+        alg_ = new IndentAlgLisp();
         break;
     case INDENT_ALG_XML:
-        alg_ = std::make_unique<IndentAlgXml>();
+        delete alg_;
+        alg_ = new IndentAlgXml();
         break;
     case INDENT_ALG_SCHEME:
-        alg_ = std::make_unique<IndentAlgScheme>();
+        delete alg_;
+        alg_ = new IndentAlgScheme();
         break;
     case INDENT_ALG_PYTHON:
-        alg_ = std::make_unique<IndentAlgPython>();
+        delete alg_;
+        alg_ = new IndentAlgPython();
         break;
     case INDENT_ALG_RUBY:
-        alg_ = std::make_unique<IndentAlgRuby>();
+        delete alg_;
+        alg_ = new IndentAlgRuby();
         break;
     case INDENT_ALG_CSTYLE:
-        alg_ = std::make_unique<IndentAlgCstyle>();
+        delete alg_;
+        alg_ = new IndentAlgCstyle();
         break;
     default:
         qWarning() << "Wrong indentation algorithm requested" << alg;

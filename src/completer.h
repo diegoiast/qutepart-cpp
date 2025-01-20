@@ -49,7 +49,7 @@ class Completer : public QObject {
     QString getWordAfterCursor() const;
 
     Qutepart *qpart_;
-    std::unique_ptr<CompletionList> widget_;
+    CompletionList *widget_ = nullptr;
     bool completionOpenedManually_;
     QSet<QString> keywords_;
     QSet<QString> customCompletions_;
