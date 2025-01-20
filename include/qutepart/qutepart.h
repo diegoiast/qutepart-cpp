@@ -493,11 +493,11 @@ class Qutepart : public QPlainTextEdit {
     QTimer *currentWordTimer;
     QString lastWordUnderCursor;
 
-    QSharedPointer<QSyntaxHighlighter> highlighter_;
+    QSyntaxHighlighter *highlighter_ = nullptr;
     std::unique_ptr<Indenter> indenter_;
-    std::unique_ptr<BracketHighlighter> bracketHighlighter_;
-    std::unique_ptr<LineNumberArea> lineNumberArea_;
-    std::unique_ptr<MarkArea> markArea_;
+    BracketHighlighter *bracketHighlighter_ = nullptr;
+    LineNumberArea *lineNumberArea_ = nullptr;
+    MarkArea *markArea_ = nullptr;
     Minimap *miniMap_ = nullptr;
     std::unique_ptr<Completer> completer_;
 

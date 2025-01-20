@@ -29,7 +29,7 @@ namespace Qutepart {
 
 Qutepart::Qutepart(QWidget *parent, const QString &text)
     : QPlainTextEdit(text, parent), indenter_(std::make_unique<Indenter>()),
-      markArea_(std::make_unique<MarkArea>(this)), completer_(std::make_unique<Completer>(this)),
+      markArea_(new MarkArea(this)), completer_(std::make_unique<Completer>(this)),
       drawIndentations_(true), drawAnyWhitespace_(false), drawIncorrectIndentation_(true),
       drawSolidEdge_(true), enableSmartHomeEnd_(true), lineLengthEdge_(80),
       brakcetsQutoEnclose(true), completionEnabled_(true), completionThreshold_(3),
@@ -107,16 +107,17 @@ Qutepart::~Qutepart() {}
 Lines Qutepart::lines() const { return Lines(document()); }
 
 void Qutepart::setHighlighter(const QString &languageId) {
-    if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
+    auto hl = static_cast<SyntaxHighlighter*>(highlighter_);
+    if (hl) {
         auto name = hl->getLanguage()->fileName;
         if (name == languageId) {
             return;
         }
     }
-    highlighter_ = QSharedPointer<QSyntaxHighlighter>(makeHighlighter(document(), languageId));
     indenter_->setLanguage(languageId);
-
-    if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
+    highlighter_ = makeHighlighter(document(), languageId);    
+    hl = static_cast<SyntaxHighlighter*>(highlighter_);
+    if (hl) {
         auto lang = hl->getLanguage();
         completer_->setKeywords(lang->allLanguageKeywords());
         hl->setTheme(theme);
@@ -126,7 +127,8 @@ void Qutepart::setHighlighter(const QString &languageId) {
 }
 
 void Qutepart::removeHighlighter() {
-    highlighter_.clear();
+    delete highlighter_;
+    highlighter_ = nullptr;
     completer_->setKeywords({});
 }
 
@@ -146,15 +148,11 @@ void Qutepart::setDefaultColors() {
 }
 
 void Qutepart::setTheme(const Theme *newTheme) {
-    if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
-        hl->setTheme(newTheme);
-    }
+    auto hl = dynamic_cast<SyntaxHighlighter*>(highlighter_);
     theme = newTheme;
-    if (highlighter_) {
-        if (auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_)) {
-            hl->setTheme(theme);
-        }
-        highlighter_->rehighlight();
+    if (hl) {
+        hl->setTheme(theme);
+        hl->rehighlight();
     }
 
     fixLineFlagColors();
@@ -254,13 +252,14 @@ QColor Qutepart::currentLineColor() const { return currentLineColor_; }
 
 void Qutepart::setCurrentLineColor(QColor color) { currentLineColor_ = color; }
 
-bool Qutepart::bracketHighlightingEnabled() const { return bool(bracketHighlighter_); }
+bool Qutepart::bracketHighlightingEnabled() const { return bracketHighlighter_ != nullptr; }
 
 void Qutepart::setBracketHighlightingEnabled(bool value) {
     if (value && (!bracketHighlighter_)) {
-        bracketHighlighter_ = std::make_unique<BracketHighlighter>(this);
+        bracketHighlighter_ = new BracketHighlighter(this);
     } else if ((!value) && bool(bracketHighlighter_)) {
-        bracketHighlighter_.reset();
+        delete bracketHighlighter_;
+        bracketHighlighter_ = nullptr;
     }
     updateExtraSelections();
 }
@@ -268,12 +267,12 @@ void Qutepart::setBracketHighlightingEnabled(bool value) {
 bool Qutepart::lineNumbersVisible() const { return bool(lineNumberArea_); }
 
 void Qutepart::setLineNumbersVisible(bool value) {
-    if ((!value) && bool(lineNumberArea_)) {
-        lineNumberArea_.reset();
-    } else if (value && (!bool(lineNumberArea_))) {
-        lineNumberArea_ = std::make_unique<LineNumberArea>(this);
-        connect(lineNumberArea_.get(), &LineNumberArea::widthChanged, this,
-                &Qutepart::updateViewport);
+    if (!value && lineNumberArea_) {
+        delete lineNumberArea_;
+        lineNumberArea_ = nullptr;
+    } else if (value && (!lineNumberArea_)) {
+        lineNumberArea_ = new LineNumberArea(this);
+        connect(lineNumberArea_, &LineNumberArea::widthChanged, this, &Qutepart::updateViewport);
     }
     updateViewport();
 }
@@ -1380,7 +1379,7 @@ auto static splitLeadingWhitespace(const QString &str) -> std::tuple<QString, QS
 }
 
 void Qutepart::toggleComment() {
-    auto hl = qSharedPointerCast<SyntaxHighlighter>(highlighter_);
+    auto hl = dynamic_cast<SyntaxHighlighter*>(highlighter_);
     if (!hl) {
         return;
     }
