@@ -1683,10 +1683,15 @@ AtomicEditOperation::AtomicEditOperation(Qutepart *qutepart) : qutepart_(qutepar
 AtomicEditOperation::~AtomicEditOperation() { qutepart_->textCursor().endEditBlock(); }
 
 static QIcon getStatusIconImpl(const QString &name, QStyle::StandardPixmap backup) {
-    if (QIcon::hasThemeIcon(name)) {
-        return QIcon::fromTheme(name);
+    auto static iconCache = QHash<QString, QIcon>();
+    if (!iconCache.contains(name)) {
+        if (QIcon::hasThemeIcon(name)) {
+            iconCache[name] = QIcon::fromTheme(name);
+        } else {
+            iconCache[name] = qApp->style()->standardIcon(backup);
+        }
     }
-    return qApp->style()->standardIcon(backup);
+    return iconCache[name];
 }
 
 QIcon iconForStatus(int status) {
