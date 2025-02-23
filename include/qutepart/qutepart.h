@@ -350,7 +350,7 @@ class Qutepart : public QPlainTextEdit {
     void setMarkCurrentWord(bool enable);
     bool getMarkCurrentWord() const;
 
-    /// When pressinv '[' - should we enclose the selection with '[]'? Supports for quotes etc
+    /// When pressing '[' - should we enclose the selection with '[]'? Supports for quotes etc
     void setBracketAutoEnclose(bool enable);
     bool getBracketAutoEnclose() const;
 
