@@ -28,12 +28,11 @@
 namespace Qutepart {
 
 Qutepart::Qutepart(QWidget *parent, const QString &text)
-    : QPlainTextEdit(text, parent), indenter_(new Indenter(this)),
-      markArea_(new MarkArea(this)), completer_(new Completer(this)),
-      drawIndentations_(true), drawAnyWhitespace_(false), drawIncorrectIndentation_(true),
-      drawSolidEdge_(true), enableSmartHomeEnd_(true), lineLengthEdge_(80),
-      brakcetsQutoEnclose(true), completionEnabled_(true), completionThreshold_(3),
-      viewportMarginStart_(0) {
+    : QPlainTextEdit(text, parent), indenter_(new Indenter(this)), markArea_(new MarkArea(this)),
+      completer_(new Completer(this)), drawIndentations_(true), drawAnyWhitespace_(false),
+      drawIncorrectIndentation_(true), drawSolidEdge_(true), enableSmartHomeEnd_(true),
+      lineLengthEdge_(80), brakcetsQutoEnclose(true), completionEnabled_(true),
+      completionThreshold_(3), viewportMarginStart_(0) {
 
     setBracketHighlightingEnabled(true);
     setLineNumbersVisible(true);
@@ -63,6 +62,13 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     });
 
     QTimer::singleShot(0, this, [this]() { updateViewport(); });
+
+    auto palette = style()->standardPalette();
+    auto c = palette.brush(QPalette::Highlight).color();
+    c.setAlpha(180);
+    palette.setBrush(QPalette::Highlight, c);
+    palette.setBrush(QPalette::HighlightedText, QBrush(Qt::NoBrush));
+    setPalette(palette);
 }
 
 QList<QTextEdit::ExtraSelection> Qutepart::highlightText(const QString &text, bool fullWords) {
@@ -107,7 +113,7 @@ Qutepart::~Qutepart() {}
 Lines Qutepart::lines() const { return Lines(document()); }
 
 void Qutepart::setHighlighter(const QString &languageId) {
-    auto hl = static_cast<SyntaxHighlighter*>(highlighter_);
+    auto hl = static_cast<SyntaxHighlighter *>(highlighter_);
     if (hl) {
         auto name = hl->getLanguage()->fileName;
         if (name == languageId) {
@@ -115,8 +121,8 @@ void Qutepart::setHighlighter(const QString &languageId) {
         }
     }
     indenter_->setLanguage(languageId);
-    highlighter_ = makeHighlighter(document(), languageId);    
-    hl = static_cast<SyntaxHighlighter*>(highlighter_);
+    highlighter_ = makeHighlighter(document(), languageId);
+    hl = static_cast<SyntaxHighlighter *>(highlighter_);
     if (hl) {
         auto lang = hl->getLanguage();
         completer_->setKeywords(lang->allLanguageKeywords());
@@ -148,7 +154,7 @@ void Qutepart::setDefaultColors() {
 }
 
 void Qutepart::setTheme(const Theme *newTheme) {
-    auto hl = dynamic_cast<SyntaxHighlighter*>(highlighter_);
+    auto hl = dynamic_cast<SyntaxHighlighter *>(highlighter_);
     theme = newTheme;
     if (hl) {
         hl->setTheme(theme);
@@ -157,8 +163,15 @@ void Qutepart::setTheme(const Theme *newTheme) {
 
     fixLineFlagColors();
     if (!newTheme) {
-        setPalette(style()->standardPalette());
         setDefaultColors();
+
+        auto palette = style()->standardPalette();
+        auto c = palette.brush(QPalette::Highlight).color();
+        c.setAlpha(180);
+        palette.setBrush(QPalette::Highlight, c);
+        palette.setBrush(QPalette::HighlightedText, QBrush(Qt::NoBrush));
+        setPalette(palette);
+
         update();
         updateExtraSelections();
         return;
@@ -172,13 +185,24 @@ void Qutepart::setTheme(const Theme *newTheme) {
     indentColor_ = theme->getEditorColors()[Theme::Colors::IndentationLine];
     whitespaceColor_ = theme->getEditorColors()[Theme::Colors::IndentationLine];
 
+    // QPalette p(palette());
+    auto palette = style()->standardPalette();
     if (theme->getEditorColors().contains(Theme::Colors::BackgroundColor) &&
         theme->getEditorColors()[Theme::Colors::BackgroundColor].isValid()) {
-        QPalette p(palette());
-        p.setColor(QPalette::Base, theme->getEditorColors()[Theme::Colors::BackgroundColor]);
-        p.setColor(QPalette::Text, theme->getTextStyles()[QStringLiteral("Normal")]["text-color"]);
-        setPalette(p);
+        palette.setColor(QPalette::Base, theme->getEditorColors()[Theme::Colors::BackgroundColor]);
+        palette.setColor(QPalette::Text,
+                         theme->getTextStyles()[QStringLiteral("Normal")]["text-color"]);
     }
+
+    if (theme->getEditorColors().contains(Theme::Colors::TextSelection) &&
+        theme->getEditorColors()[Theme::Colors::TextSelection].isValid()) {
+        auto c = theme->getEditorColors()[Theme::Colors::TextSelection];
+        palette.setBrush(QPalette::Highlight, c);
+        palette.setBrush(QPalette::HighlightedText, QBrush(Qt::NoBrush));
+    }
+
+    setPalette(palette);
+
     updateExtraSelections();
 }
 
@@ -1379,7 +1403,7 @@ auto static splitLeadingWhitespace(const QString &str) -> std::tuple<QString, QS
 }
 
 void Qutepart::toggleComment() {
-    auto hl = dynamic_cast<SyntaxHighlighter*>(highlighter_);
+    auto hl = dynamic_cast<SyntaxHighlighter *>(highlighter_);
     if (!hl) {
         return;
     }
