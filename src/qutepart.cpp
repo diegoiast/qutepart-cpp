@@ -145,12 +145,12 @@ void Qutepart::setDefaultColors() {
     currentLineColor_ = palette.color(QPalette::Highlight);
     currentLineColor_.setAlphaF(0.2f);
     whitespaceColor_ = palette.color(QPalette::Text);
-    whitespaceColor_.setAlphaF(0.2f);
+    whitespaceColor_.setAlphaF(0.1f);
     lineLengthEdgeColor_ = palette.color(QPalette::Accent);
     lineLengthEdgeColor_.setAlphaF(0.5f);
     lineNumberColor = palette.color(QPalette::Text);
     currentLineNumberColor = palette.color(QPalette::ButtonText);
-    indentColor_ = whitespaceColor_.lighter();
+    indentColor_ = whitespaceColor_;
 }
 
 void Qutepart::setTheme(const Theme *newTheme) {
@@ -922,15 +922,17 @@ void Qutepart::drawWhiteSpace(QPainter *painter, QTextBlock block, int column, Q
     QRect rightCursorRect = cursorRect(block, column + 1, 0);
     if (leftCursorRect.top() == rightCursorRect.top()) { // if on the same visual line
         int middleHeight = (leftCursorRect.top() + leftCursorRect.bottom()) / 2;
+        QPainter::CompositionMode oldMode = painter->compositionMode();
+        painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+        painter->setPen(whitespaceColor_);
         if (ch == ' ') {
-            painter->setPen(whitespaceColor_);
             int xPos = (leftCursorRect.x() + rightCursorRect.x()) / 2;
             painter->drawRect(QRect(xPos, middleHeight, 1, 1));
         } else {
-            painter->setPen(whitespaceColor_);
             painter->drawLine(leftCursorRect.x() + 3, middleHeight, rightCursorRect.x() - 3,
                               middleHeight);
         }
+        painter->setCompositionMode(oldMode);
     }
 }
 

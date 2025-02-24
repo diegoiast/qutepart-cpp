@@ -73,16 +73,15 @@ QList<QTextEdit::ExtraSelection> BracketHighlighter::extraSelections(const TextP
 // Make matched or unmatched QTextEdit.ExtraSelection
 QTextEdit::ExtraSelection BracketHighlighter::makeMatchSelection(const TextPosition &pos,
                                                                  bool matched) {
-    QColor matchedColor = Qt::green;
-    QColor nonMatchedColor = Qt::red;
-    QTextEdit::ExtraSelection selection;
+    auto palette = qpart->palette();
+    auto matchedColor = palette.color(QPalette::Highlight);
+    auto nonMatchedColor = palette.color(QPalette::LinkVisited);
 
-    if (qpart) {
-        if (auto theme = qpart->getTheme()) {
-            if (theme->getEditorColors().contains(Theme::Colors::BracketMatching)) {
-                matchedColor = theme->getEditorColors()[Theme::Colors::BracketMatching];
-                nonMatchedColor = theme->getEditorColors()[Theme::Colors::MarkError];
-            }
+    QTextEdit::ExtraSelection selection;
+    if (auto theme = qpart->getTheme()) {
+        if (theme->getEditorColors().contains(Theme::Colors::BracketMatching)) {
+            matchedColor = theme->getEditorColors()[Theme::Colors::BracketMatching];
+            nonMatchedColor = theme->getEditorColors()[Theme::Colors::MarkError];
         }
     }
 
