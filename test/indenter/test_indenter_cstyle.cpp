@@ -316,7 +316,12 @@ class Test : public BaseTest {
                                  "\n"
                                  "\n"
                                  "  text;\n";
-
+        QTest::newRow("if12") << "if (0<x)\n"
+                                 "text;\n"
+                                 ""
+                              << std::make_pair(8, 0) << ""
+                              << "if (0<x)\n"
+                                 "    text;a\n";
         QTest::newRow("if_qutepart1") << "  if (1)\n"
                                          "  {\n"
                                          "     a = 7;"
