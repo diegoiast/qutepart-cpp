@@ -31,8 +31,8 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     : QPlainTextEdit(text, parent), indenter_(new Indenter(this)), markArea_(new MarkArea(this)),
       completer_(new Completer(this)), drawIndentations_(true), drawAnyWhitespace_(false),
       drawIncorrectIndentation_(true), drawSolidEdge_(true), enableSmartHomeEnd_(true),
-      lineLengthEdge_(80), brakcetsQutoEnclose(true), completionEnabled_(true),
-      completionThreshold_(3), viewportMarginStart_(0) {
+      softLineWrapping_(true), lineLengthEdge_(80), brakcetsQutoEnclose(true),
+      completionEnabled_(true), completionThreshold_(3), viewportMarginStart_(0) {
 
     setBracketHighlightingEnabled(true);
     setLineNumbersVisible(true);
@@ -263,6 +263,10 @@ void Qutepart::setDrawSolidEdge(bool draw) {
     drawSolidEdge_ = draw;
     update();
 }
+
+bool Qutepart::softLineWrapping() const { return softLineWrapping_; }
+
+void Qutepart::setSoftLineWrapping(bool enable) { softLineWrapping_ = enable; }
 
 int Qutepart::lineLengthEdge() const { return lineLengthEdge_; }
 
@@ -619,6 +623,24 @@ void addBrackets(QTextCursor &cursor, QChar openBracket, QChar closeBracket) {
 
 void Qutepart::keyPressEvent(QKeyEvent *event) {
     QTextCursor cursor = textCursor();
+
+    if (softLineWrapping_) {
+        if (cursor.columnNumber() >= lineLengthEdge_ && !event->text().isEmpty() &&
+            event->key() != Qt::Key_Return && event->key() != Qt::Key_Enter) {
+            cursor.select(QTextCursor::WordUnderCursor);
+            auto currentWord = cursor.selectedText();
+            if (!currentWord.isEmpty()) {
+                cursor.beginEditBlock();
+                cursor.insertText("\n");
+                indenter_->indentBlock(cursor.block(), cursor.positionInBlock(), event->text()[0]);
+                cursor.insertText(currentWord);
+                cursor.insertText(event->text());
+                cursor.endEditBlock();
+                return;
+            }
+        }
+    }
+
     if (event->key() == Qt::Key_Backspace && indenter_->shouldUnindentWithBackspace(cursor)) {
         // Unindent on backspace
         indenter_->onShortcutUnindentWithBackspace(cursor);

@@ -317,6 +317,11 @@ class Qutepart : public QPlainTextEdit {
     /// Visual option. Draw solid line length marker (usually after column 80)
     void setDrawSolidEdge(bool);
 
+    /// When passing the line edge, should the word be moved to the next line (see line length edge)
+    bool softLineWrapping() const;
+    /// Enable/disable soft wrapping
+    void setSoftLineWrapping(bool);
+
     /// Visual option. Column on which line lendth marker is drawn.
     int lineLengthEdge() const;
     /// Visual option. Column on which line lendth marker is drawn.
@@ -506,6 +511,7 @@ class Qutepart : public QPlainTextEdit {
     bool drawIncorrectIndentation_;
     bool drawSolidEdge_;
     bool enableSmartHomeEnd_;
+    bool softLineWrapping_;
 
     int lineLengthEdge_;
     QColor lineNumberColor;

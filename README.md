@@ -47,9 +47,9 @@ All features are configurable
 5. Follows dark themes.
 6. Supported on Windows, Linux and OSX (probably BSD, untested - basically
    all platforms supported by Qt6).
-7. Good unicode support:sSupports BIDI (Arabic, Farsi, Hebrew), CJK and Hindu lanaguages.
+7. Good Unicode support: Supports BIDI (Arabic, Farsi, Hebrew), CJK and Hindu languages.
 8. Integration is a simple as adding a few lines in your CMake file.
-9. Uses Kate syntax highligher, with more than 380 supported languages.
+9. Uses Kate syntax highlighter, with more than 380 supported languages.
 10. Theme support, again using the Kate themes.
 11. Syntax/themes baked into the library (no need to install files on your app).
 12. Undo/redo stack. 
@@ -59,7 +59,7 @@ All features are configurable
     this word will be marked on all the document.
 16. ... with a timeout. Only after 300 msec you move to a word,
     not to spam the CPU with useless tasks.
-17. Matchin brackets are highlighedside panel .
+17. Matching brackets are highlighted side panel .
 18. Auto brackets: when you press any of `[({` the corresponding closing
     bracket is added.
 19. Mark the current line with a different background.
@@ -67,32 +67,34 @@ All features are configurable
 21. Current line in side panel is marked in bold.
 22. ... and if you have some selection - that selection will be wrapped
     with the corresponding bracket.
-23. Visibile whitepsace: whitespace is visible only at the end or beginning
+23. Visible white-space: white-space is visible only at the end or beginning
     or a line, and in the middle - only if you have more than 2 spaces.
 24. Smart end/home: if you have spaces at the end of a line, you can
-    navigate to the logical end (ignoring the whitepsace) or the last
+    navigate to the logical end (ignoring the white-space) or the last
     character of a line.
 25. Move line/selection up/down - without clipboard (alt+up, alt+down).
 26. Duplicate selection, or current line (alt+d).
 27. Can display margin (at line 80 by default).
-28. Shows indentation markers.
-29. Markers for long lines.
-30. Bookmarks (you can bookmark lines, and then move to them).
-31. Join lines (control+j).
-32. Change word/selection to UPPER CASE/lower case (or toggle).
-33. Toggle comment (for supported languages) (control+]).
-34. Text completion (from language keywords, and document).
-35. When saving, honors original line edningq (CR, CR/LN), but
-    can be overritten.
-36. Zoom document (change font size on the fly).
-37. Change indentation of text (tab/shift+tab).
-38. Preview side mini-map.
+28. Soft word wrap can be enabled at the margin (when you type after that line - text continues
+    on the next line.
+29. Shows indentation markers.
+30. Markers for long lines.
+31. Bookmarks (you can bookmark lines, and then move to them).
+32. Join lines (control+j).
+33. Change word/selection to UPPER CASE/lower case (or toggle).
+34. Toggle comment (for supported languages) (control+]).
+35. Text completion (from language keywords, and document).
+36. When saving, honors original line ending (CR, CR/LN), but
+    can be overwritten.
+37. Zoom document (change font size on the fly).
+38. Change indentation of text (tab/shift+tab).
+39. Preview side mini-map.
 
-Planned fetatures
+Planned features
 
 1. Multiple cursors.
 2. Toggle folding sections of code/text.
-3. Markdown specific intentator.
+3. Markdown specific indentator.
 4. Spell check.
 
 To see the API in action, see [editor](editor.cpp).
@@ -135,7 +137,7 @@ Diego Iastrubni <diegoiast@gmail.com>
 [Kate](http://kate-editor.org/) and Katepart (an editor component) is really cool software. The Kate authors and community have created, probably, the biggest set of highlighters and indenters for programming languages.
 
 * Qutepart uses Kate syntax highlighters (XML files) and themes.
-* Qutepart contains a port from Javascript to C++ of Kate indenters
+* Qutepart contains a port from Javascript to C++ of Kate indenters.
 * Qutepart doesn't contain Katepart code.
 
 Nothing is wrong with Katepart. Qutepart has been created to enable reusing highlighters and indenters in projects where a KDE dependency is not acceptable.
