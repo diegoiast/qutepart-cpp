@@ -152,7 +152,7 @@ TextPosition findOpeningBracketBackward(QChar bracket, const TextPosition &posit
             depth--;
         } else if (ch == closing) {
             depth++;
-        } else if (ch == '\0') {
+        } else if (ch == QChar('\0')) {
             return {};
         }
 
