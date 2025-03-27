@@ -95,7 +95,7 @@ struct LangInfo {
     QStringList names;
 
     /// Indenter algorithm for the language. Pass to ::Qutepart::Qutepart::setIndentAlgorithm()
-    IndentAlg indentAlg;
+    IndentAlg indentAlg = INDENT_ALG_NONE;
 };
 
 /**
@@ -131,7 +131,7 @@ class Theme;
  */
 class Line {
   public:
-    Line(const QTextBlock &block);
+    explicit Line(const QTextBlock &block);
 
     /// Get line text
     QString text() const;
@@ -155,7 +155,7 @@ class Line {
  */
 class LineIterator {
   public:
-    LineIterator(const QTextBlock &block);
+    explicit LineIterator(const QTextBlock &block);
 
     bool operator!=(const LineIterator &other);
     bool operator==(const LineIterator &other);
@@ -179,7 +179,7 @@ class LineIterator {
 
 class Lines {
   public:
-    Lines(QTextDocument *document);
+    explicit Lines(QTextDocument *document);
 
     /// Line count in the document
     int count() const;
@@ -240,7 +240,7 @@ class Qutepart : public QPlainTextEdit {
     Q_OBJECT
 
   public:
-    Qutepart(QWidget *parent = nullptr, const QString &text = QString());
+    explicit Qutepart(QWidget *parent = nullptr, const QString &text = {});
 
     // Not copyable or movable
     Qutepart(const Qutepart &) = delete;
@@ -575,7 +575,7 @@ Example:
  */
 class AtomicEditOperation {
   public:
-    AtomicEditOperation(Qutepart *qutepart);
+    explicit AtomicEditOperation(Qutepart *qutepart);
     ~AtomicEditOperation();
 
   private:

@@ -1030,9 +1030,9 @@ void Qutepart::chooseVisibleWhitespace(const QString &text, QVector<bool> *resul
     result->resize(text.length());
     result->fill(false);
 
-    int lastNonSpaceColumn = text.length() - 1;
-    while (lastNonSpaceColumn >= 0 && text[lastNonSpaceColumn].isSpace()) {
-        lastNonSpaceColumn--;
+    int lastNonWhitespaceIndex = text.length() - 1;
+    while (lastNonWhitespaceIndex >= 0 && text[lastNonWhitespaceIndex].isSpace()) {
+        lastNonWhitespaceIndex--;
     }
 
     if (drawAnyWhitespace_ || drawIncorrectIndentation_) {
@@ -1044,12 +1044,12 @@ void Qutepart::chooseVisibleWhitespace(const QString &text, QVector<bool> *resul
         }
 
         // Mark end whitespace
-        for (int i = lastNonSpaceColumn + 1; i < text.length(); i++) {
+        for (int i = lastNonWhitespaceIndex + 1; i < text.length(); i++) {
             result->replace(i, true);
         }
 
         // Mark middle whitespace
-        for (int i = startWhitespace; i <= lastNonSpaceColumn; i++) {
+        for (int i = startWhitespace; i <= lastNonWhitespaceIndex; i++) {
             if (text[i].isSpace()) {
                 if (i + 1 < text.length() && text[i + 1].isSpace()) {
                     // Mark consecutive whitespace
@@ -1069,7 +1069,7 @@ void Qutepart::chooseVisibleWhitespace(const QString &text, QVector<bool> *resul
                 // Find big space groups
                 QString bigSpaceGroup = QString(indenter_->width(), ' ');
                 for (int column = text.indexOf(bigSpaceGroup);
-                     column != -1 && column <= lastNonSpaceColumn;
+                     column != -1 && column <= lastNonWhitespaceIndex;
                      column = text.indexOf(bigSpaceGroup, column + 1)) {
                     for (int index = column; index < column + indenter_->width(); index++) {
                         result->replace(index, true);
@@ -1077,7 +1077,8 @@ void Qutepart::chooseVisibleWhitespace(const QString &text, QVector<bool> *resul
                 }
             } else {
                 // Find tabs
-                for (int column = text.indexOf('\t'); column != -1 && column <= lastNonSpaceColumn;
+                for (int column = text.indexOf('\t');
+                     column != -1 && column <= lastNonWhitespaceIndex;
                      column = text.indexOf('\t', column + 1)) {
                     result->replace(column, true);
                 }
