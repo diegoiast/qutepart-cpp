@@ -1108,22 +1108,29 @@ void Qutepart::updateViewport() {
     auto deltaOrizontal = verticalScrollBar()->isVisible() ? verticalScrollBar()->width() : 0;
 
     if (lineNumberArea_) {
-        int width = lineNumberArea_->widthHint();
+        auto width = lineNumberArea_->widthHint();
         lineNumberArea_->setGeometry(QRect(currentX, top, width, height));
         currentX += width;
         viewportMarginStart += width;
     }
 
     if (miniMap_) {
-        int width = miniMap_->widthHint();
-        miniMap_->setGeometry(QRect(cr.width() - width - deltaOrizontal, top, width, height));
-        viewportMarginEnd += width;
+        auto mainWidth = cr.width();
+        auto width = miniMap_->widthHint();
+        auto shouldHide = mainWidth < width * 4;
+
+        if (shouldHide) {
+            miniMap_->hide();
+        } else {
+            miniMap_->show();
+            miniMap_->setGeometry(QRect(cr.width() - width - deltaOrizontal, top, width, height));
+            viewportMarginEnd += width;
+        }
     }
 
     {
-        int width = markArea_->widthHint();
+        auto width = markArea_->widthHint();
         markArea_->setGeometry(QRect(currentX, top, width, height));
-        currentX += width;
         viewportMarginStart += width;
     }
 
