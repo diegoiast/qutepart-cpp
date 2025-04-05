@@ -240,6 +240,10 @@ class Qutepart : public QPlainTextEdit {
     Q_OBJECT
 
   public:
+    //Add ed this line for the function that makes the editor render the line after startup
+    // at line nr:1621 in qutepart.cpp
+    void showEvent(QShowEvent* event) override;
+
     explicit Qutepart(QWidget *parent = nullptr, const QString &text = {});
 
     // Not copyable or movable
