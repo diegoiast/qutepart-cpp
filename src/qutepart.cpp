@@ -1616,6 +1616,11 @@ void Qutepart::updateExtraSelections() {
 
     setExtraSelections(selections);
 }
+//the init of line.nr:245 fn: void showEvent in qutepart.h
+void Qutepart::showEvent(QShowEvent* event) {
+    QPlainTextEdit::showEvent(event);
+    updateExtraSelections();           // force update on show
+}
 
 // Smart Home behaviour. Move to first non-space or to beginning of line
 void Qutepart::onShortcutHome(QTextCursor::MoveMode moveMode) {
