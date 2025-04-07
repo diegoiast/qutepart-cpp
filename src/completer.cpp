@@ -120,7 +120,7 @@ class CompletionModel : public QAbstractItemModel {
                                            const QString &wholeWord) const {
         QVector<QString> result;
         foreach (const QString &word, wordSet_) {
-            if (word.startsWith(wordBeforeCursor) && word != wholeWord) {
+            if (word.startsWith(wordBeforeCursor, Qt::CaseInsensitive) && word != wholeWord) {
                 result << word;
             }
         }
