@@ -233,6 +233,8 @@ struct TextCursorPosition {
     int column;
 };
 
+using CompletionCallback = std::function<QSet<QString>(const QString &)>;
+
 /**
   Code editor widget
 */
@@ -364,6 +366,10 @@ class Qutepart : public QPlainTextEdit {
     bool completionEnabled() const;
     void setCompletionThreshold(int);
     int completionThreshold() const;
+    /// User defined completion callback, used to fill suggestions to user
+    inline void setCompletionCallback(CompletionCallback callback) {
+        completionCallback_ = callback;
+    }
 
     void removeMetaData();
 
@@ -493,6 +499,7 @@ class Qutepart : public QPlainTextEdit {
     void onShortcutJoinLines();
 
   private:
+    CompletionCallback completionCallback_;
     const Theme *theme = nullptr;
 
     QTimer *currentWordTimer;

@@ -26,7 +26,8 @@ class Completer : public QObject {
     ~Completer();
 
     void setKeywords(const QSet<QString> &keywords);
-
+    void setCustomCompletions(const QSet<QString> &wordSet);
+    
     bool isVisible() const;
     bool invokeCompletionIfAvailable(bool requestedByUser);
 
@@ -40,7 +41,6 @@ class Completer : public QObject {
     void onCompletionListTabPressed();
 
   private:
-    void setCustomCompletions(const QSet<QString> &wordSet);
     void updateWordSet();
     bool shouldShowModel(CompletionModel *model, bool forceShow);
     void createWidget(CompletionModel *model);

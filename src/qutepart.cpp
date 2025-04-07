@@ -715,6 +715,16 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
         }
 
         if (textTyped || (event->key() == Qt::Key_Backspace && completer_->isVisible())) {
+            auto cursor = textCursor();
+            cursor.select(QTextCursor::WordUnderCursor);
+            auto currentWord = cursor.selectedText();
+
+            if (completionCallback_) {
+                auto completions = completionCallback_(currentWord);
+                if (!completions.isEmpty()) {
+                    completer_->setCustomCompletions(completions);
+                }
+            }
             completer_->invokeCompletionIfAvailable(false);
         }
     }
