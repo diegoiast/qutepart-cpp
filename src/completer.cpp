@@ -172,6 +172,9 @@ class CompletionList : public QListView {
         setPalette(newPalette);
 
         setAttribute(Qt::WA_DeleteOnClose);
+        setFrameStyle(QFrame::Raised);
+        setFrameShape(QFrame::Box);
+        setFrameShadow(QFrame::Raised);
 
         setItemDelegate(new HTMLDelegate(this));
 
