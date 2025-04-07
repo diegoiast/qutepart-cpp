@@ -470,7 +470,7 @@ Delete widget
 */
 void Completer::closeCompletion() {
     if (widget_) {
-        delete widget_;
+        widget_->deleteLater();
         widget_ = nullptr;
         completionOpenedManually_ = false;
     }
