@@ -225,6 +225,7 @@ void Qutepart::goTo(int line, int column) {
     }
 
     setTextCursor(cursor);
+    updateExtraSelections();
 }
 
 void Qutepart::goTo(const TextCursorPosition &pos) { return goTo(pos.line, pos.column); }
