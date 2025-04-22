@@ -820,6 +820,7 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
             }
             return QSharedPointer<Language>();
         }
+        ctx->language = languagePtr;
     }
 
     return languagePtr;

@@ -1453,9 +1453,14 @@ void Qutepart::toggleComment() {
 
     AtomicEditOperation op(this);
     auto cursor = textCursor();
-    auto language = hl->getLanguage();
     auto selectionStart = cursor.selectionStart();
     auto selectionEnd = cursor.selectionEnd();
+
+    auto data = static_cast<TextBlockUserData *>(cursor.block().userData());
+    if (!data || !data->contexts.currentContext() || !data->contexts.currentContext()->language) {
+        return;
+    }
+    auto language = data->contexts.currentContext()->language;
 
     cursor.setPosition(selectionStart);
     auto startComment = language->getStartMultilineComment();
