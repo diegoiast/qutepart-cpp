@@ -637,16 +637,55 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         return;
     }
 
+    // Handle Alt+Shift+Up/Down to add new cursors
+    if (event->modifiers() == (Qt::ShiftModifier | Qt::AltModifier)) {
+        auto currentCursor = textCursor();
+        auto referenceCursor= QTextCursor();
+        if (!extraCursors.isEmpty()) {
+            referenceCursor = extraCursors.last(); // Use the last added extra cursor as reference
+        } else {
+            referenceCursor = currentCursor; // Use the main cursor if no extra cursors exist
+        }
+
+        auto newCursor = referenceCursor;
+        auto cursorAdded = false;
+        if (event->key() == Qt::Key_Up) {
+            if (newCursor.movePosition(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor)) {
+                newCursor.movePosition(QTextCursor::StartOfLine);
+                auto targetColumn = qMin(referenceCursor.positionInBlock(), newCursor.block().length() - 1);
+                newCursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, targetColumn);
+                extraCursors.append(newCursor);
+                cursorAdded = true;
+            }
+        } else if (event->key() == Qt::Key_Down) {
+            if (newCursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor)) {
+                newCursor.movePosition(QTextCursor::StartOfLine);
+                auto targetColumn = qMin(referenceCursor.positionInBlock(), newCursor.block().length() - 1);
+                newCursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, targetColumn);
+                extraCursors.append(newCursor);
+                cursorAdded = true;
+            }
+        }
+
+        if (cursorAdded) {
+            if (extraCursors.size() == 1) {
+                 extraCursorBlinkTimer_->start();
+            }
+            update();
+            event->accept();
+            return;
+        }
+    }
+
     if (!extraCursors.isEmpty()) {
+        // Handle Backspace for multiple cursors
         if (event->key() == Qt::Key_Backspace) {
             auto op = AtomicEditOperation(this);
             auto allCursors = extraCursors;
             allCursors.append(cursor);
 
             std::sort(allCursors.begin(), allCursors.end(),
-                      [](auto &a, auto &b) {
-                          return a.position() > b.position();
-                      });
+                      [](auto &a, auto &b) { return a.position() > b.position(); });
 
             for (auto &currentCursor : allCursors) {
                 if (currentCursor.position() > 0) {
@@ -665,19 +704,16 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         }
         // Handle Enter for multiple cursors
         else if (event->matches(QKeySequence::InsertParagraphSeparator)) {
-            auto op= AtomicEditOperation(this);
+            auto op = AtomicEditOperation(this);
             auto allCursors = extraCursors;
             allCursors.append(cursor);
             std::sort(allCursors.begin(), allCursors.end(),
-                      [](auto &a, auto &b) {
-                          return a.position() > b.position();
-                      });
+                      [](auto &a, auto &b) { return a.position() > b.position(); });
 
             for (auto &currentCursor : allCursors) {
                 currentCursor.insertBlock();
-                indenter_->indentBlock(
-                    currentCursor.block(), currentCursor.positionInBlock(),
-                    QChar::Null);
+                indenter_->indentBlock(currentCursor.block(),
+                                       currentCursor.positionInBlock(), QChar::Null);
             }
             cursor = allCursors.last();
             extraCursors.clear();
@@ -689,31 +725,52 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
             event->accept();
             return;
         }
+        // Handle character input
         else if (isCharEvent(event)) {
-            auto op = AtomicEditOperation (this);
             auto textToInsert = event->text();
+
+            // Collect all cursors into a single list
             auto allCursors = extraCursors;
-            
             allCursors.append(cursor);
-            std::sort(allCursors.begin(), allCursors.end(),
-                      [](auto &a, auto &b) {
-                          return a.position() < b.position();
-                      });
 
-            auto offset = 0;
-            for (auto &currentCursor : allCursors) {
-                currentCursor.setPosition(currentCursor.position() + offset);
+            // Sort cursors by position in descending order for correct insertion
+            std::sort(allCursors.begin(), allCursors.end(), [](const auto& a, const auto& b) {
+                 return a.position() > b.position();
+             });
+
+            // Perform insertion at each cursor position
+            AtomicEditOperation insertOp(this);
+            for (auto& currentCursor : allCursors) {
                 currentCursor.insertText(textToInsert);
-                offset += textToInsert.length();
+             }
+
+            // Update the main cursor and extra cursors to their new positions
+            // After descending insertion, the cursor objects in allCursors now hold their new positions.
+            // We need to separate the one that was originally the main cursor and update the extraCursors list.
+            // The cursor object that *was* the main cursor should still be accessible via the 'cursor' variable,
+            // and its position should have been updated.
+
+            auto newExtraCursorsList = QList<QTextCursor>();
+            auto newMainCursor = cursor; // The original main cursor object with updated position
+
+            // Repopulate extraCursors excluding the main cursor
+            for(const auto& updatedCursor : allCursors) {
+                // Compare updatedCursor with the newMainCursor to identify extra cursors.
+                // Comparing positions should be sufficient if there are no overlapping cursors.
+                if (updatedCursor.position() != newMainCursor.position() || updatedCursor.block() != newMainCursor.block()) {
+                     newExtraCursorsList.append(updatedCursor);
+                }
             }
 
-            cursor = allCursors.last();
-            extraCursors.clear();
-            for (int i = 0; i < allCursors.size() - 1; ++i) {
-                extraCursors.append(allCursors[i]);
-            }
-            setTextCursor(cursor);
+            extraCursors = newExtraCursorsList;
+            // The main cursor ('newMainCursor') is already the correct object with updated position,
+            // and 'setTextCursor' is not needed here as 'cursor' is a reference to the main cursor.
+            // However, to ensure the widget's internal state is fully updated for the main cursor,
+            // explicitly setting it might be safer, even if it's the same object.
+            setTextCursor(newMainCursor);
+
             updateExtraSelections();
+            update();
 
             event->accept();
             return;
@@ -831,18 +888,19 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
 void Qutepart::paintEvent(QPaintEvent *event) {
     QPlainTextEdit::paintEvent(event);
 
+    // Draw extra cursors if they are visible
     if (!extraCursors.isEmpty() && extraCursorsVisible_) {
         auto painter = QPainter(viewport());
         auto extraCursorColor = Qt::darkCyan;
-        painter.setPen(QPen(extraCursorColor, 1)); // Draw a 1-pixel wide line
+        painter.setPen(QPen(extraCursorColor, 1));
 
         for (const auto &extraCursor : extraCursors) {
             auto cursorRect = this->cursorRect(
-                extraCursor.block(), extraCursor.positionInBlock(),
-                0); // Get the rectangle for the cursor position using block and column
-            painter.drawLine(cursorRect.topLeft(), cursorRect.bottomLeft()); // Draw a vertical line
+                extraCursor.block(), extraCursor.positionInBlock(), 0);
+            painter.drawLine(cursorRect.topLeft(), cursorRect.bottomLeft());
         }
     }
+
     drawIndentMarkersAndEdge(event->rect());
 }
 
@@ -1060,15 +1118,21 @@ void Qutepart::drawIndentMarkersAndEdge(const QRect &paintEventRect) {
 }
 
 void Qutepart::drawWhiteSpace(QPainter *painter, QTextBlock block, int column, QChar ch) {
-    QRect leftCursorRect = cursorRect(block, column, 0);
-    QRect rightCursorRect = cursorRect(block, column + 1, 0);
-    if (leftCursorRect.top() == rightCursorRect.top()) { // if on the same visual line
-        int middleHeight = (leftCursorRect.top() + leftCursorRect.bottom()) / 2;
-        QPainter::CompositionMode oldMode = painter->compositionMode();
+    if (!block.isValid()) {
+        // Should not happen, but adding a check to prevent crash
+        qDebug() << "Invalid block in drawWhiteSpace!";
+        return;
+    }
+    auto cursor = QTextCursor(block);
+    auto leftCursorRect = cursorRect(block, column, 0);
+    auto rightCursorRect = cursorRect(block, column + 1, 0);
+    if (leftCursorRect.top() == rightCursorRect.top()) {
+        auto middleHeight = (leftCursorRect.top() + leftCursorRect.bottom()) / 2;
+        auto oldMode = painter->compositionMode();
         painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
         painter->setPen(whitespaceColor_);
         if (ch == ' ') {
-            int xPos = (leftCursorRect.x() + rightCursorRect.x()) / 2;
+            auto xPos = (leftCursorRect.x() + rightCursorRect.x()) / 2;
             painter->drawRect(QRect(xPos, middleHeight, 1, 1));
         } else {
             painter->drawLine(leftCursorRect.x() + 3, middleHeight, rightCursorRect.x() - 3,
