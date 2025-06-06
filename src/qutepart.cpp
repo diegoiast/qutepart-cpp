@@ -33,7 +33,7 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
       drawIncorrectIndentation_(true), drawSolidEdge_(true), enableSmartHomeEnd_(true),
       softLineWrapping_(true), lineLengthEdge_(80), brakcetsQutoEnclose(true),
       completionEnabled_(true), completionThreshold_(3), viewportMarginStart_(0) {
-
+    extraCursorBlinkTimer_ = new QTimer(this);
     setBracketHighlightingEnabled(true);
     setLineNumbersVisible(true);
     setMinimapVisible(true);
@@ -69,6 +69,11 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     palette.setBrush(QPalette::Highlight, c);
     palette.setBrush(QPalette::HighlightedText, QBrush(Qt::NoBrush));
     setPalette(palette);
+
+    // Setup extra cursor blinking timer
+    extraCursorBlinkTimer_->setInterval(QApplication::cursorFlashTime() / 2);
+    connect(extraCursorBlinkTimer_, &QTimer::timeout, this,
+            &Qutepart::toggleExtraCursorsVisibility);
 }
 
 QList<QTextEdit::ExtraSelection> Qutepart::highlightText(const QString &text, bool fullWords) {
@@ -625,6 +630,96 @@ void addBrackets(QTextCursor &cursor, QChar openBracket, QChar closeBracket) {
 void Qutepart::keyPressEvent(QKeyEvent *event) {
     QTextCursor cursor = textCursor();
 
+    if (event->key() == Qt::Key_Escape && !extraCursors.isEmpty()) {
+        extraCursors.clear();
+        updateExtraSelections(); // Clear multi-cursor highlighting
+        event->accept();
+        return;
+    }
+
+    if (!extraCursors.isEmpty()) {
+        if (event->key() == Qt::Key_Backspace) {
+            auto op = AtomicEditOperation(this);
+            auto allCursors = extraCursors;
+            allCursors.append(cursor);
+
+            std::sort(allCursors.begin(), allCursors.end(),
+                      [](auto &a, auto &b) {
+                          return a.position() > b.position();
+                      });
+
+            for (auto &currentCursor : allCursors) {
+                if (currentCursor.position() > 0) {
+                    currentCursor.deletePreviousChar();
+                }
+            }
+            cursor = allCursors.last();
+            extraCursors.clear();
+            for (auto i = 0; i < allCursors.size() - 1; ++i) {
+                extraCursors.append(allCursors[i]);
+            }
+            setTextCursor(cursor);
+            updateExtraSelections();
+            event->accept();
+            return;
+        }
+        // Handle Enter for multiple cursors
+        else if (event->matches(QKeySequence::InsertParagraphSeparator)) {
+            auto op= AtomicEditOperation(this);
+            auto allCursors = extraCursors;
+            allCursors.append(cursor);
+            std::sort(allCursors.begin(), allCursors.end(),
+                      [](auto &a, auto &b) {
+                          return a.position() > b.position();
+                      });
+
+            for (auto &currentCursor : allCursors) {
+                currentCursor.insertBlock();
+                indenter_->indentBlock(
+                    currentCursor.block(), currentCursor.positionInBlock(),
+                    QChar::Null);
+            }
+            cursor = allCursors.last();
+            extraCursors.clear();
+            for (int i = 0; i < allCursors.size() - 1; ++i) {
+                extraCursors.append(allCursors[i]);
+            }
+            setTextCursor(cursor);
+            updateExtraSelections();
+            event->accept();
+            return;
+        }
+        else if (isCharEvent(event)) {
+            auto op = AtomicEditOperation (this);
+            auto textToInsert = event->text();
+            auto allCursors = extraCursors;
+            
+            allCursors.append(cursor);
+            std::sort(allCursors.begin(), allCursors.end(),
+                      [](auto &a, auto &b) {
+                          return a.position() < b.position();
+                      });
+
+            auto offset = 0;
+            for (auto &currentCursor : allCursors) {
+                currentCursor.setPosition(currentCursor.position() + offset);
+                currentCursor.insertText(textToInsert);
+                offset += textToInsert.length();
+            }
+
+            cursor = allCursors.last();
+            extraCursors.clear();
+            for (int i = 0; i < allCursors.size() - 1; ++i) {
+                extraCursors.append(allCursors[i]);
+            }
+            setTextCursor(cursor);
+            updateExtraSelections();
+
+            event->accept();
+            return;
+        }
+    }
+
     if (softLineWrapping_) {
         if (cursor.columnNumber() >= lineLengthEdge_ && !event->text().isEmpty() &&
             event->key() != Qt::Key_Return && event->key() != Qt::Key_Enter) {
@@ -735,6 +830,19 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
 
 void Qutepart::paintEvent(QPaintEvent *event) {
     QPlainTextEdit::paintEvent(event);
+
+    if (!extraCursors.isEmpty() && extraCursorsVisible_) {
+        auto painter = QPainter(viewport());
+        auto extraCursorColor = Qt::darkCyan;
+        painter.setPen(QPen(extraCursorColor, 1)); // Draw a 1-pixel wide line
+
+        for (const auto &extraCursor : extraCursors) {
+            auto cursorRect = this->cursorRect(
+                extraCursor.block(), extraCursor.positionInBlock(),
+                0); // Get the rectangle for the cursor position using block and column
+            painter.drawLine(cursorRect.topLeft(), cursorRect.bottomLeft()); // Draw a vertical line
+        }
+    }
     drawIndentMarkersAndEdge(event->rect());
 }
 
@@ -754,6 +862,7 @@ void Qutepart::changeEvent(QEvent *event) {
             lineNumberArea_->setFont(font());
         }
     }
+    updateViewport();
 }
 
 void Qutepart::initActions() {
@@ -1607,7 +1716,7 @@ void Qutepart::updateExtraSelections() {
     QTextCursor cursor = textCursor();
     QList<QTextEdit::ExtraSelection> selections = persitentSelections;
 
-    if (currentLineColor_.isValid()) {
+    if (currentLineColor_.isValid() && extraCursors.isEmpty()) {
         selections += currentLineExtraSelection();
     }
 
@@ -1782,6 +1891,53 @@ QIcon iconForStatus(int status) {
     }
     */
     return {};
+}
+
+void Qutepart::mousePressEvent(QMouseEvent *event) {
+    if (event->modifiers() == Qt::AltModifier) {
+        auto cursor = cursorForPosition(event->pos());
+        auto exists = false;
+        if (textCursor().position() == cursor.position()) {
+            exists = true;
+        }
+        for (const auto &extraCursor : extraCursors) {
+            if (extraCursor.position() == cursor.position()) {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) {
+            extraCursors.append(cursor);
+            qDebug() << "Added cursor at line: " << cursor.blockNumber()
+                     << ", column: " << cursor.columnNumber();
+            if (extraCursors.size() == 1) {
+                extraCursorBlinkTimer_->start();
+            }
+            update();
+        }
+        event->accept();
+    } else {
+        if (!extraCursors.isEmpty()) {
+            extraCursors.clear();
+            extraCursorBlinkTimer_->stop();
+            extraCursorsVisible_ = true; 
+            update(); 
+        }
+        QPlainTextEdit::mousePressEvent(event);
+    }
+}
+
+void Qutepart::mouseReleaseEvent(QMouseEvent *event) {
+    if (event->modifiers() != Qt::AltModifier) {
+        QPlainTextEdit::mouseReleaseEvent(event);
+    } else {
+        event->accept();
+    }
+}
+
+void Qutepart::toggleExtraCursorsVisibility() {
+    extraCursorsVisible_ = !extraCursorsVisible_;
+    viewport()->update();
 }
 
 } // namespace Qutepart

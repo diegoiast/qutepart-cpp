@@ -439,9 +439,14 @@ class Qutepart : public QPlainTextEdit {
     void keyReleaseEvent(QKeyEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void changeEvent(QEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
 
   private:
     QList<QTextEdit::ExtraSelection> persitentSelections;
+    QList<QTextCursor> extraCursors;
+    QTimer *extraCursorBlinkTimer_ = nullptr;
+    bool extraCursorsVisible_ = true;
 
     void initActions();
     QAction *createAction(const QString &text, QKeySequence shortcut, const QString &iconFileName,
@@ -497,6 +502,8 @@ class Qutepart : public QPlainTextEdit {
 
     void joinNextLine(QTextCursor &cursor);
     void onShortcutJoinLines();
+
+    void toggleExtraCursorsVisibility();
 
   private:
     CompletionCallback completionCallback_;
