@@ -1789,6 +1789,17 @@ void Qutepart::updateExtraSelections() {
             TextPosition(textCursor().block(), cursor.positionInBlock()));
     }
 
+    // Add selections from extra cursors
+    for (const auto &extraCursor : extraCursors) {
+        if (extraCursor.hasSelection()) {
+            QTextEdit::ExtraSelection extraSelection;
+            extraSelection.format.setBackground(QApplication::palette().color(QPalette::Highlight));
+            extraSelection.format.setProperty(QTextFormat::FullWidthSelection, false);
+            extraSelection.cursor = extraCursor;
+            selections.append(extraSelection);
+        }
+    }
+
     if (cursor.hasSelection() && getMarkCurrentWord()) {
         auto selectedText = cursor.selectedText();
         auto searches = highlightText(selectedText, false);
@@ -1808,30 +1819,58 @@ void Qutepart::updateExtraSelections() {
 
 // Smart Home behaviour. Move to first non-space or to beginning of line
 void Qutepart::onShortcutHome(QTextCursor::MoveMode moveMode) {
-    QTextCursor cursor = textCursor();
-    int firstNonSpace = firstNonSpaceColumn(cursor.block().text());
-    if (enableSmartHomeEnd_ && cursor.positionInBlock() == firstNonSpace) {
-        setPositionInBlock(&cursor, 0, moveMode);
+    auto mainCursor = textCursor();
+    auto firstNonSpace = firstNonSpaceColumn(mainCursor.block().text());
+    if (enableSmartHomeEnd_ && mainCursor.positionInBlock() == firstNonSpace) {
+        setPositionInBlock(&mainCursor, 0, moveMode);
     } else {
-        setPositionInBlock(&cursor, firstNonSpace, moveMode);
+        setPositionInBlock(&mainCursor, firstNonSpace, moveMode);
     }
-    setTextCursor(cursor);
+    setTextCursor(mainCursor);
+
+    for (auto &extraCursor : extraCursors) {
+        firstNonSpace = firstNonSpaceColumn(extraCursor.block().text());
+        int targetPosition;
+        if (enableSmartHomeEnd_ && extraCursor.positionInBlock() == firstNonSpace) {
+            targetPosition = extraCursor.block().position() + 0;
+        } else {
+            targetPosition = extraCursor.block().position() + firstNonSpace;
+        }
+        extraCursor.setPosition(targetPosition, moveMode);
+    }
+    updateExtraSelections();
 }
 
 // Smart end behaviour. Move to last non-space or to end of line
 void Qutepart::onShortcutEnd(QTextCursor::MoveMode moveMode) {
-    QTextCursor cursor = textCursor();
-    int lastNonSpace = lastNonSpaceColumn(cursor.block().text()) + 1;
-    int lastChar = cursor.block().length() - 1;
+    auto mainCursor = textCursor();
+    auto lastNonSpace = lastNonSpaceColumn(mainCursor.block().text()) + 1;
+    auto lastChar = mainCursor.block().length() - 1;
     if (lastNonSpace > lastChar) {
         lastNonSpace = lastChar;
     }
-    if (enableSmartHomeEnd_ && cursor.positionInBlock() == lastNonSpace) {
-        setPositionInBlock(&cursor, lastChar, moveMode);
+    if (enableSmartHomeEnd_ && mainCursor.positionInBlock() == lastNonSpace) {
+        setPositionInBlock(&mainCursor, lastChar, moveMode);
     } else {
-        setPositionInBlock(&cursor, lastNonSpace, moveMode);
+        setPositionInBlock(&mainCursor, lastNonSpace, moveMode);
     }
-    setTextCursor(cursor);
+    setTextCursor(mainCursor);
+
+    for (auto &extraCursor : extraCursors) {
+        lastNonSpace = lastNonSpaceColumn(extraCursor.block().text()) + 1;
+        lastChar = extraCursor.block().length() - 1;
+        if (lastNonSpace > lastChar) {
+            lastNonSpace = lastChar;
+        }
+        int targetPosition;
+        if (enableSmartHomeEnd_ && extraCursor.positionInBlock() == lastNonSpace) {
+            targetPosition = extraCursor.block().position() + lastChar;
+        } else {
+            targetPosition = extraCursor.block().position() + lastNonSpace;
+        }
+        extraCursor.setPosition(targetPosition, moveMode);
+    }
+    updateExtraSelections();
 }
 
 void Qutepart::onShortcutToggleBookmark() {
@@ -1972,8 +2011,6 @@ void Qutepart::mousePressEvent(QMouseEvent *event) {
         }
         if (!exists) {
             extraCursors.append(cursor);
-            qDebug() << "Added cursor at line: " << cursor.blockNumber()
-                     << ", column: " << cursor.columnNumber();
             extraCursorsVisible_ = true;
             viewport()->repaint();
             extraCursorBlinkTimer_->stop();
