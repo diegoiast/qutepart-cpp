@@ -668,10 +668,10 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         }
 
         if (cursorAdded) {
-            if (extraCursors.size() == 1) {
-                 extraCursorBlinkTimer_->start();
-            }
-            update();
+            extraCursorsVisible_ = true;
+            viewport()->repaint();
+            extraCursorBlinkTimer_->stop();
+            extraCursorBlinkTimer_->start();
             event->accept();
             return;
         }
@@ -1321,7 +1321,7 @@ void Qutepart::updateViewport() {
     if (viewportMarginStart_ != viewportMarginStart || viewportMarginEnd_ != viewportMarginEnd) {
         viewportMarginStart_ = viewportMarginStart;
         viewportMarginEnd_ = viewportMarginEnd;
-        setViewportMargins(viewportMarginStart_, 0, viewportMarginEnd, 0);
+        setViewportMargins(viewportMarginStart_, 0, viewportMarginEnd_, 0);
     }
 }
 
@@ -1974,17 +1974,17 @@ void Qutepart::mousePressEvent(QMouseEvent *event) {
             extraCursors.append(cursor);
             qDebug() << "Added cursor at line: " << cursor.blockNumber()
                      << ", column: " << cursor.columnNumber();
-            if (extraCursors.size() == 1) {
-                extraCursorBlinkTimer_->start();
-            }
-            update();
+            extraCursorsVisible_ = true;
+            viewport()->repaint();
+            extraCursorBlinkTimer_->stop();
+            extraCursorBlinkTimer_->start();
+            event->accept();
         }
-        event->accept();
     } else {
         if (!extraCursors.isEmpty()) {
             extraCursors.clear();
             extraCursorBlinkTimer_->stop();
-            extraCursorsVisible_ = true; 
+            extraCursorsVisible_ = false;
             update(); 
         }
         QPlainTextEdit::mousePressEvent(event);
