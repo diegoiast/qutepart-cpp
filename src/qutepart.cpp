@@ -1829,7 +1829,7 @@ void Qutepart::updateExtraSelections() {
 
 
     // This block is for marking other occurrences of the word under cursor/selection.
-    if (getMarkCurrentWord()) {
+    if (getMarkCurrentWord() && extraCursors.isEmpty()) {
         // If there's an active selection, highlight other occurrences of the selected text
         if (cursor.hasSelection()) {
             auto selectedText = cursor.selectedText();
