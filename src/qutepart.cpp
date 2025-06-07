@@ -682,39 +682,23 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         switch (event->key()) {
             case Qt::Key_Backspace:
             case Qt::Key_Delete: {
-                auto op = AtomicEditOperation(this);
-                auto allCursors = extraCursors;
-                allCursors.append(cursor);
-
-                std::sort(allCursors.begin(), allCursors.end(),
-                          [](auto &a, auto &b) { return a.position() > b.position(); });
-
-                for (auto &currentCursor : allCursors) {
-                    if (event->key() == Qt::Key_Backspace) {
-                        if (currentCursor.hasSelection()) {
-                            currentCursor.deleteChar(); // delete selection
-                        } else if (currentCursor.position() > 0) {
-                            currentCursor.deletePreviousChar();
+                cursor = applyOperationToAllCursors(
+                    [&](QTextCursor &currentCursor) {
+                        if (event->key() == Qt::Key_Backspace) {
+                            if (currentCursor.hasSelection()) {
+                                currentCursor.deleteChar(); // delete selection
+                            } else if (currentCursor.position() > 0) {
+                                currentCursor.deletePreviousChar();
+                            }
+                        } else { // Qt::Key_Delete
+                            if (currentCursor.hasSelection()) {
+                                currentCursor.deleteChar(); // delete selection
+                            } else if (currentCursor.position() < currentCursor.block().length()) {
+                                currentCursor.deleteChar();
+                            }
                         }
-                    } else { // Qt::Key_Delete
-                        if (currentCursor.hasSelection()) {
-                            currentCursor.deleteChar(); // delete selection
-                        } else if (currentCursor.position() < currentCursor.block().length()) {
-                            currentCursor.deleteChar();
-                        }
-                    }
-                }
-
-                // Reassign main cursor and extra cursors: sort ascending, then take last as main
-                std::sort(allCursors.begin(), allCursors.end(), [](auto &a, auto &b) {
-                     return a.position() < b.position();
-                 });
-
-                cursor = allCursors.last(); // Main cursor is the last one after ascending sort
-                extraCursors.clear();
-                for (int i = 0; i < allCursors.size() - 1; ++i) {
-                    extraCursors.append(allCursors[i]);
-                }
+                    },
+                    [](auto &a, auto &b) { return a.position() > b.position(); });
 
                 setTextCursor(cursor);
                 updateExtraSelections();
@@ -724,33 +708,19 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
             }
             case Qt::Key_Left:
             case Qt::Key_Right: {
-                auto op = AtomicEditOperation(this);
-                auto allCursors = extraCursors;
-                allCursors.append(cursor);
-
-                auto moveMode = QTextCursor::MoveAnchor;
-                if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-                    moveMode = QTextCursor::KeepAnchor;
-                }
-
-                for (auto &currentCursor : allCursors) {
-                    if (event->key() == Qt::Key_Left) {
-                        currentCursor.movePosition(QTextCursor::PreviousCharacter, moveMode);
-                    } else { // Qt::Key_Right
-                        currentCursor.movePosition(QTextCursor::NextCharacter, moveMode);
-                    }
-                }
-
-                // Reassign main cursor and extra cursors: sort ascending, then take last as main
-                std::sort(allCursors.begin(), allCursors.end(), [](auto &a, auto &b) {
-                     return a.position() < b.position();
-                 });
-
-                cursor = allCursors.last(); // Main cursor is the last one after ascending sort
-                extraCursors.clear();
-                for (int i = 0; i < allCursors.size() - 1; ++i) {
-                    extraCursors.append(allCursors[i]);
-                }
+                cursor = applyOperationToAllCursors(
+                    [&](QTextCursor &currentCursor) {
+                        auto moveMode = QTextCursor::MoveAnchor;
+                        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+                            moveMode = QTextCursor::KeepAnchor;
+                        }
+                        if (event->key() == Qt::Key_Left) {
+                            currentCursor.movePosition(QTextCursor::PreviousCharacter, moveMode);
+                        } else { // Qt::Key_Right
+                            currentCursor.movePosition(QTextCursor::NextCharacter, moveMode);
+                        }
+                    },
+                    nullptr); // No specific sort order needed for this operation
 
                 setTextCursor(cursor);
                 updateExtraSelections();
@@ -759,37 +729,23 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
             }
             case Qt::Key_Up:
             case Qt::Key_Down: {
-                auto op = AtomicEditOperation(this);
-                auto allCursors = extraCursors;
-                allCursors.append(cursor);
-
-                auto moveMode = QTextCursor::MoveAnchor;
-                if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-                    moveMode = QTextCursor::KeepAnchor;
-                }
-
-                for (auto &currentCursor : allCursors) {
-                    auto originalColumn = currentCursor.positionInBlock();
-                    if (event->key() == Qt::Key_Up) {
-                        currentCursor.movePosition(QTextCursor::PreviousBlock, moveMode);
-                    } else { // Qt::Key_Down
-                        currentCursor.movePosition(QTextCursor::NextBlock, moveMode);
-                    }
-                    currentCursor.movePosition(QTextCursor::StartOfLine, moveMode);
-                    auto targetColumn = qMin(originalColumn, currentCursor.block().length() - 1);
-                    currentCursor.movePosition(QTextCursor::Right, moveMode, targetColumn);
-                }
-
-                // Reassign main cursor and extra cursors: sort ascending, then take last as main
-                std::sort(allCursors.begin(), allCursors.end(), [](const auto& a, const auto& b) {
-                     return a.position() < b.position();
-                 });
-
-                cursor = allCursors.last(); // Main cursor is the last one after ascending sort
-                extraCursors.clear();
-                for (int i = 0; i < allCursors.size() - 1; ++i) {
-                    extraCursors.append(allCursors[i]);
-                }
+                cursor = applyOperationToAllCursors(
+                    [&](QTextCursor &currentCursor) {
+                        auto moveMode = QTextCursor::MoveAnchor;
+                        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+                            moveMode = QTextCursor::KeepAnchor;
+                        }
+                        auto originalColumn = currentCursor.positionInBlock();
+                        if (event->key() == Qt::Key_Up) {
+                            currentCursor.movePosition(QTextCursor::PreviousBlock, moveMode);
+                        } else { // Qt::Key_Down
+                            currentCursor.movePosition(QTextCursor::NextBlock, moveMode);
+                        }
+                        currentCursor.movePosition(QTextCursor::StartOfLine, moveMode);
+                        auto targetColumn = qMin(originalColumn, currentCursor.block().length() - 1);
+                        currentCursor.movePosition(QTextCursor::Right, moveMode, targetColumn);
+                    },
+                    nullptr); // No specific sort order needed for this operation
 
                 setTextCursor(cursor);
                 updateExtraSelections();
@@ -803,31 +759,15 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
 
         // Handle Enter for multiple cursors
         if (event->matches(QKeySequence::InsertParagraphSeparator)) {
-            auto op = AtomicEditOperation(this);
-            auto allCursors = extraCursors;
-            allCursors.append(cursor);
-            std::sort(allCursors.begin(), allCursors.end(),
-                      [](auto &a, auto &b) { return a.position() > b.position(); });
+            cursor = applyOperationToAllCursors(
+                [&](QTextCursor &currentCursor) {
+                    currentCursor.insertBlock();
+                    indenter_->indentBlock(currentCursor.block(),
+                                           currentCursor.positionInBlock(), QChar::Null);
+                },
+                [](auto &a, auto &b) { return a.position() > b.position(); });
 
-            for (auto &currentCursor : allCursors) {
-                currentCursor.insertBlock();
-                indenter_->indentBlock(currentCursor.block(),
-                                       currentCursor.positionInBlock(), QChar::Null);
-            }
-            auto newExtraCursorsList = QList<QTextCursor>();
-            auto newMainCursor = cursor; // The original main cursor object with updated position
-
-            for(const auto& updatedCursor : allCursors) {
-                if (updatedCursor.position() != newMainCursor.position() || updatedCursor.block() != newMainCursor.block()) {
-                     newExtraCursorsList.append(updatedCursor);
-                } else {
-                    newMainCursor = updatedCursor;
-                }
-            }
-
-            extraCursors = newExtraCursorsList;
-            setTextCursor(newMainCursor);
-
+            setTextCursor(cursor);
             updateExtraSelections();
             update();
 
@@ -837,46 +777,13 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         // Handle character input
         else if (isCharEvent(event)) {
             auto textToInsert = event->text();
+            cursor = applyOperationToAllCursors(
+                [&](QTextCursor &currentCursor) {
+                    currentCursor.insertText(textToInsert);
+                },
+                [](const auto& a, const auto& b) { return a.position() > b.position(); });
 
-            // Collect all cursors into a single list
-            auto allCursors = extraCursors;
-            allCursors.append(cursor);
-
-            // Sort cursors by position in descending order for correct insertion
-            std::sort(allCursors.begin(), allCursors.end(), [](const auto& a, const auto& b) {
-                 return a.position() > b.position();
-             });
-
-            // Perform insertion at each cursor position
-            AtomicEditOperation insertOp(this);
-            for (auto& currentCursor : allCursors) {
-                currentCursor.insertText(textToInsert);
-             }
-
-            // Update the main cursor and extra cursors to their new positions
-            // After descending insertion, the cursor objects in allCursors now hold their new positions.
-            // We need to separate the one that was originally the main cursor and update the extraCursors list.
-            // The cursor object that *was* the main cursor should still be accessible via the 'cursor' variable,
-            // and its position should have been updated.
-
-            auto newExtraCursorsList = QList<QTextCursor>();
-            auto newMainCursor = cursor; // The original main cursor object with updated position
-
-            // Repopulate extraCursors excluding the main cursor
-            for(const auto& updatedCursor : allCursors) {
-                // Compare updatedCursor with the newMainCursor to identify extra cursors.
-                // Comparing positions should be sufficient if there are no overlapping cursors.
-                if (updatedCursor.position() != newMainCursor.position() || updatedCursor.block() != newMainCursor.block()) {
-                     newExtraCursorsList.append(updatedCursor);
-                }
-            }
-
-            extraCursors = newExtraCursorsList;
-            // The main cursor ('newMainCursor') is already the correct object with updated position,
-            // and 'setTextCursor' is not needed here as 'cursor' is a reference to the main cursor.
-            // However, to ensure the widget's internal state is fully updated for the main cursor,
-            // explicitly setting it might be safer, even if it's the same object.
-            setTextCursor(newMainCursor);
+            setTextCursor(cursor);
 
             updateExtraSelections();
             update();
@@ -1887,13 +1794,14 @@ void Qutepart::updateExtraSelections() {
     QTextCursor cursor = textCursor();
     QList<QTextEdit::ExtraSelection> selections = persitentSelections;
 
-    if (currentLineColor_.isValid() && extraCursors.isEmpty()) {
-        selections += currentLineExtraSelection();
+    // Highlight current line always, regardless of extra cursors
+    if (currentLineColor_.isValid()) {
+        selections.append(currentLineExtraSelection());
     }
 
     if (bracketHighlighter_) {
-        selections += bracketHighlighter_->extraSelections(
-            TextPosition(textCursor().block(), cursor.positionInBlock()));
+        selections.append(bracketHighlighter_->extraSelections(
+            TextPosition(textCursor().block(), cursor.positionInBlock())));
     }
 
     // Add selections from extra cursors
@@ -1907,18 +1815,33 @@ void Qutepart::updateExtraSelections() {
         }
     }
 
-    if (cursor.hasSelection() && getMarkCurrentWord()) {
-        auto selectedText = cursor.selectedText();
-        auto searches = highlightText(selectedText, false);
-        qDebug() << QString("Found selection %1 times").arg(searches.size());
-        selections += searches;
-    } else if (lastWordUnderCursor.length() > 2) {
-        auto searches = highlightText(lastWordUnderCursor, true);
-        qDebug() << QString("Found current word %1 times").arg(searches.size());
-        selections += searches;
-#if 0
-        qDebug() << "Seacrching for word" << m_lastWordUnderCursor << "Found " << selections.size();
-#endif
+    // Explicitly add main cursor's selection if it exists.
+    // This ensures the main selection is always visible,
+    // as QPlainTextEdit's default selection rendering might be
+    // affected when extra selections are present.
+    if (cursor.hasSelection()) {
+        QTextEdit::ExtraSelection mainCursorSelection;
+        mainCursorSelection.format.setBackground(QApplication::palette().color(QPalette::Highlight));
+        mainCursorSelection.format.setProperty(QTextFormat::FullWidthSelection, false);
+        mainCursorSelection.cursor = cursor;
+        selections.append(mainCursorSelection);
+    }
+
+
+    // This block is for marking other occurrences of the word under cursor/selection.
+    if (getMarkCurrentWord()) {
+        // If there's an active selection, highlight other occurrences of the selected text
+        if (cursor.hasSelection()) {
+            auto selectedText = cursor.selectedText();
+            if (!selectedText.isEmpty()) {
+                auto searches = highlightText(selectedText, false); // fullWords = false for selections
+                selections += searches;
+            }
+        } else if (lastWordUnderCursor.length() > 2) {
+            // If no active selection, highlight other occurrences of the word under cursor
+            auto searches = highlightText(lastWordUnderCursor, true); // fullWords = true for word under cursor
+            selections += searches;
+        }
     }
 
     setExtraSelections(selections);
@@ -2146,6 +2069,34 @@ void Qutepart::mouseReleaseEvent(QMouseEvent *event) {
 void Qutepart::toggleExtraCursorsVisibility() {
     extraCursorsVisible_ = !extraCursorsVisible_;
     viewport()->update();
+}
+
+QTextCursor Qutepart::applyOperationToAllCursors(
+    std::function<void(QTextCursor&)> operation,
+    std::function<bool(const QTextCursor&, const QTextCursor&)> sortOrderBeforeOp)
+{
+    auto allCursors = extraCursors;
+    allCursors.append(textCursor());
+
+    if (sortOrderBeforeOp) {
+        std::sort(allCursors.begin(), allCursors.end(), sortOrderBeforeOp);
+    }
+
+    AtomicEditOperation op(this);
+    for (auto& currentCursor : allCursors) {
+        operation(currentCursor);
+    }
+
+    std::sort(allCursors.begin(), allCursors.end(), [](const auto& a, const auto& b) {
+         return a.position() < b.position();
+     });
+
+    QTextCursor newMainCursor = allCursors.last();
+    extraCursors.clear();
+    for (int i = 0; i < allCursors.size() - 1; ++i) {
+        extraCursors.append(allCursors[i]);
+    }
+    return newMainCursor;
 }
 
 } // namespace Qutepart

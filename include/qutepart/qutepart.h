@@ -489,6 +489,10 @@ class Qutepart : public QPlainTextEdit {
     void insertLineBelow();
     void toggleComment();
 
+    QTextCursor applyOperationToAllCursors(
+        std::function<void(QTextCursor&)> operation,
+        std::function<bool(const QTextCursor&, const QTextCursor&)> sortOrderBeforeOp);
+
   private slots:
     void updateViewport();
     void updateExtraSelections();
