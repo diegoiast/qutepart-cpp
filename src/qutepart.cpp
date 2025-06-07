@@ -11,6 +11,7 @@
 #include <QPainter>
 #include <QScrollBar>
 #include <QStyle>
+#include <QKeyEvent>
 
 #include "bracket_highlighter.h"
 #include "completer.h"
@@ -692,6 +693,68 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                     currentCursor.deletePreviousChar();
                 }
             }
+            cursor = allCursors.last();
+            extraCursors.clear();
+            for (auto i = 0; i < allCursors.size() - 1; ++i) {
+                extraCursors.append(allCursors[i]);
+            }
+            setTextCursor(cursor);
+            updateExtraSelections();
+            event->accept();
+            return;
+        }
+        // Handle Left/Right for multiple cursors
+        else if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right) {
+            auto op = AtomicEditOperation(this);
+            auto allCursors = extraCursors;
+            allCursors.append(cursor);
+
+            for (auto &currentCursor : allCursors) {
+                if (event->key() == Qt::Key_Left) {
+                    currentCursor.movePosition(QTextCursor::PreviousCharacter);
+                } else { // Qt::Key_Right
+                    currentCursor.movePosition(QTextCursor::NextCharacter);
+                }
+            }
+            // Sort cursors by position in ascending order to ensure correct main/extra cursor separation
+            std::sort(allCursors.begin(), allCursors.end(), [](const auto& a, const auto& b) {
+                 return a.position() < b.position();
+             });
+
+            cursor = allCursors.last();
+            extraCursors.clear();
+            for (auto i = 0; i < allCursors.size() - 1; ++i) {
+                extraCursors.append(allCursors[i]);
+            }
+            setTextCursor(cursor);
+            updateExtraSelections();
+            event->accept();
+            return;
+        }
+        // Handle Up/Down for multiple cursors
+        else if (event->key() == Qt::Key_Up || event->key() == Qt::Key_Down) {
+            auto op = AtomicEditOperation(this);
+            auto allCursors = extraCursors;
+            allCursors.append(cursor);
+
+            for (auto &currentCursor : allCursors) {
+                // Save original column to try to maintain it
+                auto originalColumn = currentCursor.positionInBlock();
+                if (event->key() == Qt::Key_Up) {
+                    currentCursor.movePosition(QTextCursor::PreviousBlock);
+                } else { // Qt::Key_Down
+                    currentCursor.movePosition(QTextCursor::NextBlock);
+                }
+                // Try to restore original column
+                currentCursor.movePosition(QTextCursor::StartOfLine);
+                auto targetColumn = qMin(originalColumn, currentCursor.block().length() - 1);
+                currentCursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, targetColumn);
+            }
+            // Sort cursors by position in ascending order to ensure correct main/extra cursor separation
+            std::sort(allCursors.begin(), allCursors.end(), [](const auto& a, const auto& b) {
+                 return a.position() < b.position();
+             });
+
             cursor = allCursors.last();
             extraCursors.clear();
             for (auto i = 0; i < allCursors.size() - 1; ++i) {
