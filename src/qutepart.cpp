@@ -633,7 +633,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
 
     if (event->key() == Qt::Key_Escape && !extraCursors.isEmpty()) {
         extraCursors.clear();
-        updateExtraSelections(); // Clear multi-cursor highlighting
+        updateExtraSelections();
         event->accept();
         return;
     }
@@ -670,6 +670,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
 
         if (cursorAdded) {
             extraCursorsVisible_ = true;
+            updateExtraSelections();
             viewport()->repaint();
             extraCursorBlinkTimer_->stop();
             extraCursorBlinkTimer_->start();
