@@ -391,6 +391,7 @@ void Qutepart::setCompletionEnabled(bool val) { completionEnabled_ = val; }
 
 int Qutepart::completionThreshold() const { return completionThreshold_; }
 
+/// Returns the status of a line. A line is marked as modified when its changed via the user
 bool Qutepart::isLineModified(int lineNumber) const {
     auto block = document()->findBlockByNumber(lineNumber);
     if (!block.isValid()) {
@@ -399,11 +400,13 @@ bool Qutepart::isLineModified(int lineNumber) const {
     return hasFlag(block, MODIFIED_BIT);
 }
 
+/// Set the status of a line, modified or not
 void Qutepart::setLineModified(int lineNumber, bool modified) const {
     auto block = document()->findBlockByNumber(lineNumber);
     setLineModified(block, modified);
 }
 
+/// Set the status of a line, modified or not
 void Qutepart::setLineModified(QTextBlock &block, bool modified) const {
     setFlag(block, MODIFIED_BIT, modified);
     if (markArea_) {
@@ -411,13 +414,15 @@ void Qutepart::setLineModified(QTextBlock &block, bool modified) const {
     }
 }
 
+/// Clear modifications from all document.
 void Qutepart::removeModifications() {
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
         setFlag(block, MODIFIED_BIT, false);
     }
 }
 
-auto Qutepart::modifyBlockFlag(int lineNumber, int bit, bool status, QColor background) -> void {
+// Markings
+void Qutepart::modifyBlockFlag(int lineNumber, int bit, bool status, QColor background) {
     auto block = document()->findBlockByNumber(lineNumber);
     if (!block.isValid()) {
         qDebug() << "Invalid line " << lineNumber << "cannot set status" << bit;
@@ -638,44 +643,67 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         return;
     }
 
-    // Handle Alt+Shift+Up/Down to add new cursors
-    if (event->modifiers() == (Qt::ShiftModifier | Qt::AltModifier)) {
-        auto currentCursor = textCursor();
-        auto referenceCursor= QTextCursor();
-        if (!extraCursors.isEmpty()) {
-            referenceCursor = extraCursors.last(); // Use the last added extra cursor as reference
-        } else {
-            referenceCursor = currentCursor; // Use the main cursor if no extra cursors exist
-        }
-
-        auto newCursor = referenceCursor;
-        auto cursorAdded = false;
+    if (event->modifiers() == (Qt::AltModifier | Qt::ShiftModifier)) {
+        int offset = 0;
         if (event->key() == Qt::Key_Up) {
-            if (newCursor.movePosition(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor)) {
-                newCursor.movePosition(QTextCursor::StartOfLine);
-                auto targetColumn = qMin(referenceCursor.positionInBlock(), newCursor.block().length() - 1);
-                newCursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, targetColumn);
-                extraCursors.append(newCursor);
-                cursorAdded = true;
-            }
+            offset = -1;
         } else if (event->key() == Qt::Key_Down) {
-            if (newCursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor)) {
-                newCursor.movePosition(QTextCursor::StartOfLine);
-                auto targetColumn = qMin(referenceCursor.positionInBlock(), newCursor.block().length() - 1);
-                newCursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, targetColumn);
-                extraCursors.append(newCursor);
-                cursorAdded = true;
-            }
+            offset = +1;
         }
 
-        if (cursorAdded) {
-            extraCursorsVisible_ = true;
-            updateExtraSelections();
-            viewport()->repaint();
-            extraCursorBlinkTimer_->stop();
-            extraCursorBlinkTimer_->start();
-            event->accept();
-            return;
+        if (offset != 0) {
+            QTextCursor oldMainCursor = textCursor();
+            int currentBlockNumber = oldMainCursor.block().blockNumber();
+            int targetBlockNumber = currentBlockNumber + offset;
+
+            if (targetBlockNumber >= 0 && targetBlockNumber < document()->blockCount()) {
+                QTextBlock newBlock = document()->findBlockByNumber(targetBlockNumber);
+                if (!newBlock.isValid()) {
+                    event->ignore();
+                    return;
+                }
+                QTextCursor newMainCursor(newBlock);
+                int targetColumn = qMin(oldMainCursor.positionInBlock(), newBlock.length() - 1);
+                if (targetColumn < 0) targetColumn = 0;
+                newMainCursor.setPosition(newBlock.position() + targetColumn);
+
+                QSet<int> desiredCursorPositions;
+
+                if (oldMainCursor.position() != newMainCursor.position()) {
+                    desiredCursorPositions.insert(oldMainCursor.position());
+                }
+
+                for (const auto& ec : extraCursors) {
+                    desiredCursorPositions.insert(ec.position());
+                }
+
+                desiredCursorPositions.insert(newMainCursor.position());
+
+                QList<QTextCursor> updatedExtraCursors;
+                for (int pos : desiredCursorPositions) {
+                    if (pos == newMainCursor.position()) {
+                        continue;
+                    }
+                    QTextBlock block = document()->findBlock(pos);
+                    if (block.isValid()) {
+                        QTextCursor cursor(block);
+                        int colInBlock = pos - block.position();
+                        if (colInBlock < 0) colInBlock = 0;
+                        cursor.setPosition(block.position() + qMin(colInBlock, block.length() - 1));
+                        updatedExtraCursors.append(cursor);
+                    }
+                }
+
+                setTextCursor(newMainCursor);
+                extraCursors = updatedExtraCursors;
+                extraCursorsVisible_ = true;
+                viewport()->repaint();
+                extraCursorBlinkTimer_->stop();
+                extraCursorBlinkTimer_->start();
+                updateExtraSelections();
+                event->accept();
+                return;
+            }
         }
     }
 
@@ -720,31 +748,6 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                         } else { // Qt::Key_Right
                             currentCursor.movePosition(QTextCursor::NextCharacter, moveMode);
                         }
-                    },
-                    nullptr); // No specific sort order needed for this operation
-
-                setTextCursor(cursor);
-                updateExtraSelections();
-                event->accept();
-                return;
-            }
-            case Qt::Key_Up:
-            case Qt::Key_Down: {
-                cursor = applyOperationToAllCursors(
-                    [&](QTextCursor &currentCursor) {
-                        auto moveMode = QTextCursor::MoveAnchor;
-                        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-                            moveMode = QTextCursor::KeepAnchor;
-                        }
-                        auto originalColumn = currentCursor.positionInBlock();
-                        if (event->key() == Qt::Key_Up) {
-                            currentCursor.movePosition(QTextCursor::PreviousBlock, moveMode);
-                        } else { // Qt::Key_Down
-                            currentCursor.movePosition(QTextCursor::NextBlock, moveMode);
-                        }
-                        currentCursor.movePosition(QTextCursor::StartOfLine, moveMode);
-                        auto targetColumn = qMin(originalColumn, currentCursor.block().length() - 1);
-                        currentCursor.movePosition(QTextCursor::Right, moveMode, targetColumn);
                     },
                     nullptr); // No specific sort order needed for this operation
 
@@ -1506,35 +1509,186 @@ void Qutepart::duplicateSelection() {
 }
 
 void Qutepart::moveSelectedLines(int offsetLines) {
-    AtomicEditOperation op(this);
-    QTextCursor cursor = textCursor();
+    // 1. Collect all initial cursor data (block number and position within block)
+    //    We need to store the initial state of ALL cursors (main + extra) before any modifications.
+    QList<QTextCursor> initialAllCursors;
+    initialAllCursors.append(textCursor()); // Main cursor first
+    initialAllCursors.append(extraCursors); // Then all extra cursors
 
-    int smallerPos = std::min(cursor.anchor(), cursor.position());
-    int biggerPos = std::max(cursor.anchor(), cursor.position());
+    // --- Multi-cursor logic (now applies to single cursor as well) ---
 
-    if (offsetLines == 1) { // move down
-        QTextBlock nextBlock = document()->findBlock(biggerPos).next();
-        if (!nextBlock.isValid()) {
-            return;
-        }
-        QTextBlock topBlock = document()->findBlock(smallerPos);
-        QString text = lines().popAt(nextBlock.blockNumber());
-        lines().insertAt(topBlock.blockNumber(), text);
-    } else if (offsetLines == -1) { // move up
-        QTextBlock prevBlock = document()->findBlock(smallerPos).previous();
-        if (!prevBlock.isValid()) {
-            return;
-        }
-        QTextBlock bottomBlock = document()->findBlock(biggerPos);
-        QString text = lines().popAt(prevBlock.blockNumber());
-        lines().insertAt(bottomBlock.blockNumber() + 1, text);
-    } else {
-        qFatal("Bad line move offset %d", offsetLines);
+    // This list stores the original block number and column for each cursor in the exact order
+    // they were in initially (main cursor first, then extra cursors in their original order).
+    // This is used to reconstruct the main/extra cursor distinction at the end.
+    QList<QPair<int, int>> initialCursorOriginalBlockColumnPairs;
+    for (const auto& cursor : initialAllCursors) {
+        initialCursorOriginalBlockColumnPairs.append({cursor.block().blockNumber(), cursor.positionInBlock()});
     }
 
-    // TODO make sure bookmarks are saved on their place
+    // Create a mutable copy of all lines in the document and a tracker for original indices
+    QVector<QString> linesContentSnapshot;
+    for (int i = 0; i < lines().count(); ++i) {
+        linesContentSnapshot.append(lines().at(i).text());
+    }
+
+    // This vector tracks the original index of the line content currently at each position.
+    // e.g., if originalIndexTracker[5] = 2, it means the content at linesContentSnapshot[5] was originally from block 2.
+    QVector<int> originalIndexTracker(linesContentSnapshot.size());
+    for (int i = 0; i < linesContentSnapshot.size(); ++i) {
+        originalIndexTracker[i] = i; // Initially, content at index i was from original block i.
+    }
+
+    // Determine the order in which to process cursors for line movement (important for preventing conflicts)
+    QList<int> uniqueCursorBlockNumbers; // Using QList to maintain order after sorting
+    for (const auto& cursor : initialAllCursors) {
+        uniqueCursorBlockNumbers.append(cursor.block().blockNumber());
+    }
+    // Remove duplicates and sort
+    std::sort(uniqueCursorBlockNumbers.begin(), uniqueCursorBlockNumbers.end());
+    uniqueCursorBlockNumbers.erase(std::unique(uniqueCursorBlockNumbers.begin(), uniqueCursorBlockNumbers.end()), uniqueCursorBlockNumbers.end());
+
+    // When moving lines DOWN, process from bottom to top to avoid shifting issues with indices
+    if (offsetLines > 0) {
+        std::reverse(uniqueCursorBlockNumbers.begin(), uniqueCursorBlockNumbers.end());
+    }
+
+    AtomicEditOperation op(this); // Group all edits into one undo/redo step
+
+    // 2. Perform line movements by manipulating the content snapshot and tracker
+    // This part is the most critical for correct reordering.
+    // Instead of in-place swaps that can get complicated with multiple moves,
+    // we'll build the 'final' content directly.
+
+    QVector<QString> finalLinesContent(linesContentSnapshot.size());
+    QVector<int> finalLinesOriginalIndexTracker(linesContentSnapshot.size());
+    finalLinesOriginalIndexTracker.fill(-1); // Use -1 to indicate an empty slot
+
+    // This map will store the final physical index for each original block number after reordering.
+    QMap<int, int> originalBlockToFinalPhysicalIndexMap;
+
+    // First, place the lines that are explicitly moved by cursors into their new positions
+    QSet<int> originalBlocksWithCursors(uniqueCursorBlockNumbers.begin(), uniqueCursorBlockNumbers.end());
+
+    for (int originalBlockNumber : uniqueCursorBlockNumbers) { // Iterate through sorted unique blocks
+        int targetPhysicalIndex = originalBlockNumber + offsetLines;
+
+        // Clamp target index to valid range
+        if (targetPhysicalIndex < 0) targetPhysicalIndex = 0;
+        if (targetPhysicalIndex >= linesContentSnapshot.size()) targetPhysicalIndex = linesContentSnapshot.size() - 1;
+
+        // Find an available slot at or near the target index.
+        int actualFinalIndex = targetPhysicalIndex;
+
+        // Find the next available slot for the line being moved
+        while (actualFinalIndex < linesContentSnapshot.size() && finalLinesOriginalIndexTracker[actualFinalIndex] != -1) {
+            actualFinalIndex++;
+        }
+        if (actualFinalIndex >= linesContentSnapshot.size()) {
+            // If we ran out of space after target index, try backwards
+            actualFinalIndex = targetPhysicalIndex - 1;
+            while (actualFinalIndex >= 0 && finalLinesOriginalIndexTracker[actualFinalIndex] != -1) {
+                actualFinalIndex--;
+            }
+            if (actualFinalIndex < 0) {
+                 // Fallback: if no empty slot found, use the clamped target index, overwriting if necessary
+                 actualFinalIndex = targetPhysicalIndex;
+            }
+        }
+
+        finalLinesContent[actualFinalIndex] = linesContentSnapshot[originalBlockNumber];
+        finalLinesOriginalIndexTracker[actualFinalIndex] = originalBlockNumber;
+        originalBlockToFinalPhysicalIndexMap[originalBlockNumber] = actualFinalIndex;
+    }
+
+    // Now, fill in the lines that were *not* moved by a cursor into the remaining empty slots.
+    QList<int> remainingOriginalIndices; // Original indices of lines that were NOT moved
+    for(int i = 0; i < linesContentSnapshot.size(); ++i) {
+        if (!originalBlocksWithCursors.contains(i)) {
+            remainingOriginalIndices.append(i);
+        }
+    }
+    std::sort(remainingOriginalIndices.begin(), remainingOriginalIndices.end()); // Maintain relative order
+
+    int remainingIndexCounter = 0;
+    for (int i = 0; i < finalLinesContent.size(); ++i) {
+        if (finalLinesOriginalIndexTracker[i] == -1) { // If this slot is empty
+            if (remainingIndexCounter < remainingOriginalIndices.size()) {
+                int originalBlockNumberForThisSlot = remainingOriginalIndices[remainingIndexCounter++];
+                finalLinesContent[i] = linesContentSnapshot[originalBlockNumberForThisSlot];
+                finalLinesOriginalIndexTracker[i] = originalBlockNumberForThisSlot;
+                originalBlockToFinalPhysicalIndexMap[originalBlockNumberForThisSlot] = i;
+            }
+        }
+    }
+
+    // Now linesContentSnapshot and originalIndexTracker contain the final reordered state
+    linesContentSnapshot = finalLinesContent;
+    originalIndexTracker = finalLinesOriginalIndexTracker;
+
+    // 3. Clear the actual document and re-insert the reordered lines from the snapshot.
+    document()->clear();
+    QTextCursor docCursor(document()); // Cursor to insert content
+    if (!linesContentSnapshot.isEmpty()) {
+        docCursor.insertText(linesContentSnapshot[0]); // Insert first line content
+        for (int i = 1; i < linesContentSnapshot.size(); ++i) {
+            docCursor.insertBlock(); // Create new block
+            docCursor.insertText(linesContentSnapshot[i]); // Insert content into it
+        }
+    }
+
+    // 4. Reconstruct and set new cursor positions
+    QList<QTextCursor> newExtraCursors;
+    QTextCursor newMainCursor(document());
+    bool mainCursorSet = false;
+
+    // Iterate through the initial cursor data (main cursor first, then extras) to reconstruct them.
+    for (const auto& originalCursorInfo : initialCursorOriginalBlockColumnPairs) {
+        int originalBlockNumber = originalCursorInfo.first;
+        int originalColumn = originalCursorInfo.second;
+
+        // Get the final physical block number for the content that was originally at originalBlockNumber.
+        int finalPhysicalBlockNumber = originalBlockToFinalPhysicalIndexMap.value(originalBlockNumber, -1);
+
+        QTextBlock newBlock;
+        int targetColumn;
+
+        if (finalPhysicalBlockNumber != -1) {
+            newBlock = document()->findBlockByNumber(finalPhysicalBlockNumber);
+            if (newBlock.isValid()) {
+                targetColumn = qMin(originalColumn, newBlock.length() - 1);
+                if (targetColumn < 0) targetColumn = 0;
+            } else {
+                // Fallback if final block is invalid after map lookup
+                newBlock = document()->firstBlock();
+                targetColumn = 0;
+            }
+        } else {
+            // Fallback if original block number not found in map (e.g., line removed by other operation)
+            newBlock = document()->firstBlock();
+            targetColumn = 0;
+        }
+
+        if (!newBlock.isValid()) {
+            continue; // Skip this cursor if document is empty or new block is invalid
+        }
+
+        QTextCursor newCursor(newBlock);
+        newCursor.setPosition(newBlock.position() + targetColumn);
+
+        if (!mainCursorSet) {
+            newMainCursor = newCursor;
+            mainCursorSet = true;
+        } else {
+            newExtraCursors.append(newCursor);
+        }
+    }
+
+    setTextCursor(newMainCursor);
+    extraCursors = newExtraCursors;
+
     markArea_->update();
     ensureCursorVisible();
+    QTimer::singleShot(0, this, &Qutepart::updateExtraSelections);
 }
 
 void Qutepart::deleteLine() {
@@ -1725,11 +1879,11 @@ void Qutepart::toggleComment() {
     auto handleMultilineCommentSingleLines = [&]() {
         auto startBlock = cursor.document()->findBlock(selectionStart).blockNumber();
         auto endBlock = cursor.document()->findBlock(selectionEnd).blockNumber();
-
         auto allNonEmptyLinesCommented = true;
+
         cursor.setPosition(selectionStart);
         for (auto i = startBlock; i <= endBlock; ++i) {
-            QString line = cursor.block().text().trimmed();
+            auto line = cursor.block().text().trimmed();
             if (!line.isEmpty() && !line.startsWith(singleLineComment)) {
                 allNonEmptyLinesCommented = false;
                 break;
@@ -1740,8 +1894,8 @@ void Qutepart::toggleComment() {
         cursor.setPosition(selectionStart);
         for (auto i = startBlock; i <= endBlock; ++i) {
             cursor.movePosition(QTextCursor::StartOfLine);
-            QString line = cursor.block().text();
-            QString trimmedLine = line.trimmed();
+            auto line = cursor.block().text();
+            auto trimmedLine = line.trimmed();
 
             if (allNonEmptyLinesCommented) {
                 if (trimmedLine.startsWith(singleLineComment)) {
@@ -1764,16 +1918,15 @@ void Qutepart::toggleComment() {
 
         cursor.setPosition(selectionStart);
         cursor.setPosition(selectionEnd, QTextCursor::KeepAnchor);
-        QString newSelectedText = cursor.selectedText();
-        int lineSeparatorCount = newSelectedText.count(QChar::ParagraphSeparator);
-        int newSelectionEnd = cursor.position();
+        auto newSelectedText = cursor.selectedText();
+        auto lineSeparatorCount = newSelectedText.count(QChar::ParagraphSeparator);
+        auto newSelectionEnd = cursor.position();
 
         if (allNonEmptyLinesCommented) {
             newSelectionEnd -= singleLineComment.length() * (lineSeparatorCount + 1);
         } else {
             newSelectionEnd += singleLineComment.length() * (lineSeparatorCount + 1);
         }
-
         cursor.setPosition(selectionStart);
         cursor.setPosition(newSelectionEnd, QTextCursor::KeepAnchor);
     };
@@ -1792,63 +1945,48 @@ void Qutepart::toggleComment() {
 }
 
 void Qutepart::updateExtraSelections() {
-    QTextCursor cursor = textCursor();
-    QList<QTextEdit::ExtraSelection> selections = persitentSelections;
-
-    // Highlight current line always, regardless of extra cursors
-    if (currentLineColor_.isValid()) {
-        selections.append(currentLineExtraSelection());
-    }
+    auto cursor = textCursor();
+    auto selections = persitentSelections;
 
     if (bracketHighlighter_) {
         selections.append(bracketHighlighter_->extraSelections(
             TextPosition(textCursor().block(), cursor.positionInBlock())));
     }
 
-    // Add selections from extra cursors
-    for (const auto &extraCursor : extraCursors) {
-        if (extraCursor.hasSelection()) {
-            QTextEdit::ExtraSelection extraSelection;
-            extraSelection.format.setBackground(QApplication::palette().color(QPalette::Highlight));
-            extraSelection.format.setProperty(QTextFormat::FullWidthSelection, false);
-            extraSelection.cursor = extraCursor;
-            selections.append(extraSelection);
+    if (extraCursors.isEmpty()) {
+        // Highlight current line when there's only a single cursor.
+        if (currentLineColor_.isValid()) {
+            selections.append(currentLineExtraSelection());
         }
-    }
 
-    // Explicitly add main cursor's selection if it exists.
-    // This ensures the main selection is always visible,
-    // as QPlainTextEdit's default selection rendering might be
-    // affected when extra selections are present.
-    if (cursor.hasSelection()) {
-        QTextEdit::ExtraSelection mainCursorSelection;
-        mainCursorSelection.format.setBackground(QApplication::palette().color(QPalette::Highlight));
-        mainCursorSelection.format.setProperty(QTextFormat::FullWidthSelection, false);
-        mainCursorSelection.cursor = cursor;
-        selections.append(mainCursorSelection);
-    }
-
-
-    // This block is for marking other occurrences of the word under cursor/selection.
-    if (getMarkCurrentWord() && extraCursors.isEmpty()) {
-        // If there's an active selection, highlight other occurrences of the selected text
-        if (cursor.hasSelection()) {
-            auto selectedText = cursor.selectedText();
-            if (!selectedText.isEmpty()) {
-                auto searches = highlightText(selectedText, false); // fullWords = false for selections
+        if (getMarkCurrentWord()) {
+            if (cursor.hasSelection()) {
+                auto selectedText = cursor.selectedText();
+                if (!selectedText.isEmpty()) {
+                    auto searches = highlightText(selectedText, false);
+                    selections += searches;
+                }
+            } else if (lastWordUnderCursor.length() > 2) {
+                auto searches = highlightText(lastWordUnderCursor, true);
                 selections += searches;
             }
-        } else if (lastWordUnderCursor.length() > 2) {
-            // If no active selection, highlight other occurrences of the word under cursor
-            auto searches = highlightText(lastWordUnderCursor, true); // fullWords = true for word under cursor
-            selections += searches;
+        }
+    } else {
+        for (const auto &extraCursor : extraCursors) {
+            if (extraCursor.hasSelection()) {
+                auto extraSelection = QTextEdit::ExtraSelection();
+                extraSelection.format.setBackground(QApplication::palette().color(QPalette::Highlight));
+                extraSelection.format.setProperty(QTextFormat::FullWidthSelection, false);
+                extraSelection.cursor = extraCursor;
+                selections.append(extraSelection);
+            }
         }
     }
 
     setExtraSelections(selections);
 }
 
-// Smart Home behaviour. Move to first non-space or to beginning of line
+/// Smart Home behaviour. Move to first non-space or to beginning of line
 void Qutepart::onShortcutHome(QTextCursor::MoveMode moveMode) {
     auto mainCursor = textCursor();
     auto firstNonSpace = firstNonSpaceColumn(mainCursor.block().text());
@@ -1872,7 +2010,7 @@ void Qutepart::onShortcutHome(QTextCursor::MoveMode moveMode) {
     updateExtraSelections();
 }
 
-// Smart end behaviour. Move to last non-space or to end of line
+/// Smart end behaviour. Move to last non-space or to end of line
 void Qutepart::onShortcutEnd(QTextCursor::MoveMode moveMode) {
     auto mainCursor = textCursor();
     auto lastNonSpace = lastNonSpaceColumn(mainCursor.block().text()) + 1;
@@ -2101,3 +2239,4 @@ QTextCursor Qutepart::applyOperationToAllCursors(
 }
 
 } // namespace Qutepart
+
