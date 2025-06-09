@@ -645,6 +645,10 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         multipleCursorPaste();
         event->accept();
         return;
+    } else if (event->matches(QKeySequence::Cut)) {
+        multipleCursorCut();
+        event->accept();
+        return;
     }
 
     QTextCursor cursor = textCursor();
@@ -2301,6 +2305,43 @@ void Qutepart::multipleCursorCopy() {
 
     auto textToCopy = lines.join('\n');
     QApplication::clipboard()->setText(textToCopy);
+}
+
+void Qutepart::multipleCursorCut() {
+    if (extraCursors.isEmpty()) {
+        QPlainTextEdit::cut();
+        return;
+    }
+
+    auto lines = QStringList();
+    auto allCursors = extraCursors;
+    allCursors.prepend(textCursor());
+
+    for (const auto& cursor : allCursors) {
+        if (cursor.hasSelection()) {
+            lines << cursor.selectedText();
+        } else {
+            auto block = cursor.block();
+            auto text = block.text();
+            if (text.endsWith("\u2029")) {
+                text = text.left(text.length() - 1);
+            }
+            lines << text;
+        }
+    }
+
+    auto textToCopy = lines.join('\n');
+    QApplication::clipboard()->setText(textToCopy);
+
+    AtomicEditOperation op(this);
+    for (auto& cursor : allCursors) {
+        if (cursor.hasSelection()) {
+            cursor.removeSelectedText();
+        } else {
+            cursor.select(QTextCursor::BlockUnderCursor);
+            cursor.removeSelectedText();
+        }
+    }
 }
 
 } // namespace Qutepart
