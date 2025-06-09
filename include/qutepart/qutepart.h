@@ -434,6 +434,9 @@ class Qutepart : public QPlainTextEdit {
     // Convenience functions
     void resetSelection();
 
+    void multipleCursorPaste();
+    void multipleCursorCopy();
+
   protected:
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;

@@ -634,6 +634,19 @@ void addBrackets(QTextCursor &cursor, QChar openBracket, QChar closeBracket) {
 } // anonymous namespace
 
 void Qutepart::keyPressEvent(QKeyEvent *event) {
+    // Fixme: Handle copy/paste shortcuts
+    // We should instead re-connect the original copy/paste actions. Which are
+    // not accsible via API.
+    if (event->matches(QKeySequence::Copy)) {
+        multipleCursorCopy();
+        event->accept();
+        return;
+    } else if (event->matches(QKeySequence::Paste)) {
+        multipleCursorPaste();
+        event->accept();
+        return;
+    }
+
     QTextCursor cursor = textCursor();
 
     if (event->key() == Qt::Key_Escape && !extraCursors.isEmpty()) {
@@ -2236,6 +2249,58 @@ QTextCursor Qutepart::applyOperationToAllCursors(
         extraCursors.append(allCursors[i]);
     }
     return newMainCursor;
+}
+
+void Qutepart::multipleCursorPaste() {
+    if (extraCursors.isEmpty()) {
+        QPlainTextEdit::paste();
+        return;
+    }
+    
+    auto allCursors = extraCursors;
+    auto clipboardText = QApplication::clipboard()->text();
+    auto lines = clipboardText.split('\n');
+
+    allCursors.prepend(textCursor());  // Add main cursor first
+    AtomicEditOperation op(this);
+    if (lines.size() == allCursors.size()) {
+        for (int i = 0; i < allCursors.size(); ++i) {
+            auto cursor = allCursors[i];
+            cursor.insertText(lines[i]);
+        }
+    } else {
+        for (const auto& cursor : allCursors) {
+            auto cur = cursor;
+            cur.insertText(clipboardText);
+        }
+    }
+}
+
+void Qutepart::multipleCursorCopy() {
+    if (extraCursors.isEmpty()) {
+        QPlainTextEdit::copy();
+        return;
+    }
+
+    auto lines = QStringList();
+    auto allCursors = extraCursors;
+
+    allCursors.prepend(textCursor());
+    for (const auto& cursor : allCursors) {
+        if (cursor.hasSelection()) {
+            lines << cursor.selectedText();
+        } else {
+            auto block = cursor.block();
+            auto text = block.text();
+            if (text.endsWith("\u2029")) {
+                text = text.left(text.length() - 1);
+            }
+            lines << text;
+        }
+    }
+
+    auto textToCopy = lines.join('\n');
+    QApplication::clipboard()->setText(textToCopy);
 }
 
 } // namespace Qutepart
