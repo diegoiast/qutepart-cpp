@@ -728,23 +728,17 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         switch (event->key()) {
             case Qt::Key_Backspace:
             case Qt::Key_Delete: {
-                cursor = applyOperationToAllCursors(
-                    [&](QTextCursor &currentCursor) {
-                        if (event->key() == Qt::Key_Backspace) {
-                            if (currentCursor.hasSelection()) {
-                                currentCursor.deleteChar(); // delete selection
-                            } else if (currentCursor.position() > 0) {
-                                currentCursor.deletePreviousChar();
-                            }
-                        } else { // Qt::Key_Delete
-                            if (currentCursor.hasSelection()) {
-                                currentCursor.deleteChar(); // delete selection
-                            } else if (currentCursor.position() < currentCursor.block().length()) {
-                                currentCursor.deleteChar();
-                            }
+                cursor = applyOperationToAllCursors([&](QTextCursor &currentCursor) {
+                    if (event->key() == Qt::Key_Backspace) {
+                        if (currentCursor.hasSelection()) {
+                            currentCursor.deleteChar(); // delete selection
+                        } else if (currentCursor.position() > 0) {
+                            currentCursor.deletePreviousChar();
                         }
-                    },
-                    [](auto &a, auto &b) { return a.position() > b.position(); });
+                    } else {
+                        currentCursor.deleteChar();
+                    }
+                }, [](auto &a, auto &b) { return a.position() > b.position(); });
 
                 setTextCursor(cursor);
                 updateExtraSelections();
