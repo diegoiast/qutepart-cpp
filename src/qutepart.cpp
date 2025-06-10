@@ -761,9 +761,17 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                             moveMode = QTextCursor::KeepAnchor;
                         }
                         if (event->key() == Qt::Key_Left) {
-                            currentCursor.movePosition(QTextCursor::PreviousCharacter, moveMode);
+                            if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                                currentCursor.movePosition(QTextCursor::PreviousWord, moveMode);
+                            } else {
+                                currentCursor.movePosition(QTextCursor::PreviousCharacter, moveMode);
+                            }
                         } else { // Qt::Key_Right
-                            currentCursor.movePosition(QTextCursor::NextCharacter, moveMode);
+                            if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                                currentCursor.movePosition(QTextCursor::NextWord, moveMode);
+                            } else {
+                                currentCursor.movePosition(QTextCursor::NextCharacter, moveMode);
+                            }
                         }
                     },
                     nullptr); // No specific sort order needed for this operation
