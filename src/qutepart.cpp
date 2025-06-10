@@ -1445,51 +1445,49 @@ Insert or remove text from the beginning of blocks
 void Qutepart::changeSelectedBlocksIndent(bool increase, bool withSpace) {
     QTextCursor cursor = textCursor();
 
-    // Tab typed and no selection. Insert smart indentation
-    if (increase && (!cursor.hasSelection())) {
-        indenter_->onShortcutIndentAfterCursor(cursor);
-        return;
-    }
-
-    // Multiple lines selection or unindent shortcut pressed.
-    // Indent blocks
-
-    QTextBlock startBlock = document()->findBlock(cursor.selectionStart());
-    QTextBlock endBlock = document()->findBlock(cursor.selectionEnd());
-    if (cursor.selectionStart() != cursor.selectionEnd() &&
-        endBlock.position() == cursor.selectionEnd() && endBlock.previous().isValid()) {
-        endBlock = endBlock.previous(); // do not indent not selected line if
-                                        // indenting multiple lines
-    }
-
-    if (startBlock == endBlock) { // indent single line
-        if (increase) {
-            indentBlock(startBlock, withSpace);
-        } else {
-            unIndentBlock(startBlock, withSpace);
-        }
-    } else { // indent multiply lines
-        QTextBlock stopBlock = endBlock.next();
-        QTextBlock block = startBlock;
-
-        {
-            AtomicEditOperation op(this);
-            while (block != stopBlock) {
-                if (increase) {
-                    indentBlock(block, withSpace);
-                } else {
-                    unIndentBlock(block, withSpace);
+    // Handle both single and multiple cursors
+    cursor = applyOperationToAllCursors(
+        [&](QTextCursor &currentCursor) {
+            if (currentCursor.hasSelection()) {
+                QTextBlock startBlock = document()->findBlock(currentCursor.selectionStart());
+                QTextBlock endBlock = document()->findBlock(currentCursor.selectionEnd());
+                if (currentCursor.selectionStart() != currentCursor.selectionEnd() &&
+                    endBlock.position() == currentCursor.selectionEnd() && endBlock.previous().isValid()) {
+                    endBlock = endBlock.previous(); // do not indent not selected line if indenting multiple lines
                 }
 
-                block = block.next();
+                if (startBlock == endBlock) { // indent single line
+                    if (increase) {
+                        indentBlock(startBlock, withSpace);
+                    } else {
+                        unIndentBlock(startBlock, withSpace);
+                    }
+                } else { // indent multiply lines
+                    QTextBlock stopBlock = endBlock.next();
+                    QTextBlock block = startBlock;
+                    while (block != stopBlock) {
+                        if (increase) {
+                            indentBlock(block, withSpace);
+                        } else {
+                            unIndentBlock(block, withSpace);
+                        }
+                        block = block.next();
+                    }
+                }
+            } else {
+                // No selection
+                if (increase) {
+                    indenter_->onShortcutIndentAfterCursor(currentCursor);
+                } else {
+                    indenter_->onShortcutUnindentWithBackspace(currentCursor);
+                }
             }
-        }
+        },
+        [](auto &a, auto &b) { return a.position() > b.position(); });
 
-        QTextCursor newCursor(startBlock);
-        newCursor.setPosition(endBlock.position() + endBlock.text().length(),
-                              QTextCursor::KeepAnchor);
-        setTextCursor(cursor);
-    }
+    setTextCursor(cursor);
+    updateExtraSelections();
+    update();
 }
 
 void Qutepart::scrollByOffset(int offset) {
