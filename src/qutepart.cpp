@@ -909,6 +909,8 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
             QPlainTextEdit::keyPressEvent(event);
         }
     } else {
+        // make action shortcuts override keyboard events (non-default Qt
+        // behaviour)
         foreach (QAction *action, actions()) {
             QKeySequence seq = action->shortcut();
             if (seq.count() == 1 && seq[0].key() == event->key() &&
