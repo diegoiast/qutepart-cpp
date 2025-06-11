@@ -775,6 +775,34 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                 event->accept();
                 return;
             }
+            case Qt::Key_Up:
+            case Qt::Key_Down: {
+                cursor = applyOperationToAllCursors(
+                    [&](QTextCursor &currentCursor) {
+                        auto moveMode = QTextCursor::MoveAnchor;
+                        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+                            moveMode = QTextCursor::KeepAnchor;
+                        }
+                        auto column = currentCursor.positionInBlock();
+                        if (event->key() == Qt::Key_Up) {
+                            currentCursor.movePosition(QTextCursor::Up, moveMode);
+                        } else {
+                            currentCursor.movePosition(QTextCursor::Down, moveMode);
+                        }
+                        auto newBlockLength = currentCursor.block().length();
+                        auto targetColumn = qMin(column, newBlockLength - 1);
+                        if (targetColumn < 0) {
+                            targetColumn = 0;
+                        }
+                        currentCursor.setPosition(currentCursor.block().position() + targetColumn, moveMode);
+                    },
+                    [](const auto& a, const auto& b) { return a.position() < b.position(); });
+
+                setTextCursor(cursor);
+                updateExtraSelections();
+                event->accept();
+                return;
+            }
             default: {
                 // Continue to handle other cases below
             }
