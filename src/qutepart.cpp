@@ -1556,186 +1556,77 @@ void Qutepart::duplicateSelection() {
 }
 
 void Qutepart::moveSelectedLines(int offsetLines) {
-    // 1. Collect all initial cursor data (block number and position within block)
-    //    We need to store the initial state of ALL cursors (main + extra) before any modifications.
-    QList<QTextCursor> initialAllCursors;
-    initialAllCursors.append(textCursor()); // Main cursor first
-    initialAllCursors.append(extraCursors); // Then all extra cursors
-
-    // --- Multi-cursor logic (now applies to single cursor as well) ---
-
-    // This list stores the original block number and column for each cursor in the exact order
-    // they were in initially (main cursor first, then extra cursors in their original order).
-    // This is used to reconstruct the main/extra cursor distinction at the end.
-    QList<QPair<int, int>> initialCursorOriginalBlockColumnPairs;
-    for (const auto& cursor : initialAllCursors) {
-        initialCursorOriginalBlockColumnPairs.append({cursor.block().blockNumber(), cursor.positionInBlock()});
+    if (offsetLines == 0) {
+        return;
+    }
+    auto  minSelectedBlock = INT_MAX;
+    auto  maxSelectedBlock = INT_MIN;
+    auto allCursors = extraCursors;
+    allCursors.append(textCursor());
+    for (const auto& cursor : allCursors) {
+        auto posBlock = cursor.block().blockNumber();
+        auto anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
+        auto startBlock = std::min(posBlock, anchorBlock);
+        auto endBlock = std::max(posBlock, anchorBlock);
+        minSelectedBlock = std::min(minSelectedBlock, startBlock);
+        maxSelectedBlock = std::max(maxSelectedBlock, endBlock);
     }
 
-    // Create a mutable copy of all lines in the document and a tracker for original indices
+    if (offsetLines < 0 && minSelectedBlock == 0) {
+        return;
+    }
+    if (offsetLines > 0 && maxSelectedBlock == document()->blockCount() - 1) {
+        return;
+    }
     QVector<QString> linesContentSnapshot;
-    for (int i = 0; i < lines().count(); ++i) {
+    for (auto i = 0; i < lines().count(); ++i) {
         linesContentSnapshot.append(lines().at(i).text());
     }
 
-    // This vector tracks the original index of the line content currently at each position.
-    // e.g., if originalIndexTracker[5] = 2, it means the content at linesContentSnapshot[5] was originally from block 2.
-    QVector<int> originalIndexTracker(linesContentSnapshot.size());
-    for (int i = 0; i < linesContentSnapshot.size(); ++i) {
-        originalIndexTracker[i] = i; // Initially, content at index i was from original block i.
-    }
-
-    // Determine the order in which to process cursors for line movement (important for preventing conflicts)
-    QList<int> uniqueCursorBlockNumbers; // Using QList to maintain order after sorting
-    for (const auto& cursor : initialAllCursors) {
-        uniqueCursorBlockNumbers.append(cursor.block().blockNumber());
-    }
-    // Remove duplicates and sort
-    std::sort(uniqueCursorBlockNumbers.begin(), uniqueCursorBlockNumbers.end());
-    uniqueCursorBlockNumbers.erase(std::unique(uniqueCursorBlockNumbers.begin(), uniqueCursorBlockNumbers.end()), uniqueCursorBlockNumbers.end());
-
-    // When moving lines DOWN, process from bottom to top to avoid shifting issues with indices
-    if (offsetLines > 0) {
-        std::reverse(uniqueCursorBlockNumbers.begin(), uniqueCursorBlockNumbers.end());
-    }
-
-    AtomicEditOperation op(this); // Group all edits into one undo/redo step
-
-    // 2. Perform line movements by manipulating the content snapshot and tracker
-    // This part is the most critical for correct reordering.
-    // Instead of in-place swaps that can get complicated with multiple moves,
-    // we'll build the 'final' content directly.
-
-    QVector<QString> finalLinesContent(linesContentSnapshot.size());
-    QVector<int> finalLinesOriginalIndexTracker(linesContentSnapshot.size());
-    finalLinesOriginalIndexTracker.fill(-1); // Use -1 to indicate an empty slot
-
-    // This map will store the final physical index for each original block number after reordering.
     QMap<int, int> originalBlockToFinalPhysicalIndexMap;
-
-    // First, place the lines that are explicitly moved by cursors into their new positions
-    QSet<int> originalBlocksWithCursors(uniqueCursorBlockNumbers.begin(), uniqueCursorBlockNumbers.end());
-
-    for (int originalBlockNumber : uniqueCursorBlockNumbers) { // Iterate through sorted unique blocks
-        int targetPhysicalIndex = originalBlockNumber + offsetLines;
-
-        // Clamp target index to valid range
-        if (targetPhysicalIndex < 0) targetPhysicalIndex = 0;
-        if (targetPhysicalIndex >= linesContentSnapshot.size()) targetPhysicalIndex = linesContentSnapshot.size() - 1;
-
-        // Find an available slot at or near the target index.
-        int actualFinalIndex = targetPhysicalIndex;
-
-        // Find the next available slot for the line being moved
-        while (actualFinalIndex < linesContentSnapshot.size() && finalLinesOriginalIndexTracker[actualFinalIndex] != -1) {
-            actualFinalIndex++;
-        }
-        if (actualFinalIndex >= linesContentSnapshot.size()) {
-            // If we ran out of space after target index, try backwards
-            actualFinalIndex = targetPhysicalIndex - 1;
-            while (actualFinalIndex >= 0 && finalLinesOriginalIndexTracker[actualFinalIndex] != -1) {
-                actualFinalIndex--;
+    auto cursor = applyOperationToAllCursors([&](QTextCursor& cursor) {
+            auto posBlock = cursor.block().blockNumber();
+            auto anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
+            auto startBlock = std::min(posBlock, anchorBlock);
+            auto endBlock = std::max(posBlock, anchorBlock);
+            if (offsetLines < 0 && startBlock == 0) {
+                return cursor;
             }
-            if (actualFinalIndex < 0) {
-                 // Fallback: if no empty slot found, use the clamped target index, overwriting if necessary
-                 actualFinalIndex = targetPhysicalIndex;
+            if (offsetLines > 0 && endBlock == document()->blockCount() - 1) {
+                return cursor;
             }
-        }
-
-        finalLinesContent[actualFinalIndex] = linesContentSnapshot[originalBlockNumber];
-        finalLinesOriginalIndexTracker[actualFinalIndex] = originalBlockNumber;
-        originalBlockToFinalPhysicalIndexMap[originalBlockNumber] = actualFinalIndex;
-    }
-
-    // Now, fill in the lines that were *not* moved by a cursor into the remaining empty slots.
-    QList<int> remainingOriginalIndices; // Original indices of lines that were NOT moved
-    for(int i = 0; i < linesContentSnapshot.size(); ++i) {
-        if (!originalBlocksWithCursors.contains(i)) {
-            remainingOriginalIndices.append(i);
-        }
-    }
-    std::sort(remainingOriginalIndices.begin(), remainingOriginalIndices.end()); // Maintain relative order
-
-    int remainingIndexCounter = 0;
-    for (int i = 0; i < finalLinesContent.size(); ++i) {
-        if (finalLinesOriginalIndexTracker[i] == -1) { // If this slot is empty
-            if (remainingIndexCounter < remainingOriginalIndices.size()) {
-                int originalBlockNumberForThisSlot = remainingOriginalIndices[remainingIndexCounter++];
-                finalLinesContent[i] = linesContentSnapshot[originalBlockNumberForThisSlot];
-                finalLinesOriginalIndexTracker[i] = originalBlockNumberForThisSlot;
-                originalBlockToFinalPhysicalIndexMap[originalBlockNumberForThisSlot] = i;
+            auto column = cursor.positionInBlock();  // Store the column position
+            auto targetStartBlock = startBlock + offsetLines;
+            for (int i = startBlock; i <= endBlock; ++i) {
+                originalBlockToFinalPhysicalIndexMap[i] = targetStartBlock + (i - startBlock);
             }
-        }
-    }
-
-    // Now linesContentSnapshot and originalIndexTracker contain the final reordered state
-    linesContentSnapshot = finalLinesContent;
-    originalIndexTracker = finalLinesOriginalIndexTracker;
-
-    // 3. Clear the actual document and re-insert the reordered lines from the snapshot.
-    document()->clear();
-    QTextCursor docCursor(document()); // Cursor to insert content
-    if (!linesContentSnapshot.isEmpty()) {
-        docCursor.insertText(linesContentSnapshot[0]); // Insert first line content
-        for (int i = 1; i < linesContentSnapshot.size(); ++i) {
-            docCursor.insertBlock(); // Create new block
-            docCursor.insertText(linesContentSnapshot[i]); // Insert content into it
-        }
-    }
-
-    // 4. Reconstruct and set new cursor positions
-    QList<QTextCursor> newExtraCursors;
-    QTextCursor newMainCursor(document());
-    bool mainCursorSet = false;
-
-    // Iterate through the initial cursor data (main cursor first, then extras) to reconstruct them.
-    for (const auto& originalCursorInfo : initialCursorOriginalBlockColumnPairs) {
-        int originalBlockNumber = originalCursorInfo.first;
-        int originalColumn = originalCursorInfo.second;
-
-        // Get the final physical block number for the content that was originally at originalBlockNumber.
-        int finalPhysicalBlockNumber = originalBlockToFinalPhysicalIndexMap.value(originalBlockNumber, -1);
-
-        QTextBlock newBlock;
-        int targetColumn;
-
-        if (finalPhysicalBlockNumber != -1) {
-            newBlock = document()->findBlockByNumber(finalPhysicalBlockNumber);
-            if (newBlock.isValid()) {
-                targetColumn = qMin(originalColumn, newBlock.length() - 1);
-                if (targetColumn < 0) targetColumn = 0;
-            } else {
-                // Fallback if final block is invalid after map lookup
-                newBlock = document()->firstBlock();
-                targetColumn = 0;
+            auto linesToMove = QStringList();
+            for (auto i = startBlock; i <= endBlock; ++i) {
+                linesToMove.append(linesContentSnapshot[i]);
             }
-        } else {
-            // Fallback if original block number not found in map (e.g., line removed by other operation)
-            newBlock = document()->firstBlock();
-            targetColumn = 0;
+            for (auto i = endBlock; i >= startBlock; --i) {
+                lines().popAt(i);
+            }
+            for (auto i = 0; i < linesToMove.size(); ++i) {
+                lines().insertAt(targetStartBlock + i, linesToMove[i]);
+            }
+            auto targetBlock = document()->findBlockByNumber(targetStartBlock);
+            cursor.setPosition(targetBlock.position() + qMin(column, targetBlock.length() - 1));
+            return cursor;
+        },
+        [offsetLines](const QTextCursor& a, const QTextCursor& b) {
+            // When moving down, process from bottom to top
+            // When moving up, process from top to bottom
+            return offsetLines > 0 ? 
+                   a.block().blockNumber() > b.block().blockNumber() :
+                   a.block().blockNumber() < b.block().blockNumber();
         }
+    );
 
-        if (!newBlock.isValid()) {
-            continue; // Skip this cursor if document is empty or new block is invalid
-        }
-
-        QTextCursor newCursor(newBlock);
-        newCursor.setPosition(newBlock.position() + targetColumn);
-
-        if (!mainCursorSet) {
-            newMainCursor = newCursor;
-            mainCursorSet = true;
-        } else {
-            newExtraCursors.append(newCursor);
-        }
-    }
-
-    setTextCursor(newMainCursor);
-    extraCursors = newExtraCursors;
-
+    setTextCursor(cursor);
+    updateExtraSelections();
     markArea_->update();
     ensureCursorVisible();
-    QTimer::singleShot(0, this, &Qutepart::updateExtraSelections);
 }
 
 void Qutepart::deleteLine() {
