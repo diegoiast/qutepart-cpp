@@ -1559,17 +1559,21 @@ void Qutepart::moveSelectedLines(int offsetLines) {
     if (offsetLines == 0) {
         return;
     }
-    auto  minSelectedBlock = INT_MAX;
-    auto  maxSelectedBlock = INT_MIN;
+
+    auto minSelectedBlock = INT_MAX;
+    auto maxSelectedBlock = INT_MIN;
     auto allCursors = extraCursors;
+    auto originalSelections = QVector<QPair<int, int>>();
+
     allCursors.append(textCursor());
-    for (const auto& cursor : allCursors) {
+    for (const auto &cursor : allCursors) {
         auto posBlock = cursor.block().blockNumber();
         auto anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
         auto startBlock = std::min(posBlock, anchorBlock);
         auto endBlock = std::max(posBlock, anchorBlock);
         minSelectedBlock = std::min(minSelectedBlock, startBlock);
         maxSelectedBlock = std::max(maxSelectedBlock, endBlock);
+        originalSelections.append({startBlock, endBlock});
     }
 
     if (offsetLines < 0 && minSelectedBlock == 0) {
@@ -1584,7 +1588,8 @@ void Qutepart::moveSelectedLines(int offsetLines) {
     }
 
     QMap<int, int> originalBlockToFinalPhysicalIndexMap;
-    auto cursor = applyOperationToAllCursors([&](QTextCursor& cursor) {
+    auto cursor = applyOperationToAllCursors(
+        [&](QTextCursor &cursor) {
             auto posBlock = cursor.block().blockNumber();
             auto anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
             auto startBlock = std::min(posBlock, anchorBlock);
@@ -1595,7 +1600,7 @@ void Qutepart::moveSelectedLines(int offsetLines) {
             if (offsetLines > 0 && endBlock == document()->blockCount() - 1) {
                 return cursor;
             }
-            auto column = cursor.positionInBlock();  // Store the column position
+            auto column = cursor.positionInBlock();
             auto targetStartBlock = startBlock + offsetLines;
             for (int i = startBlock; i <= endBlock; ++i) {
                 originalBlockToFinalPhysicalIndexMap[i] = targetStartBlock + (i - startBlock);
@@ -1614,16 +1619,32 @@ void Qutepart::moveSelectedLines(int offsetLines) {
             cursor.setPosition(targetBlock.position() + qMin(column, targetBlock.length() - 1));
             return cursor;
         },
-        [offsetLines](const QTextCursor& a, const QTextCursor& b) {
+        [offsetLines](const QTextCursor &a, const QTextCursor &b) {
             // When moving down, process from bottom to top
             // When moving up, process from top to bottom
-            return offsetLines > 0 ? 
-                   a.block().blockNumber() > b.block().blockNumber() :
-                   a.block().blockNumber() < b.block().blockNumber();
-        }
-    );
+            return offsetLines > 0 ? a.block().blockNumber() > b.block().blockNumber()
+                                   : a.block().blockNumber() < b.block().blockNumber();
+        });
 
-    setTextCursor(cursor);
+    // Reapply selections after move
+    auto newCursors = QList<QTextCursor>();
+    for (const auto &[startBlock, endBlock] : originalSelections) {
+        auto cursor = QTextCursor(document());
+        auto newStartBlock = startBlock + offsetLines;
+        auto newEndBlock = endBlock + offsetLines;
+        auto startPos = document()->findBlockByNumber(newStartBlock).position();
+        auto endBlockObj = document()->findBlockByNumber(newEndBlock);
+        auto endPos = endBlockObj.position() + endBlockObj.length() - 1;
+        cursor.setPosition(startPos);
+        cursor.setPosition(endPos, QTextCursor::KeepAnchor);
+        newCursors.append(cursor);
+    }
+
+    if (!newCursors.isEmpty()) {
+        setTextCursor(newCursors.last());
+        extraCursors = newCursors.mid(0, newCursors.size() - 1);
+    }
+
     updateExtraSelections();
     markArea_->update();
     ensureCursorVisible();
@@ -2181,7 +2202,7 @@ void Qutepart::multipleCursorPaste() {
         QPlainTextEdit::paste();
         return;
     }
-    
+
     auto allCursors = extraCursors;
     auto clipboardText = QApplication::clipboard()->text();
     auto lines = clipboardText.split('\n');
@@ -2266,4 +2287,3 @@ void Qutepart::multipleCursorCut() {
 }
 
 } // namespace Qutepart
-
