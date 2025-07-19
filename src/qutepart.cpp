@@ -2223,65 +2223,103 @@ void Qutepart::multipleCursorPaste() {
 }
 
 void Qutepart::multipleCursorCopy() {
-    if (extraCursors.isEmpty()) {
-        QPlainTextEdit::copy();
-        return;
+    auto allCursors = extraCursors;
+    allCursors.append(textCursor());
+
+    std::sort(allCursors.begin(), allCursors.end(), [](const auto &a, const auto &b) {
+        return a.block().blockNumber() < b.block().blockNumber();
+    });
+
+    auto usedBlocks = QSet<int>();
+    auto anySelection = false;
+    for (const auto &cursor : allCursors) {
+        if (cursor.hasSelection()) {
+            anySelection = true;
+            break;
+        }
     }
 
     auto lines = QStringList();
-    auto allCursors = extraCursors;
-
-    allCursors.prepend(textCursor());
-    for (const auto& cursor : allCursors) {
+    for (const auto &cursor : allCursors) {
         if (cursor.hasSelection()) {
             lines << cursor.selectedText();
-        } else {
-            auto block = cursor.block();
-            auto text = block.text();
-            if (text.endsWith("\u2029")) {
-                text = text.left(text.length() - 1);
+        } else if (!anySelection) {
+            int blockNum = cursor.block().blockNumber();
+            if (!usedBlocks.contains(blockNum)) {
+                auto text = cursor.block().text();
+                if (text.endsWith(QChar(0x2029))) {
+                    text.chop(1);
+                }
+                lines << text;
+                usedBlocks.insert(blockNum);
             }
-            lines << text;
         }
     }
 
     auto textToCopy = lines.join('\n');
+    if (!anySelection) {
+        textToCopy.append('\n');
+    }
     QApplication::clipboard()->setText(textToCopy);
 }
 
 void Qutepart::multipleCursorCut() {
-    if (extraCursors.isEmpty()) {
-        QPlainTextEdit::cut();
-        return;
-    }
-
-    auto lines = QStringList();
     auto allCursors = extraCursors;
     allCursors.prepend(textCursor());
 
-    for (const auto& cursor : allCursors) {
+    std::sort(allCursors.begin(), allCursors.end(),
+              [](const auto &a, const auto &b) { return a.position() < b.position(); });
+
+    auto lines = QStringList();
+    auto anySelection = false;
+    for (auto &cursor : allCursors) {
         if (cursor.hasSelection()) {
             lines << cursor.selectedText();
+            anySelection = true;
         } else {
-            auto block = cursor.block();
-            auto text = block.text();
-            if (text.endsWith("\u2029")) {
-                text = text.left(text.length() - 1);
+            auto text = cursor.block().text();
+            if (text.endsWith(QChar(0x2029))) {
+                text.chop(1);
             }
             lines << text;
         }
     }
-
     auto textToCopy = lines.join('\n');
+    if (!anySelection) {
+        textToCopy.append('\n');
+    }
     QApplication::clipboard()->setText(textToCopy);
 
+    std::sort(allCursors.begin(), allCursors.end(), [](const auto &a, const auto &b) {
+        return a.block().blockNumber() > b.block().blockNumber();
+    });
+
     AtomicEditOperation op(this);
-    for (auto& cursor : allCursors) {
+    auto minBlock = std::numeric_limits<int>::max();
+    for (auto &cursor : allCursors) {
         if (cursor.hasSelection()) {
+            minBlock =
+                std::min(minBlock, std::min(cursor.block().blockNumber(),
+                                            document()->findBlock(cursor.anchor()).blockNumber()));
             cursor.removeSelectedText();
         } else {
+            minBlock = std::min(minBlock, cursor.block().blockNumber());
             cursor.select(QTextCursor::BlockUnderCursor);
             cursor.removeSelectedText();
+        }
+    }
+
+    if (!anySelection) {
+        if (document()->blockCount() == 0) {
+            setTextCursor(QTextCursor(document()));
+            return;
+        }
+        auto afterCutBlock = std::min(minBlock, document()->blockCount() - 1);
+        auto targetBlock = document()->findBlockByNumber(afterCutBlock);
+        if (targetBlock.isValid()) {
+            QTextCursor caret(targetBlock);
+            caret.movePosition(QTextCursor::StartOfBlock);
+            setTextCursor(caret);
         }
     }
 }

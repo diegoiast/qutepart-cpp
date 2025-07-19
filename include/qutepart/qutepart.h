@@ -435,7 +435,23 @@ class Qutepart : public QPlainTextEdit {
     void resetSelection();
 
     void multipleCursorPaste();
+
+    /**
+     * \brief Copies selected text or full lines under cursor(s), like VSCode.
+     *  - If any cursor/selection exists, collects selected text or lines under the cursors,
+     *   and joins them with '\n' to the clipboard.
+     * - If no cursor has a selection, copies the whole line(s) under all cursors to the clipboard,
+     *   joined with '\n' (block mode copy like VSCode).
+     * - No changes made to the document or caret.
+     */
     void multipleCursorCopy();
+
+    /**
+     * Cuts selected text or whole lines with multi-cursor support.
+     * When there is no selection, cuts the whole line under each cursor,
+     * merges all cut text (in order) into the clipboard (like VSCode),
+     * and places the caret after the cut region (or at the last line).
+     */
     void multipleCursorCut();
 
   protected:
