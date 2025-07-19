@@ -384,7 +384,6 @@ bool Completer::isVisible() const { return widget_ != nullptr; }
 // Text in the qpart changed. Update word set
 void Completer::onTextChanged() {
     updateWordSetTimer_.start();
-    updateWordSet();
 }
 
 void Completer::onModificationChanged(bool modified) {
