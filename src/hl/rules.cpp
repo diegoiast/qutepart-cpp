@@ -323,7 +323,7 @@ AbstractNumberRule::AbstractNumberRule(const AbstractRuleParams &params,
 void AbstractNumberRule::printDescription(QTextStream &out) const {
     AbstractRule::printDescription(out);
 
-    foreach (RulePtr rule, childRules) {
+    for (auto const &rule: std::as_const(childRules)) {
         out << "\t\t\t" << rule->description() << "\n";
     }
 }
@@ -345,7 +345,7 @@ MatchResult *AbstractNumberRule::tryMatchImpl(const TextToMatch &textToMatch) co
         TextToMatch textToMatchCopy = textToMatch;
         textToMatchCopy.shift(matchedLength);
 
-        foreach (RulePtr rule, childRules) {
+        for(auto const &rule: std::as_const(childRules)) {
             MatchResult *matchRes = rule->tryMatch(textToMatchCopy);
             if (matchRes != nullptr) {
                 matchedLength += matchRes->length;

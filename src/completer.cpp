@@ -119,7 +119,7 @@ class CompletionModel : public QAbstractItemModel {
     QVector<QString> makeListOfCompletions(const QString &wordBeforeCursor,
                                            const QString &wholeWord) const {
         QVector<QString> result;
-        foreach (const QString &word, wordSet_) {
+        for (auto const &word:  std::as_const(wordSet_)) {
             if (word.startsWith(wordBeforeCursor, Qt::CaseInsensitive) && word != wholeWord) {
                 result << word;
             }
@@ -219,7 +219,7 @@ class CompletionList : public QListView {
     */
     QSize sizeHint() const override {
         int width = -1;
-        foreach (const QString &word, completionModel_->words()) {
+        for (auto const &word:  std::as_const(completionModel_->words())) {
             int wordWidth = fontMetrics().horizontalAdvance(word);
             if (wordWidth > width) {
                 width = wordWidth;

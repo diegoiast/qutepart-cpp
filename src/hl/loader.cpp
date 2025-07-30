@@ -27,7 +27,7 @@ QList<RulePtr> loadRules(QXmlStreamReader &xmlReader, QString &error);
 
 QHash<QString, QString> attrsToInsensitiveHashMap(const QXmlStreamAttributes &attrs) {
     QHash<QString, QString> result;
-    foreach (const QXmlStreamAttribute attr, attrs) {
+    for (auto const &attr: std::as_const(attrs)) {
         result[attr.name().toString().toLower()] = attr.value().toString();
     }
 
@@ -612,19 +612,17 @@ auto static loadComments(QXmlStreamReader &xmlReader, QString &start, QString &e
 
 QSet<QChar> strToSet(const QString &str) {
     QSet<QChar> res;
-    foreach (QChar chr, str) {
+    for (auto chr: str) {
         res.insert(chr);
     }
-
     return res;
 }
 
 QString setToStr(const QSet<QChar> &set) {
     QString res;
-    foreach (QChar chr, set) {
+    for(auto chr: set) {
         res += chr;
     }
-
     return res;
 }
 
@@ -653,7 +651,7 @@ void loadKeywordParams(const QXmlStreamAttributes &attrs, QString &keywordDelimi
 }
 
 void makeKeywordsLowerCase(QHash<QString, QStringList> &keywordLists) {
-    foreach (QStringList list, keywordLists) {
+    for (auto &list: keywordLists) {
         for (int i = 0; i < list.size(); i++) {
             list[i] = list[i].toLower();
         }
@@ -709,7 +707,7 @@ QList<ContextPtr> loadLanguageSytnax(QXmlStreamReader &xmlReader, QString &keywo
         }
     }
 
-    foreach (ContextPtr context, contexts) {
+    for (auto &context: contexts) {
         context->setKeywordParams(keywordLists, keywordDeliminators, keywordsKeySensitive, error);
         if (!error.isNull()) {
             return QList<ContextPtr>();
@@ -721,8 +719,8 @@ QList<ContextPtr> loadLanguageSytnax(QXmlStreamReader &xmlReader, QString &keywo
         }
     }
 
-    foreach (const QStringList &kwList, keywordLists) {
-        foreach (const QString &word, kwList) {
+    for (auto const &kwList: std::as_const(keywordLists)) {
+        for (auto const &word: std::as_const(kwList)) {
             allLanguageKeywords += word;
         }
     }
@@ -807,11 +805,11 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
      * to support recursive references
      */
     QHash<QString, ContextPtr> contextMap; // to resolve references
-    foreach (ContextPtr ctxPtr, contexts) {
+    for (auto &ctxPtr: std::as_const(contexts)) {
         contextMap[ctxPtr->name()] = ctxPtr;
     }
 
-    foreach (ContextPtr ctx, contexts) {
+    for (auto &ctx: contexts) {
         ctx->resolveContextReferences(contextMap, error);
         if (!error.isNull()) {
             {

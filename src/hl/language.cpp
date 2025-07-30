@@ -41,7 +41,7 @@ void Language::printDescription(QTextStream &out) const {
         out << "\tindenter: " << indenter << "\n";
     }
 
-    foreach (ContextPtr ctx, this->contexts) {
+    for (auto const &ctx: std::as_const(this->contexts)) {
         ctx->printDescription(out);
     }
 }
@@ -84,10 +84,7 @@ ContextPtr Language::getContext(const QString &contextName) const {
 }
 
 void Language::setTheme(const Theme *theme) {
-    foreach (auto ctx, contexts) {
-#if 0
-        qDebug() << "Patching language " << this->name << ", context=" << ctx->name();
-#endif
+    for(auto &ctx: contexts) {
         ctx->setTheme(theme);
     }
 }
