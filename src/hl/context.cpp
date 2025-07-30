@@ -42,7 +42,7 @@ void Context::printDescription(QTextStream &out) const {
         out << "\t\tdynamic\n";
     }
 
-    foreach (RulePtr rule, rules) {
+    for (const auto &rule: std::as_const(rules)) {
         rule->printDescription(out);
     }
 }
@@ -65,7 +65,7 @@ void Context::setTheme(const Theme *theme) {
         fallthroughContext.context()->setTheme(theme);
     }
 
-    for (auto rule : rules) {
+    for (auto &rule : rules) {
         rule->setTheme(theme);
     }
 }
@@ -91,7 +91,7 @@ void Context::resolveContextReferences(const QHash<QString, ContextPtr> &context
         return;
     }
 
-    foreach (RulePtr rule, rules) {
+    for (auto &rule: rules) {
         rule->resolveContextReferences(contexts, error);
         if (!error.isNull()) {
             return;
@@ -101,7 +101,7 @@ void Context::resolveContextReferences(const QHash<QString, ContextPtr> &context
 
 void Context::setKeywordParams(const QHash<QString, QStringList> &lists,
                                const QString &deliminatorSet, bool caseSensitive, QString &error) {
-    foreach (RulePtr rule, rules) {
+    for (auto &rule: rules) {
         rule->setKeywordParams(lists, caseSensitive, deliminatorSet, error);
         if (!error.isNull()) {
             break;
@@ -119,7 +119,7 @@ void Context::setStyles(const QHash<QString, Style> &styles, QString &error) {
         style.updateTextType(attribute);
     }
 
-    foreach (RulePtr rule, rules) {
+    for (auto &rule: rules) {
         rule->setStyles(styles, error);
         if (!error.isNull()) {
             break;
@@ -143,7 +143,7 @@ void appendFormat(QVector<QTextLayout::FormatRange> &formats, int start, int len
 }
 
 void fillTextTypeMap(QString &textTypeMap, int start, int length, QChar textType) {
-    for (int i = start; i < start + length; i++) {
+    for (auto i = start; i < start + length; i++) {
         textTypeMap[i] = textType;
     }
 }
@@ -216,7 +216,7 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
 }
 
 MatchResult *Context::tryMatch(const TextToMatch &textToMatch) const {
-    foreach (RulePtr rule, rules) {
+    for (auto &rule: rules) {
         MatchResult *matchRes = rule->tryMatch(textToMatch);
         if (matchRes != nullptr) {
             return matchRes;

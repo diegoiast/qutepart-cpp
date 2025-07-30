@@ -32,7 +32,7 @@ std::map<QChar, QString> HTML_ESCAPE_TABLE = {
 // Replace special HTML symbols with escase sequences
 QString htmlEscape(const QString& text) {
     QString result;
-    foreach(QChar ch, text) {
+    for (auto ch: text) {
         auto replacement = HTML_ESCAPE_TABLE.find(ch);
         if (replacement == HTML_ESCAPE_TABLE.end()) {
             result += ch;

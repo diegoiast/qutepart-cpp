@@ -911,7 +911,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
     } else {
         // make action shortcuts override keyboard events (non-default Qt
         // behaviour)
-        foreach (QAction *action, actions()) {
+        for (auto action: actions()) {
             QKeySequence seq = action->shortcut();
             if (seq.count() == 1 && seq[0].key() == event->key() &&
                 seq[0].keyboardModifiers() == event->modifiers()) {
@@ -1190,7 +1190,6 @@ void Qutepart::drawWhiteSpace(QPainter *painter, QTextBlock block, int column, Q
         qDebug() << "Invalid block in drawWhiteSpace!";
         return;
     }
-    auto cursor = QTextCursor(block);
     auto leftCursorRect = cursorRect(block, column, 0);
     auto rightCursorRect = cursorRect(block, column + 1, 0);
     if (leftCursorRect.top() == rightCursorRect.top()) {
