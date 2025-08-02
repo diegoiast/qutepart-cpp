@@ -46,7 +46,7 @@ void Language::printDescription(QTextStream &out) const {
     }
 }
 
-void Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats) {
+int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats) {
     ContextStack contextStack = getContextStack(block);
     TextToMatch textToMatch(block.text(), contextStack.currentData());
     QString textTypeMap(textToMatch.text.length(), ' ');
@@ -70,6 +70,7 @@ void Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange
 
     data->textTypeMap = textTypeMap;
     data->contexts = contextStack;
+    return *((int *)contextStack.currentContext());
 }
 
 ContextPtr Language::getContext(const QString &contextName) const {

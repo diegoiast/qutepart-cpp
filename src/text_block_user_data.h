@@ -18,6 +18,7 @@ class TextBlockUserData : public QTextBlockUserData {
     TextBlockUserData(const QString &textTypeMap, const ContextStack &contexts);
     QString textTypeMap;
     ContextStack contexts;
+    int state = 0;
 
     struct {
         QString message;

@@ -6,16 +6,25 @@
 
 #include <qutepart.h>
 #include "text_block_flags.h"
+#include "text_block_user_data.h"
 
 namespace Qutepart {
 
 bool hasFlag(const QTextBlock &block, int flag) {
-    int state = block.userState();
+    auto data = static_cast<TextBlockUserData *>(block.userData());
+    if (!data) {
+        return false;
+    }
+    auto state = data->state;
     return state != -1 && state & flag;
 }
 
 void setFlag(QTextBlock &block, int flag, bool value) {
-    int state = block.userState();
+    auto data = static_cast<TextBlockUserData *>(block.userData());
+    if (!data) {
+        return;
+    }
+    auto &state = data->state;
     if (state == -1) {
         state = 0;
     }
@@ -25,8 +34,6 @@ void setFlag(QTextBlock &block, int flag, bool value) {
     } else {
         state &= (~flag);
     }
-
-    block.setUserState(state);
 }
 
 } // namespace Qutepart
