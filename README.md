@@ -11,8 +11,8 @@ source code? This library is easy to integrate, easy to use.
 
 ```C++
     auto qutepart = new Qutepart::Qutepart(window);
-    
-    // optionally - set a theme    
+
+    // optionally - set a theme
     auto theme = new Qutepart::Theme;
     theme->loadTheme(":/qutepart/themes/github-light.theme");
     qutepart.setTheme(theme);
@@ -52,7 +52,7 @@ All features are configurable
 9. Uses Kate syntax highlighter, with more than 380 supported languages.
 10. Theme support, again using the Kate themes.
 11. Syntax/themes baked into the library (no need to install files on your app).
-12. Undo/redo stack. 
+12. Undo/redo stack.
 13. Insert/override text (defaults to insert, modify by pressing "Insert" key)
 14. Copy/paste/cut/del (selection and current word/line).
 15. Selection of current word: when the cursor is on a word,
@@ -78,7 +78,7 @@ All features are configurable
 28. Soft word wrap can be enabled at the margin (when you type after that line - text continues
     on the next line.
 29. Shows indentation markers.
-30. Markers for long lines.
+30. Multiple cursors (selection, copy, paste, moving).
 31. Bookmarks (you can bookmark lines, and then move to them).
 32. Join lines (control+j).
 33. Change word/selection to UPPER CASE/lower case (or toggle).
@@ -92,28 +92,19 @@ All features are configurable
 
 Planned features
 
-1. Multiple cursors.
+1. Spell check.
 2. Toggle folding sections of code/text.
 3. Markdown specific indentator.
-4. Spell check.
 
 To see the API in action, see [editor](editor.cpp).
 
 ## Build dependencies
-* C++17 compiler (tested under MSVC 2022, GCC 13, Clang17)
+* C++17 compiler (tested under MSVC 2022, GCC 13, Clang17 or newer versions)
 * CMake
-* Qt 6.7
+* Qt 6.8
 
 ## Building and installation
 Add this to your CMakeLists.txt
-
-```CMake
-CPMAddPackage("gh:diegoiast/qutepart-cpp#main")
-add_executable(app ...)
-target_link_libraries(app PUBLIC ... qutepart ...)
-```
-
-If you are not using CPM, you can use directly fetch content:
 ```CMake
 include(FetchContent)
 FetchContent_Declare(
@@ -126,9 +117,16 @@ add_executable(app ...)
 target_link_libraries(app PUBLIC ... qutepart ...)
 ```
 
+Or if you are using [CPM](https://github.com/cpm-cmake/CPM.cmake):
+```CMake
+CPMAddPackage("gh:diegoiast/qutepart-cpp#main")
+add_executable(app ...)
+target_link_libraries(app PUBLIC ... qutepart ...)
+```
+
 ## Authors
-Andrei Kopats
-Diego Iastrubni <diegoiast@gmail.com>
+* Andrei Kopats
+* Diego Iastrubni <diegoiast@gmail.com>
 
 ## Bug reports, patches
 [Github page](https://github.com/diegoiast/qutepart-cpp)
