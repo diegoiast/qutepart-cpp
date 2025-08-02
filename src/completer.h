@@ -27,7 +27,7 @@ class Completer : public QObject {
 
     void setKeywords(const QSet<QString> &keywords);
     void setCustomCompletions(const QSet<QString> &wordSet);
-    
+
     bool isVisible() const;
     bool invokeCompletionIfAvailable(bool requestedByUser);
 

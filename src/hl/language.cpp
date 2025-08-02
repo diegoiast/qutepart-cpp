@@ -41,7 +41,7 @@ void Language::printDescription(QTextStream &out) const {
         out << "\tindenter: " << indenter << "\n";
     }
 
-    for (auto const &ctx: std::as_const(this->contexts)) {
+    for (auto const &ctx : std::as_const(this->contexts)) {
         ctx->printDescription(out);
     }
 }
@@ -85,7 +85,7 @@ ContextPtr Language::getContext(const QString &contextName) const {
 }
 
 void Language::setTheme(const Theme *theme) {
-    for(auto &ctx: contexts) {
+    for (auto &ctx : contexts) {
         ctx->setTheme(theme);
     }
 }

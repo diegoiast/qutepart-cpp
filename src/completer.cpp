@@ -119,7 +119,7 @@ class CompletionModel : public QAbstractItemModel {
     QVector<QString> makeListOfCompletions(const QString &wordBeforeCursor,
                                            const QString &wholeWord) const {
         QVector<QString> result;
-        for (auto const &word:  std::as_const(wordSet_)) {
+        for (auto const &word : std::as_const(wordSet_)) {
             if (word.startsWith(wordBeforeCursor, Qt::CaseInsensitive) && word != wholeWord) {
                 result << word;
             }
@@ -219,7 +219,7 @@ class CompletionList : public QListView {
     */
     QSize sizeHint() const override {
         int width = -1;
-        for (auto const &word:  std::as_const(completionModel_->words())) {
+        for (auto const &word : std::as_const(completionModel_->words())) {
             int wordWidth = fontMetrics().horizontalAdvance(word);
             if (wordWidth > width) {
                 width = wordWidth;
@@ -382,9 +382,7 @@ void Completer::setCustomCompletions(const QSet<QString> &wordSet) { customCompl
 bool Completer::isVisible() const { return widget_ != nullptr; }
 
 // Text in the qpart changed. Update word set
-void Completer::onTextChanged() {
-    updateWordSetTimer_.start();
-}
+void Completer::onTextChanged() { updateWordSetTimer_.start(); }
 
 void Completer::onModificationChanged(bool modified) {
     if (!modified) {

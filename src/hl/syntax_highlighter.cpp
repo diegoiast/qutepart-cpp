@@ -23,7 +23,7 @@ void SyntaxHighlighter::highlightBlock(const QString &) {
     QVector<QTextLayout::FormatRange> formats;
 
     auto state = language->highlightBlock(currentBlock(), formats);
-    for (auto &range: std::as_const(formats)) {
+    for (auto &range : std::as_const(formats)) {
         setFormat(range.start, range.length, range.format);
     }
     setCurrentBlockState(state);

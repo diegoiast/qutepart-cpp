@@ -510,8 +510,8 @@ class Qutepart : public QPlainTextEdit {
     void toggleComment();
 
     QTextCursor applyOperationToAllCursors(
-        std::function<void(QTextCursor&)> operation,
-        std::function<bool(const QTextCursor&, const QTextCursor&)> sortOrderBeforeOp);
+        std::function<void(QTextCursor &)> operation,
+        std::function<bool(const QTextCursor &, const QTextCursor &)> sortOrderBeforeOp);
 
   private slots:
     void updateViewport();

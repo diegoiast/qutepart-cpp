@@ -8,10 +8,10 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QDebug>
+#include <QKeyEvent>
 #include <QPainter>
 #include <QScrollBar>
 #include <QStyle>
-#include <QKeyEvent>
 
 #include "bracket_highlighter.h"
 #include "completer.h"
@@ -681,7 +681,9 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                 }
                 QTextCursor newMainCursor(newBlock);
                 int targetColumn = qMin(oldMainCursor.positionInBlock(), newBlock.length() - 1);
-                if (targetColumn < 0) targetColumn = 0;
+                if (targetColumn < 0) {
+                    targetColumn = 0;
+                }
                 newMainCursor.setPosition(newBlock.position() + targetColumn);
 
                 QSet<int> desiredCursorPositions;
@@ -690,7 +692,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                     desiredCursorPositions.insert(oldMainCursor.position());
                 }
 
-                for (const auto& ec : extraCursors) {
+                for (const auto &ec : extraCursors) {
                     desiredCursorPositions.insert(ec.position());
                 }
 
@@ -705,7 +707,9 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                     if (block.isValid()) {
                         QTextCursor cursor(block);
                         int colInBlock = pos - block.position();
-                        if (colInBlock < 0) colInBlock = 0;
+                        if (colInBlock < 0) {
+                            colInBlock = 0;
+                        }
                         cursor.setPosition(block.position() + qMin(colInBlock, block.length() - 1));
                         updatedExtraCursors.append(cursor);
                     }
@@ -726,9 +730,10 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
 
     if (!extraCursors.isEmpty()) {
         switch (event->key()) {
-            case Qt::Key_Backspace:
-            case Qt::Key_Delete: {
-                cursor = applyOperationToAllCursors([&](QTextCursor &currentCursor) {
+        case Qt::Key_Backspace:
+        case Qt::Key_Delete: {
+            cursor = applyOperationToAllCursors(
+                [&](QTextCursor &currentCursor) {
                     if (event->key() == Qt::Key_Backspace) {
                         if (currentCursor.hasSelection()) {
                             currentCursor.deleteChar(); // delete selection
@@ -738,74 +743,76 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                     } else {
                         currentCursor.deleteChar();
                     }
-                }, [](auto &a, auto &b) { return a.position() > b.position(); });
+                },
+                [](auto &a, auto &b) { return a.position() > b.position(); });
 
-                setTextCursor(cursor);
-                updateExtraSelections();
-                update();
-                event->accept();
-                return;
-            }
-            case Qt::Key_Left:
-            case Qt::Key_Right: {
-                cursor = applyOperationToAllCursors(
-                    [&](QTextCursor &currentCursor) {
-                        auto moveMode = QTextCursor::MoveAnchor;
-                        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-                            moveMode = QTextCursor::KeepAnchor;
-                        }
-                        if (event->key() == Qt::Key_Left) {
-                            if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                                currentCursor.movePosition(QTextCursor::PreviousWord, moveMode);
-                            } else {
-                                currentCursor.movePosition(QTextCursor::PreviousCharacter, moveMode);
-                            }
-                        } else { // Qt::Key_Right
-                            if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                                currentCursor.movePosition(QTextCursor::NextWord, moveMode);
-                            } else {
-                                currentCursor.movePosition(QTextCursor::NextCharacter, moveMode);
-                            }
-                        }
-                    },
-                    nullptr); // No specific sort order needed for this operation
-
-                setTextCursor(cursor);
-                updateExtraSelections();
-                event->accept();
-                return;
-            }
-            case Qt::Key_Up:
-            case Qt::Key_Down: {
-                cursor = applyOperationToAllCursors(
-                    [&](QTextCursor &currentCursor) {
-                        auto moveMode = QTextCursor::MoveAnchor;
-                        if (event->modifiers().testFlag(Qt::ShiftModifier)) {
-                            moveMode = QTextCursor::KeepAnchor;
-                        }
-                        auto column = currentCursor.positionInBlock();
-                        if (event->key() == Qt::Key_Up) {
-                            currentCursor.movePosition(QTextCursor::Up, moveMode);
+            setTextCursor(cursor);
+            updateExtraSelections();
+            update();
+            event->accept();
+            return;
+        }
+        case Qt::Key_Left:
+        case Qt::Key_Right: {
+            cursor = applyOperationToAllCursors(
+                [&](QTextCursor &currentCursor) {
+                    auto moveMode = QTextCursor::MoveAnchor;
+                    if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+                        moveMode = QTextCursor::KeepAnchor;
+                    }
+                    if (event->key() == Qt::Key_Left) {
+                        if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                            currentCursor.movePosition(QTextCursor::PreviousWord, moveMode);
                         } else {
-                            currentCursor.movePosition(QTextCursor::Down, moveMode);
+                            currentCursor.movePosition(QTextCursor::PreviousCharacter, moveMode);
                         }
-                        auto newBlockLength = currentCursor.block().length();
-                        auto targetColumn = qMin(column, newBlockLength - 1);
-                        if (targetColumn < 0) {
-                            targetColumn = 0;
+                    } else { // Qt::Key_Right
+                        if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                            currentCursor.movePosition(QTextCursor::NextWord, moveMode);
+                        } else {
+                            currentCursor.movePosition(QTextCursor::NextCharacter, moveMode);
                         }
-                        currentCursor.setPosition(currentCursor.block().position() + targetColumn, moveMode);
-                    },
-                    [](const auto& a, const auto& b) { return a.position() < b.position(); });
+                    }
+                },
+                nullptr); // No specific sort order needed for this operation
 
-                setTextCursor(cursor);
-                updateExtraSelections();
-                event->accept();
-                return;
-            }
-            default: {
-                // Continue to handle other cases below
-            }
+            setTextCursor(cursor);
+            updateExtraSelections();
+            event->accept();
+            return;
+        }
+        case Qt::Key_Up:
+        case Qt::Key_Down: {
+            cursor = applyOperationToAllCursors(
+                [&](QTextCursor &currentCursor) {
+                    auto moveMode = QTextCursor::MoveAnchor;
+                    if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+                        moveMode = QTextCursor::KeepAnchor;
+                    }
+                    auto column = currentCursor.positionInBlock();
+                    if (event->key() == Qt::Key_Up) {
+                        currentCursor.movePosition(QTextCursor::Up, moveMode);
+                    } else {
+                        currentCursor.movePosition(QTextCursor::Down, moveMode);
+                    }
+                    auto newBlockLength = currentCursor.block().length();
+                    auto targetColumn = qMin(column, newBlockLength - 1);
+                    if (targetColumn < 0) {
+                        targetColumn = 0;
+                    }
+                    currentCursor.setPosition(currentCursor.block().position() + targetColumn,
+                                              moveMode);
+                },
+                [](const auto &a, const auto &b) { return a.position() < b.position(); });
+
+            setTextCursor(cursor);
+            updateExtraSelections();
+            event->accept();
+            return;
+        }
+        default: {
+            // Continue to handle other cases below
+        }
         }
 
         // Handle Enter for multiple cursors
@@ -813,8 +820,8 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
             cursor = applyOperationToAllCursors(
                 [&](QTextCursor &currentCursor) {
                     currentCursor.insertBlock();
-                    indenter_->indentBlock(currentCursor.block(),
-                                           currentCursor.positionInBlock(), QChar::Null);
+                    indenter_->indentBlock(currentCursor.block(), currentCursor.positionInBlock(),
+                                           QChar::Null);
                 },
                 [](auto &a, auto &b) { return a.position() > b.position(); });
 
@@ -829,10 +836,8 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         else if (isCharEvent(event)) {
             auto textToInsert = event->text();
             cursor = applyOperationToAllCursors(
-                [&](QTextCursor &currentCursor) {
-                    currentCursor.insertText(textToInsert);
-                },
-                [](const auto& a, const auto& b) { return a.position() > b.position(); });
+                [&](QTextCursor &currentCursor) { currentCursor.insertText(textToInsert); },
+                [](const auto &a, const auto &b) { return a.position() > b.position(); });
 
             setTextCursor(cursor);
 
@@ -911,7 +916,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
     } else {
         // make action shortcuts override keyboard events (non-default Qt
         // behaviour)
-        for (auto action: actions()) {
+        for (auto action : actions()) {
             QKeySequence seq = action->shortcut();
             if (seq.count() == 1 && seq[0].key() == event->key() &&
                 seq[0].keyboardModifiers() == event->modifiers()) {
@@ -962,8 +967,8 @@ void Qutepart::paintEvent(QPaintEvent *event) {
         painter.setPen(QPen(extraCursorColor, 1));
 
         for (const auto &extraCursor : extraCursors) {
-            auto cursorRect = this->cursorRect(
-                extraCursor.block(), extraCursor.positionInBlock(), 0);
+            auto cursorRect =
+                this->cursorRect(extraCursor.block(), extraCursor.positionInBlock(), 0);
             painter.drawLine(cursorRect.topLeft(), cursorRect.bottomLeft());
         }
     }
@@ -1483,17 +1488,21 @@ void Qutepart::changeSelectedBlocksIndent(bool increase, bool withSpace) {
                 QTextBlock startBlock = document()->findBlock(currentCursor.selectionStart());
                 QTextBlock endBlock = document()->findBlock(currentCursor.selectionEnd());
                 if (currentCursor.selectionStart() != currentCursor.selectionEnd() &&
-                    endBlock.position() == currentCursor.selectionEnd() && endBlock.previous().isValid()) {
-                    endBlock = endBlock.previous(); // do not indent not selected line if indenting multiple lines
+                    endBlock.position() == currentCursor.selectionEnd() &&
+                    endBlock.previous().isValid()) {
+                    // do not indent not selected line if indenting multiple lines
+                    endBlock = endBlock.previous();
                 }
 
-                if (startBlock == endBlock) { // indent single line
+                if (startBlock == endBlock) {
+                    // indent single line
                     if (increase) {
                         indentBlock(startBlock, withSpace);
                     } else {
                         unIndentBlock(startBlock, withSpace);
                     }
-                } else { // indent multiply lines
+                } else {
+                    // indent multiply lines
                     QTextBlock stopBlock = endBlock.next();
                     QTextBlock block = startBlock;
                     while (block != stopBlock) {
@@ -1933,7 +1942,8 @@ void Qutepart::updateExtraSelections() {
         for (const auto &extraCursor : extraCursors) {
             if (extraCursor.hasSelection()) {
                 auto extraSelection = QTextEdit::ExtraSelection();
-                extraSelection.format.setBackground(QApplication::palette().color(QPalette::Highlight));
+                extraSelection.format.setBackground(
+                    QApplication::palette().color(QPalette::Highlight));
                 extraSelection.format.setProperty(QTextFormat::FullWidthSelection, false);
                 extraSelection.cursor = extraCursor;
                 selections.append(extraSelection);
@@ -2149,7 +2159,7 @@ void Qutepart::mousePressEvent(QMouseEvent *event) {
             extraCursors.clear();
             extraCursorBlinkTimer_->stop();
             extraCursorsVisible_ = false;
-            update(); 
+            update();
         }
         QPlainTextEdit::mousePressEvent(event);
     }
@@ -2169,9 +2179,8 @@ void Qutepart::toggleExtraCursorsVisibility() {
 }
 
 QTextCursor Qutepart::applyOperationToAllCursors(
-    std::function<void(QTextCursor&)> operation,
-    std::function<bool(const QTextCursor&, const QTextCursor&)> sortOrderBeforeOp)
-{
+    std::function<void(QTextCursor &)> operation,
+    std::function<bool(const QTextCursor &, const QTextCursor &)> sortOrderBeforeOp) {
     auto allCursors = extraCursors;
     allCursors.append(textCursor());
 
@@ -2180,13 +2189,12 @@ QTextCursor Qutepart::applyOperationToAllCursors(
     }
 
     AtomicEditOperation op(this);
-    for (auto& currentCursor : allCursors) {
+    for (auto &currentCursor : allCursors) {
         operation(currentCursor);
     }
 
-    std::sort(allCursors.begin(), allCursors.end(), [](const auto& a, const auto& b) {
-         return a.position() < b.position();
-     });
+    std::sort(allCursors.begin(), allCursors.end(),
+              [](const auto &a, const auto &b) { return a.position() < b.position(); });
 
     QTextCursor newMainCursor = allCursors.last();
     extraCursors.clear();
@@ -2206,7 +2214,7 @@ void Qutepart::multipleCursorPaste() {
     auto clipboardText = QApplication::clipboard()->text();
     auto lines = clipboardText.split('\n');
 
-    allCursors.prepend(textCursor());  // Add main cursor first
+    allCursors.prepend(textCursor()); // Add main cursor first
     AtomicEditOperation op(this);
     if (lines.size() == allCursors.size()) {
         for (int i = 0; i < allCursors.size(); ++i) {
@@ -2214,7 +2222,7 @@ void Qutepart::multipleCursorPaste() {
             cursor.insertText(lines[i]);
         }
     } else {
-        for (const auto& cursor : allCursors) {
+        for (const auto &cursor : allCursors) {
             auto cur = cursor;
             cur.insertText(clipboardText);
         }

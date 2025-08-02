@@ -38,14 +38,13 @@ class IndentAlgNormal : public IndentAlgImpl {
 
 } // namespace
 
-Indenter::Indenter(QObject *parent) : QObject(parent), alg_(new IndentAlgNormal()), useTabs_(false), width_(4) {
+Indenter::Indenter(QObject *parent)
+    : QObject(parent), alg_(new IndentAlgNormal()), useTabs_(false), width_(4) {
     alg_->setConfig(width_, useTabs_);
     alg_->setLanguage(language_);
 }
 
-Indenter::~Indenter() {
-    delete alg_;
-}
+Indenter::~Indenter() { delete alg_; }
 
 void Indenter::setAlgorithm(IndentAlg alg) {
     switch (alg) {

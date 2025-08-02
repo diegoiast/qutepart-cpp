@@ -42,7 +42,7 @@ void Context::printDescription(QTextStream &out) const {
         out << "\t\tdynamic\n";
     }
 
-    for (const auto &rule: std::as_const(rules)) {
+    for (const auto &rule : std::as_const(rules)) {
         rule->printDescription(out);
     }
 }
@@ -91,7 +91,7 @@ void Context::resolveContextReferences(const QHash<QString, ContextPtr> &context
         return;
     }
 
-    for (auto &rule: rules) {
+    for (auto &rule : rules) {
         rule->resolveContextReferences(contexts, error);
         if (!error.isNull()) {
             return;
@@ -101,7 +101,7 @@ void Context::resolveContextReferences(const QHash<QString, ContextPtr> &context
 
 void Context::setKeywordParams(const QHash<QString, QStringList> &lists,
                                const QString &deliminatorSet, bool caseSensitive, QString &error) {
-    for (auto &rule: rules) {
+    for (auto &rule : rules) {
         rule->setKeywordParams(lists, caseSensitive, deliminatorSet, error);
         if (!error.isNull()) {
             break;
@@ -119,7 +119,7 @@ void Context::setStyles(const QHash<QString, Style> &styles, QString &error) {
         style.updateTextType(attribute);
     }
 
-    for (auto &rule: rules) {
+    for (auto &rule : rules) {
         rule->setStyles(styles, error);
         if (!error.isNull()) {
             break;
@@ -216,7 +216,7 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
 }
 
 MatchResult *Context::tryMatch(const TextToMatch &textToMatch) const {
-    for (auto &rule: rules) {
+    for (auto &rule : rules) {
         MatchResult *matchRes = rule->tryMatch(textToMatch);
         if (matchRes != nullptr) {
             return matchRes;
