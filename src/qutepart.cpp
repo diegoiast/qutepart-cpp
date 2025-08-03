@@ -872,15 +872,38 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
     } else if (event->matches(QKeySequence::InsertParagraphSeparator)) {
         // Enter pressed. Indent new empty line
         AtomicEditOperation op(this);
-
-        auto textAfterCursor = cursor.block().text().mid(cursor.positionInBlock());
+        
+        const QString currentLine = cursor.block().text();
+        const int cursorPosInBlock = cursor.positionInBlock();
+        
+        // Only try to preserve cursor position if it's in the middle of the line
+        const bool shouldPreservePosition = (cursorPosInBlock > 0) && 
+                                          (cursorPosInBlock < currentLine.length());
+        QString textAfterCursor;
+        if (shouldPreservePosition) {
+            textAfterCursor = currentLine.mid(cursorPosInBlock);
+        }
+        
+        // Let the default handler process the enter key
         QPlainTextEdit::keyPressEvent(event);
-        indenter_->indentBlock(cursor.block(), cursor.positionInBlock(), event->text()[0]);
-        if (!textAfterCursor.isEmpty()) {
-            QTextCursor newCursor = textCursor();
-            int newPos = newCursor.position() - textAfterCursor.length();
-            newCursor.setPosition(newPos);
-            setTextCursor(newCursor);
+        
+        // Get the new cursor position after the default handler
+        QTextCursor newCursor = textCursor();
+        const QTextBlock newBlock = newCursor.block();
+        
+        // Only apply indentation if we're still on a valid block
+        if (newBlock.isValid()) {
+            // Apply indentation to the new line
+            indenter_->indentBlock(newBlock, newCursor.positionInBlock(), '\n');
+            
+            // If there was text after the cursor, move the cursor back before it
+            if (shouldPreservePosition && !textAfterCursor.isEmpty()) {
+                const int newPos = newBlock.text().indexOf(textAfterCursor);
+                if (newPos != -1) {
+                    newCursor.setPosition(newBlock.position() + newPos);
+                    setTextCursor(newCursor);
+                }
+            }
         }
     } else if (cursor.positionInBlock() == (cursor.block().length() - 1) &&
                indenter_->shouldAutoIndentOnEvent(event)) {
