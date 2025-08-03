@@ -872,8 +872,16 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
     } else if (event->matches(QKeySequence::InsertParagraphSeparator)) {
         // Enter pressed. Indent new empty line
         AtomicEditOperation op(this);
+
+        auto textAfterCursor = cursor.block().text().mid(cursor.positionInBlock());
         QPlainTextEdit::keyPressEvent(event);
         indenter_->indentBlock(cursor.block(), cursor.positionInBlock(), event->text()[0]);
+        if (!textAfterCursor.isEmpty()) {
+            QTextCursor newCursor = textCursor();
+            int newPos = newCursor.position() - textAfterCursor.length();
+            newCursor.setPosition(newPos);
+            setTextCursor(newCursor);
+        }
     } else if (cursor.positionInBlock() == (cursor.block().length() - 1) &&
                indenter_->shouldAutoIndentOnEvent(event)) {
         // Indentation on special characters. Like closing bracket in XML

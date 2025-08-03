@@ -132,9 +132,9 @@ void Indenter::indentBlock(QTextBlock block, int cursorPos, QChar typedKey) cons
     } else { // be smart
         QString indentedLine;
         if (typedKey == QChar::Null) { // format line on shortcut
-            indentedLine = alg_->autoFormatLine(block);
+            indentedLine = alg_ ? alg_->autoFormatLine(block) : QString();
         } else {
-            indentedLine = alg_->indentLine(block, cursorPos);
+            indentedLine = alg_ ? alg_->indentLine(block, cursorPos) : QString();
         }
 
         if ((!indentedLine.isNull()) && indentedLine != block.text()) {
