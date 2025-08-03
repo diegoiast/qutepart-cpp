@@ -18,8 +18,6 @@
 #include <hl/rules.h>
 #include <hl/syntax_highlighter.h>
 
-#include "bracket_highlighter.h"
-#include "hl/loader.h"
 #include "theme.h"
 
 namespace Qutepart {
@@ -91,7 +89,7 @@ auto Theme::loadTheme(const QString &filename) -> bool {
     // Parse metadata
     auto metaDataObj = themeData["metadata"].toObject();
     auto copyrightArray = metaDataObj["copyright"].toArray();
-    for (const auto &copyright : copyrightArray) {
+    for (const auto &copyright : std::as_const(copyrightArray)) {
         metaData.copyright.push_back(copyright.toString());
     }
     metaData.name = metaDataObj["name"].toString();

@@ -74,8 +74,8 @@ QList<QTextEdit::ExtraSelection> BracketHighlighter::extraSelections(const TextP
 QTextEdit::ExtraSelection BracketHighlighter::makeMatchSelection(const TextPosition &pos,
                                                                  bool matched) {
     auto palette = qpart->palette();
-    auto matchedColor = palette.color(QPalette::Highlight);
-    auto nonMatchedColor = palette.color(QPalette::LinkVisited);
+    auto matchedColor = palette.color(QPalette::Highlight).lighter();
+    auto nonMatchedColor = palette.color(QPalette::LinkVisited).lighter();
 
     QTextEdit::ExtraSelection selection;
     if (auto theme = qpart->getTheme()) {
