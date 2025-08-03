@@ -920,6 +920,17 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         AtomicEditOperation op(this);
         QPlainTextEdit::keyPressEvent(event);
     } else if (cursor.hasSelection()) {
+        if (event->key() == Qt::Key_Tab && event->modifiers() == Qt::NoModifier) {
+            changeSelectedBlocksIndent(true, false);
+            event->accept();
+            return;
+        } 
+        else if (event->key() == Qt::Key_Backtab || 
+                (event->key() == Qt::Key_Tab && event->modifiers() == Qt::ShiftModifier)) {
+            changeSelectedBlocksIndent(false, false);
+            event->accept();
+            return;
+        }
         switch (event->key()) {
         case Qt::Key_Apostrophe:
             addBrackets(cursor, '\'', '\'');
