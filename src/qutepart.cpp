@@ -501,7 +501,7 @@ void Qutepart::removeMetaData() {
         auto data = static_cast<TextBlockUserData *>(block.userData());
         if (data) {
             data->metaData.message.clear();
-            block.setUserState(0);
+            data->state = 0;
         }
     }
     persitentSelections.clear();
