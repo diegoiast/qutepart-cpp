@@ -872,30 +872,30 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
     } else if (event->matches(QKeySequence::InsertParagraphSeparator)) {
         // Enter pressed. Indent new empty line
         AtomicEditOperation op(this);
-        
+
         const QString currentLine = cursor.block().text();
         const int cursorPosInBlock = cursor.positionInBlock();
-        
+
         // Only try to preserve cursor position if it's in the middle of the line
-        const bool shouldPreservePosition = (cursorPosInBlock > 0) && 
-                                          (cursorPosInBlock < currentLine.length());
+        const bool shouldPreservePosition =
+            (cursorPosInBlock > 0) && (cursorPosInBlock < currentLine.length());
         QString textAfterCursor;
         if (shouldPreservePosition) {
             textAfterCursor = currentLine.mid(cursorPosInBlock);
         }
-        
+
         // Let the default handler process the enter key
         QPlainTextEdit::keyPressEvent(event);
-        
+
         // Get the new cursor position after the default handler
         QTextCursor newCursor = textCursor();
         const QTextBlock newBlock = newCursor.block();
-        
+
         // Only apply indentation if we're still on a valid block
         if (newBlock.isValid()) {
             // Apply indentation to the new line
             indenter_->indentBlock(newBlock, newCursor.positionInBlock(), '\n');
-            
+
             // If there was text after the cursor, move the cursor back before it
             if (shouldPreservePosition && !textAfterCursor.isEmpty()) {
                 const int newPos = newBlock.text().indexOf(textAfterCursor);
@@ -924,9 +924,8 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
             changeSelectedBlocksIndent(true, false);
             event->accept();
             return;
-        } 
-        else if (event->key() == Qt::Key_Backtab || 
-                (event->key() == Qt::Key_Tab && event->modifiers() == Qt::ShiftModifier)) {
+        } else if (event->key() == Qt::Key_Backtab ||
+                   (event->key() == Qt::Key_Tab && event->modifiers() == Qt::ShiftModifier)) {
             changeSelectedBlocksIndent(false, false);
             event->accept();
             return;
@@ -2273,26 +2272,27 @@ void Qutepart::multipleCursorPaste() {
 
 void Qutepart::multipleCursorCopy() {
     auto allCursors = extraCursors;
-    allCursors.append(textCursor());
+    auto textToCopy = QString();
 
+    allCursors.append(textCursor());
     std::sort(allCursors.begin(), allCursors.end(), [](const auto &a, const auto &b) {
         return a.block().blockNumber() < b.block().blockNumber();
     });
+    auto anySelection = std::any_of(allCursors.begin(), allCursors.end(),
+                                    [](const auto &cursor) { return cursor.hasSelection(); });
 
-    auto usedBlocks = QSet<int>();
-    auto anySelection = false;
-    for (const auto &cursor : allCursors) {
-        if (cursor.hasSelection()) {
-            anySelection = true;
-            break;
+    if (anySelection) {
+        auto selectedTexts = QStringList();
+        for (const auto &cursor : allCursors) {
+            if (cursor.hasSelection()) {
+                selectedTexts << cursor.selectedText();
+            }
         }
-    }
-
-    auto lines = QStringList();
-    for (const auto &cursor : allCursors) {
-        if (cursor.hasSelection()) {
-            lines << cursor.selectedText();
-        } else if (!anySelection) {
+        textToCopy = selectedTexts.join('\n').replace(QChar(0x2029), '\n');
+    } else {
+        auto usedBlocks = QSet<int>();
+        auto lines = QStringList();
+        for (const auto &cursor : allCursors) {
             int blockNum = cursor.block().blockNumber();
             if (!usedBlocks.contains(blockNum)) {
                 auto text = cursor.block().text();
@@ -2303,11 +2303,10 @@ void Qutepart::multipleCursorCopy() {
                 usedBlocks.insert(blockNum);
             }
         }
-    }
-
-    auto textToCopy = lines.join('\n');
-    if (!anySelection) {
-        textToCopy.append('\n');
+        textToCopy = lines.join('\n');
+        if (!lines.isEmpty()) {
+            textToCopy.append('\n');
+        }
     }
     QApplication::clipboard()->setText(textToCopy);
 }
