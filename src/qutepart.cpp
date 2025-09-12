@@ -857,7 +857,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
             if (!currentWord.isEmpty()) {
                 cursor.beginEditBlock();
                 cursor.insertText("\n");
-                indenter_->indentBlock(cursor.block(), cursor.positionInBlock(), event->text()[0]);
+                indenter_->indentBlock(cursor.block(), cursor.positionInBlock(), event->key());
                 cursor.insertText(currentWord);
                 cursor.insertText(event->text());
                 cursor.endEditBlock();
@@ -894,7 +894,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         // Only apply indentation if we're still on a valid block
         if (newBlock.isValid()) {
             // Apply indentation to the new line
-            indenter_->indentBlock(newBlock, newCursor.positionInBlock(), '\n');
+            indenter_->indentBlock(newBlock, newCursor.positionInBlock(), Qt::Key_Enter);
 
             // If there was text after the cursor, move the cursor back before it
             if (shouldPreservePosition && !textAfterCursor.isEmpty()) {
@@ -909,7 +909,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                indenter_->shouldAutoIndentOnEvent(event)) {
         // Indentation on special characters. Like closing bracket in XML
         QPlainTextEdit::keyPressEvent(event);
-        indenter_->indentBlock(cursor.block(), cursor.positionInBlock(), event->text()[0]);
+        indenter_->indentBlock(cursor.block(), cursor.positionInBlock(), event->key());
     } else if (event->key() == Qt::Key_Insert && event->modifiers() == Qt::NoModifier) {
         // toggle Overwrite mode
         setOverwriteMode(!overwriteMode());

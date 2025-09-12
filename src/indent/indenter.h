@@ -38,7 +38,7 @@ class Indenter : public QObject {
 #if 0
     void autoIndentBlock(QTextBlock block, QChar typedKey) const;
 #endif
-    void indentBlock(QTextBlock block, int cursorPos, QChar typedKey) const;
+    void indentBlock(QTextBlock block, int cursorPos, int typedKey) const;
   public slots:
     void onShortcutIndentAfterCursor(QTextCursor cursor) const;
     void onShortcutUnindentWithBackspace(QTextCursor &cursor) const;
