@@ -16,7 +16,9 @@ namespace Qutepart {
 
 AbstractRule::AbstractRule(const AbstractRuleParams &params)
     : lookAhead(params.lookAhead), attribute(params.attribute), contextSwitcher(params.context),
-      firstNonSpace(params.firstNonSpace), column(params.column), dynamic(params.dynamic) {}
+      firstNonSpace(params.firstNonSpace), column(params.column), dynamic(params.dynamic),
+      beginRegion(params.beginRegion),
+      endRegion(params.endRegion) {}
 
 void AbstractRule::printDescription(QTextStream &out) const {
     out << "\t\t" << description() << "\n";
@@ -61,7 +63,7 @@ MatchResult *AbstractRule::makeMatchResult(int length, bool lineContinue,
         length = 0;
     }
 
-    return new MatchResult(length, data, lineContinue, contextSwitcher, style);
+    return new MatchResult(length, data, lineContinue, contextSwitcher, style, this);
 }
 
 MatchResult *AbstractRule::tryMatch(const TextToMatch &textToMatch) const {

@@ -142,8 +142,8 @@ AbstractRuleParams parseAbstractRuleParams(const QXmlStreamAttributes &attrs, QS
         return AbstractRuleParams();
     }
 
-    // TODO beginRegion
-    // TODO endRegion
+    QString beginRegion = getAttribute(attrs, "beginRegion");
+    QString endRegion = getAttribute(attrs, "endRegion");
 
     int column = -1;
     QString columnStr = getAttribute(attrs, "column");
@@ -155,7 +155,7 @@ AbstractRuleParams parseAbstractRuleParams(const QXmlStreamAttributes &attrs, QS
         }
     }
 
-    return AbstractRuleParams{attribute, context, lookAhead, firstNonSpace, column, dynamic};
+    return AbstractRuleParams{attribute, context, lookAhead, firstNonSpace, column, dynamic, beginRegion, endRegion};
 }
 
 template <class RuleClass>

@@ -18,7 +18,7 @@ class AbstractRule;
 class MatchResult {
   public:
     MatchResult(int length, const QStringList &data, bool lineContinue,
-                const ContextSwitcher &context, const Style &style);
+                const ContextSwitcher &context, const Style &style, const AbstractRule *rule);
     MatchResult();
 
     int length;
@@ -26,6 +26,7 @@ class MatchResult {
     bool lineContinue;
     ContextSwitcher nextContext;
     Style style;
+    const AbstractRule *rule;
 };
 
 } // namespace Qutepart

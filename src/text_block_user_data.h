@@ -7,6 +7,7 @@
 #pragma once
 
 #include <QIcon>
+#include <QStack>
 #include <QTextBlockUserData>
 
 #include "context_stack.h"
@@ -19,6 +20,12 @@ class TextBlockUserData : public QTextBlockUserData {
     QString textTypeMap;
     ContextStack contexts;
     int state = 0;
+
+    struct {
+        int level = 0;
+        bool processed = false;
+    } folding;
+    QStack<QString> regions;
 
     struct {
         QString message;

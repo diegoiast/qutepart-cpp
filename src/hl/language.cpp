@@ -59,9 +59,9 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
 
     do {
         // qDebug() << "\tIn context " << contextStack.currentContext()->name();
-        const Context *context = contextStack.currentContext();
+        Context *context = const_cast<Context*>(contextStack.currentContext()); // Cast to non-const
         contextStack =
-            context->parseBlock(contextStack, textToMatch, formats, textTypeMap, lineContinue);
+            context->parseBlock(contextStack, textToMatch, formats, textTypeMap, lineContinue, data);
     } while (!textToMatch.isEmpty());
 
     if (!lineContinue) {
@@ -99,9 +99,20 @@ ContextStack Language::getContextStack(QTextBlock block) {
     }
 
     if (data != nullptr) {
-        return data->contexts;
+        ContextStack contextStack = data->contexts;
+        if (data->folding.processed) {
+            data->folding.level = 0;
+        }
+        if (prevBlock.isValid()) {
+            auto* prevData = static_cast<TextBlockUserData*>(prevBlock.userData());
+            if (prevData) {
+                data->regions = prevData->regions;
+            }
+        }
+        return contextStack;
     } else {
-        return defaultContextStack;
+        ContextStack contextStack = defaultContextStack;
+        return contextStack;
     }
 }
 

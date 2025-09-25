@@ -13,6 +13,7 @@
 #include <optional>
 
 #include "context_stack.h"
+#include "text_block_user_data.h"
 #include "context_switcher.h"
 #include "style.h"
 
@@ -51,7 +52,7 @@ class Context {
 
     const ContextStack parseBlock(const ContextStack &contextStack, TextToMatch &textToMatch,
                                   QVector<QTextLayout::FormatRange> &formats, QString &textTypeMap,
-                                  bool &lineContinue) const;
+                                  bool &lineContinue, TextBlockUserData *data);
 
     // Try to match textToMatch with nested rules
     MatchResult *tryMatch(const TextToMatch &textToMatch) const;

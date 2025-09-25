@@ -26,6 +26,8 @@ struct AbstractRuleParams {
     bool firstNonSpace;
     int column; // -1 if not set
     bool dynamic;
+    QString beginRegion;
+    QString endRegion;
 };
 
 class AbstractRule {
@@ -69,6 +71,8 @@ class AbstractRule {
     int column; // -1 if not set
     bool dynamic;
     Style style;
+    QString beginRegion;
+    QString endRegion;
 };
 
 // A rule which has 1 string as a parameter
