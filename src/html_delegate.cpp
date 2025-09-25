@@ -83,17 +83,12 @@ void HTMLDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                              myOption.palette.color(QPalette::Active, QPalette::HighlightedText));
     }
 
-    QRect textRect = style->subElementRect(QStyle::SE_ItemViewItemText, &options);
+    auto textRect = style->subElementRect(QStyle::SE_ItemViewItemText, &options);
     painter->save();
-    painter->translate(textRect.topLeft());
 
-    /* Original example contained line
-        painter.setClipRect(textRect.translated(-textRect.topLeft()))
-    but text is drawn clipped with it on kubuntu 12.04
-    */
-
+    auto yOffset = (textRect.height() - doc.size().height()) / 2.0;
+    painter->translate(textRect.left(), textRect.top() + yOffset);
     doc.documentLayout()->draw(painter, ctx);
-
     painter->restore();
 }
 
