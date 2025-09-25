@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QListView>
 #include <QRegularExpression>
+#include <QScrollBar>
 
 #include "completer.h"
 #include "html_delegate.h"
@@ -29,10 +30,9 @@ const QRegularExpression wordAtStartRegExp("^" + wordPattern);
 // completion invoked manually.
 const int MAX_VISIBLE_WORD_COUNT = 256;
 
-const int MAX_VISIBLE_ROWS = 20; // no any technical reason, just for better UI
+const int MAX_VISIBLE_ROWS = 7; // no any technical reason, just for better UI
 
 const int WIDGET_BORDER_MARGIN = 5;
-const int SCROLLBAR_WIDTH = 30; // just a guess
 
 } // anonymous namespace
 
@@ -48,12 +48,12 @@ class CompletionModel : public QAbstractItemModel {
 
     // Set model information
     void setCompletionData(const QString &wordBeforeCursor, const QString wholeWord) {
+        beginResetModel();
         typedText_ = wordBeforeCursor;
         words_ = makeListOfCompletions(wordBeforeCursor, wholeWord);
         QString commonStart = commonWordStart(words_);
         canCompleteText_ = commonStart.mid(wordBeforeCursor.length());
-
-        emit(layoutChanged());
+        endResetModel();
     }
 
     bool hasWords() const { return !words_.isEmpty(); }
@@ -149,8 +149,7 @@ class CompletionModel : public QAbstractItemModel {
 
     QString canCompleteText() const { return canCompleteText_; }
 
-  signals:
-    void layoutChanged();
+
 
   private:
     const QSet<QString> &wordSet_;
@@ -175,6 +174,7 @@ class CompletionList : public QListView {
         setFrameStyle(QFrame::Raised);
         setFrameShape(QFrame::Box);
         setFrameShadow(QFrame::Raised);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
         setItemDelegate(new HTMLDelegate(this));
 
@@ -214,67 +214,64 @@ class CompletionList : public QListView {
 
     /* QWidget.sizeHint implementation
     Automatically resizes the widget according to rows count
-
-    FIXME very bad algorithm. Remove all this margins, if you can
     */
     QSize sizeHint() const override {
-        int width = -1;
-        for (auto const &word : std::as_const(completionModel_->words())) {
-            int wordWidth = fontMetrics().horizontalAdvance(word);
-            if (wordWidth > width) {
-                width = wordWidth;
-            }
+        const int rowCount = std::min(model()->rowCount(), MAX_VISIBLE_ROWS);
+        int height = 0;
+        if (rowCount > 0) {
+            height = sizeHintForRow(0) * rowCount + frameWidth() * 2;
         }
 
-        width = width * 1.4; // FIXME bad hack. invent better formula
-        width += 30;         // margin
-
-        // drawn with scrollbar without +2. I don't know why
-        int rowCount = std::min(model()->rowCount(), MAX_VISIBLE_ROWS);
-        int height = sizeHintForRow(0) * (rowCount + 0.5); // + 0.5 row margin
+        int maxWidth = 0;
+        const QFontMetrics fm = fontMetrics();
+        for (const auto &word : std::as_const(completionModel_->words())) {
+            maxWidth = std::max(maxWidth, fm.horizontalAdvance(word));
+        }
+        // Add some margin for HTML delegate and frame
+        int width = maxWidth + frameWidth() * 2 + 30;
+        if (model()->rowCount() > MAX_VISIBLE_ROWS) {
+            width += verticalScrollBar()->sizeHint().width();
+        }
 
         return QSize(width, height);
-    }
-
-    // QWidget::minimumSizeHint implementation
-    int minimumHeight() const {
-        return sizeHintForRow(0) * 1.5; // + 0.5 row margin
     }
 
     CompletionModel *completionModel() const { return completionModel_; }
 
     // Move widget to point under cursor
     void updateGeometry() {
-        QSize hint = sizeHint();
-        int width = hint.width();
-        int height = hint.height();
+        auto hint = sizeHint();
+        auto width = hint.width();
+        auto height = hint.height();
+        auto const cursorRect = qpart_->QPlainTextEdit::cursorRect(qpart_->textCursor());
+        auto const parentSize = parentWidget()->size();
+        auto const spaceBelow = parentSize.height() - cursorRect.bottom();
+        auto const spaceAbove = cursorRect.top();
 
-        QRect cursorRect = qpart_->QPlainTextEdit::cursorRect(qpart_->textCursor());
-        QSize parentSize = parentWidget()->size();
-
-        int spaceBelow = parentSize.height() - cursorRect.bottom() - WIDGET_BORDER_MARGIN;
-        int spaceAbove = cursorRect.top() - WIDGET_BORDER_MARGIN;
-        int xPos = -1;
-        int yPos = -1;
-
-        if (height <= spaceBelow || spaceBelow > spaceAbove) {
+        int yPos;
+        if (height <= spaceBelow) {
+            // fits below
             yPos = cursorRect.bottom();
-            if (height > spaceBelow && spaceBelow > minimumHeight()) {
-                height = spaceBelow;
-                width = width + SCROLLBAR_WIDTH;
-            }
+        } else if (height <= spaceAbove) {
+            // fits above
+            yPos = cursorRect.top() - height;
         } else {
-            if (height > spaceAbove && spaceAbove > minimumHeight()) {
-                height = spaceAbove;
-                width = width + SCROLLBAR_WIDTH;
+            // doesn't fit either way, resize it in the larger space
+            if (spaceBelow > spaceAbove) {
+                yPos = cursorRect.bottom();
+                height = spaceBelow - WIDGET_BORDER_MARGIN;
+            } else {
+                height = spaceAbove - WIDGET_BORDER_MARGIN;
+                yPos = cursorRect.top() - height;
             }
-            yPos = std::max(3, cursorRect.top() - height);
         }
 
-        xPos = cursorRect.right() - horizontalShift();
-
-        if (xPos + width + WIDGET_BORDER_MARGIN > parentSize.width()) {
-            xPos = std::max(3, parentSize.width() - WIDGET_BORDER_MARGIN - width);
+        int xPos = cursorRect.right() - horizontalShift();
+        if (xPos + width > parentSize.width()) {
+            xPos = parentSize.width() - width;
+        }
+        if (xPos < 0) {
+            xPos = 0;
         }
 
         setGeometry(xPos, yPos, width, height);

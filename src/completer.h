@@ -9,7 +9,6 @@
 #include <QObject>
 #include <QSet>
 #include <QTimer>
-#include <memory>
 
 namespace Qutepart {
 
