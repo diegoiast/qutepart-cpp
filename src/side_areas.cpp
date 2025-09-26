@@ -153,7 +153,7 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
     auto currentBlock = qpart_->textCursor().block().fragmentIndex();
     QTextBlock block = qpart_->firstVisibleBlock();
     int blockNumber = block.blockNumber();
-    int top = int(qpart_->blockBoundingGeometry(block).translated(qpart_->contentOffset()).top());
+    int top = int(qpart_->blockBoundingRect(block).translated(qpart_->contentOffset()).top());
     int bottom = top + int(qpart_->blockBoundingRect(block).height());
     int singleBlockHeight = qpart_->cursorRect(block, 0, 0).height();
 
@@ -228,12 +228,12 @@ void MarkArea::paintEvent(QPaintEvent *event) {
     painter.fillRect(event->rect(), backgruoundColor);
 
     auto block = qpart_->firstVisibleBlock();
-    auto blockBoundingGeometry =
-        qpart_->blockBoundingGeometry(block).translated(qpart_->contentOffset());
-    auto top = blockBoundingGeometry.top();
+    auto blockBoundingRect =
+        qpart_->blockBoundingRect(block).translated(qpart_->contentOffset());
+    auto top = blockBoundingRect.top();
 
     while (block.isValid() && top <= event->rect().bottom()) {
-        auto height = qpart_->blockBoundingGeometry(block).height();
+        auto height = qpart_->blockBoundingRect(block).height();
         auto bottom = top + height;
 
         if (block.isVisible() && bottom >= event->rect().top()) {
@@ -361,7 +361,7 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
 
     auto viewportStartY = viewportStartLine * lineHeight - minimapOffset;
     auto viewportHeight = viewportLines * lineHeight;
-    auto viewportRect =
+    auto viewportRect = 
         QRect(minimapArea.left(),
               std::max(0, std::min(viewportStartY, minimapVisibleHeight - viewportHeight)),
               minimapArea.width(), std::min(viewportHeight, minimapArea.height()));
