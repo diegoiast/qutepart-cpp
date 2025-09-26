@@ -13,13 +13,13 @@
  * See also hl_factory.h if you need only syntax highlighter.
  */
 
-#include <memory>
-
+#include <QTextBlock>
 #include <QColor>
 #include <QDebug>
 #include <QPlainTextEdit>
 #include <QSharedPointer>
-#include <QSyntaxHighlighter>
+
+class QSyntaxHighlighter;
 
 namespace Qutepart {
 
@@ -123,6 +123,7 @@ class MarkArea;
 class Minimap;
 class Completer;
 class Theme;
+class FoldingArea;
 
 /**
  * Document line.
@@ -516,6 +517,7 @@ class Qutepart : public QPlainTextEdit {
   private slots:
     void updateViewport();
     void updateExtraSelections();
+    void onFoldClicked(int lineNumber);
 
     void onShortcutHome(QTextCursor::MoveMode moveMode);
     void onShortcutEnd(QTextCursor::MoveMode moveMode);
@@ -543,6 +545,7 @@ class Qutepart : public QPlainTextEdit {
     MarkArea *markArea_ = nullptr;
     Minimap *miniMap_ = nullptr;
     Completer *completer_;
+    FoldingArea *foldingArea_ = nullptr;
 
     bool drawIndentations_;
     bool drawAnyWhitespace_;
@@ -595,6 +598,7 @@ class Qutepart : public QPlainTextEdit {
 
     friend class LineNumberArea;
     friend class MarkArea;
+    friend class FoldingArea;
 
   public:
     int MaxLinesForWordHighligher = 100000;

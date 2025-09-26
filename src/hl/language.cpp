@@ -55,7 +55,21 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
     if (!data) {
         data = new TextBlockUserData(textTypeMap, contextStack);
         block.setUserData(data);
+        qDebug() << "Language: Created new TextBlockUserData for block" << block.blockNumber();
+    } else {
+        qDebug() << "Language: Reusing existing TextBlockUserData for block" << block.blockNumber();
     }
+
+    data->folding.processed = false;
+
+    QTextBlock prevBlock = block.previous();
+    if (prevBlock.isValid()) {
+        TextBlockUserData* prevData = static_cast<TextBlockUserData*>(prevBlock.userData());
+        if (prevData) {
+            data->regions = prevData->regions;
+        }
+    }
+    qDebug() << "Language: Block" << block.blockNumber() << "final folding level:" << data->folding.level;
 
     do {
         // qDebug() << "\tIn context " << contextStack.currentContext()->name();
@@ -70,7 +84,7 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
 
     data->textTypeMap = textTypeMap;
     data->contexts = contextStack;
-    return *((int *)contextStack.currentContext());
+    return qHash(contextStack);
 }
 
 ContextPtr Language::getContext(const QString &contextName) const {
@@ -99,20 +113,9 @@ ContextStack Language::getContextStack(QTextBlock block) {
     }
 
     if (data != nullptr) {
-        ContextStack contextStack = data->contexts;
-        if (data->folding.processed) {
-            data->folding.level = 0;
-        }
-        if (prevBlock.isValid()) {
-            auto* prevData = static_cast<TextBlockUserData*>(prevBlock.userData());
-            if (prevData) {
-                data->regions = prevData->regions;
-            }
-        }
-        return contextStack;
+        return data->contexts;
     } else {
-        ContextStack contextStack = defaultContextStack;
-        return contextStack;
+        return defaultContextStack;
     }
 }
 

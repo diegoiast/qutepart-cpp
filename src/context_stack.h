@@ -7,12 +7,18 @@
 #pragma once
 
 #include <QStringList>
+#include <QHash>
+#include <QVector>
 
 namespace Qutepart {
 
 class ContextSwitcher;
-
 class Context;
+struct ContextStackItem;
+class ContextStack;
+
+uint qHash(const ContextStackItem &key, uint seed = 0);
+uint qHash(const ContextStack &key, uint seed = 0);
 
 struct ContextStackItem {
     ContextStackItem();
@@ -26,9 +32,11 @@ struct ContextStackItem {
 
 class ContextStack {
   public:
+    ContextStack() = default;
     ContextStack(Context *context);
 
     bool operator==(const ContextStack &other) const;
+    bool operator!=(const ContextStack &other) const;
 
   private:
     ContextStack(const QVector<ContextStackItem> &items);
@@ -46,6 +54,8 @@ class ContextStack {
 
   private:
     QVector<ContextStackItem> items;
+
+    friend uint qHash(const ContextStack &key, uint seed);
 };
 
 } // namespace Qutepart

@@ -5,6 +5,7 @@
  */
 
 #include <QDebug>
+#include <QHashFunctions>
 
 #include "context.h"
 #include "context_switcher.h"
@@ -58,6 +59,18 @@ ContextStack ContextStack::switchContext(const ContextSwitcher &operation,
     }
 
     return ContextStack(newItems);
+}
+
+bool ContextStack::operator!=(const ContextStack &other) const { return !(*this == other); }
+
+uint qHash(const ContextStackItem &key, uint seed)
+{
+    return ::qHash(key.context, seed) ^ ::qHash(key.data, seed);
+}
+
+uint qHash(const ContextStack &key, uint seed)
+{
+    return qHashRange(key.items.begin(), key.items.end(), seed);
 }
 
 } // namespace Qutepart
