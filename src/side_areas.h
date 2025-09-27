@@ -85,4 +85,23 @@ class Minimap : public SideArea {
     const int charWidth = 3;
 };
 
+class FoldingArea : public SideArea {
+    Q_OBJECT
+
+  public:
+    explicit FoldingArea(Qutepart *editor);
+
+    int widthHint() const;
+
+  signals:
+    void foldClicked(int lineNumber);
+
+  protected:
+    void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+
+  private:
+    QTextBlock blockAt(const QPoint &pos) const;
+};
+
 } // namespace Qutepart

@@ -17,7 +17,6 @@
 #include "completer.h"
 #include "qutepart.h"
 #include "side_areas.h"
-#include "side_areas/folding_area.h"
 #include "text_block_flags.h"
 #include "text_block_utils.h"
 
@@ -43,7 +42,6 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     setMarkCurrentWord(true);
     foldingArea_->show();
     connect(foldingArea_, &FoldingArea::foldClicked, this, &Qutepart::onFoldClicked);
-    connect(this, &Qutepart::updateRequest, foldingArea_, &FoldingArea::onUpdateRequest);
     setDrawSolidEdge(drawSolidEdge_);
 
     setDefaultColors();
@@ -1415,10 +1413,16 @@ void Qutepart::updateViewport() {
         viewportMarginStart += width;
     }
 
+    {
+        auto width = markArea_->widthHint();
+        markArea_->setGeometry(QRect(currentX, top, width, height));
+        viewportMarginStart += width;
+        currentX += width;
+    }
+
     if (foldingArea_) {
         auto width = foldingArea_->widthHint();
         foldingArea_->setGeometry(QRect(currentX, top, width, height));
-        currentX += width;
         viewportMarginStart += width;
     }
 
@@ -1434,12 +1438,6 @@ void Qutepart::updateViewport() {
             miniMap_->setGeometry(QRect(cr.width() - width - deltaOrizontal, top, width, height));
             viewportMarginEnd += width;
         }
-    }
-
-    {
-        auto width = markArea_->widthHint();
-        markArea_->setGeometry(QRect(currentX, top, width, height));
-        viewportMarginStart += width;
     }
 
     if (viewportMarginStart_ != viewportMarginStart || viewportMarginEnd_ != viewportMarginEnd) {

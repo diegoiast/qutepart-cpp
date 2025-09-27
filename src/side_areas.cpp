@@ -12,6 +12,7 @@
 #include <QScrollBar>
 #include <QTextBlock>
 #include <QToolTip>
+#include <QMouseEvent>
 
 #include "qutepart.h"
 #include "text_block_flags.h"
@@ -151,15 +152,15 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
     painter.setPen(foreground);
 
     auto currentBlock = qpart_->textCursor().block().fragmentIndex();
-    QTextBlock block = qpart_->firstVisibleBlock();
-    int blockNumber = block.blockNumber();
-    int top = int(qpart_->blockBoundingRect(block).translated(qpart_->contentOffset()).top());
-    int bottom = top + int(qpart_->blockBoundingRect(block).height());
-    int singleBlockHeight = qpart_->cursorRect(block, 0, 0).height();
+    auto block = qpart_->firstVisibleBlock();
+    auto blockNumber = block.blockNumber();
+    auto top = int(qpart_->blockBoundingRect(block).translated(qpart_->contentOffset()).top());
+    auto bottom = top + int(qpart_->blockBoundingRect(block).height());
+    auto singleBlockHeight = qpart_->cursorRect(block, 0, 0).height();
 
-    QRectF boundingRect = qpart_->blockBoundingRect(block);
-    int availableWidth = width() - RIGHT_LINE_NUM_MARGIN - LEFT_LINE_NUM_MARGIN;
-    int availableHeight = qpart_->fontMetrics().height();
+    auto boundingRect = qpart_->blockBoundingRect(block);
+    auto availableWidth = width() - RIGHT_LINE_NUM_MARGIN - LEFT_LINE_NUM_MARGIN;
+    auto availableHeight = qpart_->fontMetrics().height();
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
             QString number = QString("%1").arg(blockNumber + 1);
@@ -211,7 +212,6 @@ MarkArea::MarkArea(Qutepart *textEdit) : SideArea(textEdit) {
 QPixmap MarkArea::loadIcon(const QString &name) const {
     auto icon = QIcon::fromTheme(name);
     auto size = qpart_->cursorRect(qpart_->document()->begin(), 0, 0).height() - 6;
-    // This also works with Qt.AA_UseHighDpiPixmaps
     return icon.pixmap(size, size);
 }
 
@@ -308,7 +308,7 @@ void Minimap::paintEvent(QPaintEvent *event) {
 }
 
 QFont Minimap::minimapFont() const {
-    QFont font = this->font();
+    auto font = this->font();
     font.setPointSizeF(2);
     return font;
 }
@@ -374,7 +374,6 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
 
     auto palette = qpart_->palette();
     auto textColor = palette.color(QPalette::Text);
-
     auto minimapBackground = palette.color(QPalette::AlternateBase);
     if (auto theme = qpart_->getTheme()) {
         if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
@@ -449,6 +448,107 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     }
 
     painter->restore();
+}
+
+FoldingArea::FoldingArea(Qutepart *editor) : SideArea(editor) {
+    setMouseTracking(true);
+}
+
+int FoldingArea::widthHint() const {
+    return qpart_->fontMetrics().horizontalAdvance(QLatin1Char('9')) + 6;
+}
+
+void FoldingArea::paintEvent(QPaintEvent *event) {
+    auto palette = qpart_->palette();
+    auto textColor = palette.color(QPalette::Text);
+    auto background = palette.color(QPalette::AlternateBase);
+
+    if (auto theme = qpart_->getTheme()) {
+        if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
+            background = theme->getEditorColors()[Theme::Colors::IconBorder];
+        }
+    }
+
+    QPainter painter(this);
+    painter.fillRect(event->rect(), background);
+
+    auto block = qpart_->firstVisibleBlock();
+    auto top = qRound(qpart_->blockBoundingRect(block).translated(qpart_->contentOffset()).top());
+    auto bottom = top + qRound(qpart_->blockBoundingRect(block).height());
+
+    while (block.isValid() && top <= event->rect().bottom()) {
+        if (block.isVisible() && bottom >= event->rect().top()) {
+            auto const data = static_cast<TextBlockUserData *>(block.userData());
+            if (data) {
+                // qDebug() << "Block" << block.blockNumber() << "folding level" <<
+                // data->folding.level;
+            }
+
+            TextBlockUserData *prevData = nullptr;
+            auto prevBlock = block.previous();
+            auto prevLevel = 0;
+            if (prevBlock.isValid()) {
+                prevData = static_cast<TextBlockUserData *>(prevBlock.userData());
+            }
+
+            if (prevData) {
+                prevLevel = prevData->folding.level;
+            }
+
+            if (data && data->folding.level > prevLevel) {
+                // qDebug() << "  - Drawing folding marker for block" << block.blockNumber();
+                painter.setPen(textColor);
+                QRect r(1, top, width() - 2, qpart_->fontMetrics().height());
+                painter.drawRect(r);
+
+                if (block.next().isVisible()) {
+                    painter.drawText(r, Qt::AlignCenter, "-");
+                } else {
+                    painter.drawText(r, Qt::AlignCenter, "+");
+                }
+            }
+        }
+
+        block = block.next();
+        top = bottom;
+        bottom = top + qRound(qpart_->blockBoundingRect(block).height());
+    }
+}
+
+QTextBlock FoldingArea::blockAt(const QPoint& pos) const {
+    QTextBlock block = qpart_->firstVisibleBlock();
+    if ( ! block.isValid()) {
+        return QTextBlock();
+    }
+
+    int top = qRound(qpart_->blockBoundingRect(block).translated(qpart_->contentOffset()).top());
+    int bottom = top + qRound(qpart_->blockBoundingRect(block).height());
+
+    while (block.isValid() && top <= pos.y()) {
+        if (block.isVisible() && bottom >= pos.y()) {
+            return block;
+        }
+        block = block.next();
+        top = bottom;
+        bottom = top + qRound(qpart_->blockBoundingRect(block).height());
+    }
+
+    return QTextBlock();
+}
+
+void FoldingArea::mousePressEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
+        QTextBlock block = blockAt(event->pos());
+        if (block.isValid()) {
+            TextBlockUserData *data = static_cast<TextBlockUserData *>(block.userData());
+            if (data && data->folding.level > 0) {
+                emit foldClicked(block.blockNumber());
+                event->accept();
+                return;
+            }
+        }
+    }
+    QWidget::mousePressEvent(event);
 }
 
 } // namespace Qutepart
