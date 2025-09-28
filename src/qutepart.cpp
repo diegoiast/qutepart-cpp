@@ -600,7 +600,7 @@ void Qutepart::resetSelection() {
 
 namespace {
 // Check if an event may be a typed character
-bool isCharEvent(QKeyEvent *ev) {
+static bool isCharEvent(QKeyEvent *ev) {
     QString text = ev->text();
     if (text.length() != 1) {
         return false;
@@ -623,7 +623,7 @@ bool isCharEvent(QKeyEvent *ev) {
     return true;
 }
 
-void addBrackets(QTextCursor &cursor, QChar openBracket, QChar closeBracket) {
+static void addBrackets(QTextCursor &cursor, QChar openBracket, QChar closeBracket) {
     auto start = cursor.selectionStart();
     auto end = cursor.selectionEnd();
     cursor.beginEditBlock();
@@ -635,6 +635,37 @@ void addBrackets(QTextCursor &cursor, QChar openBracket, QChar closeBracket) {
 }
 
 } // anonymous namespace
+
+QVector<int> Qutepart::getFoldedLines() const {
+    QVector<int> foldedLines;
+    for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
+        auto data = static_cast<TextBlockUserData *>(block.userData());
+        if (data && data->folding.folded) {
+            foldedLines << block.blockNumber();
+        }
+    }
+    return foldedLines;
+}
+
+void Qutepart::setFoldedLines(const QVector<int> &foldedLines) {
+    for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
+        auto data = static_cast<TextBlockUserData *>(block.userData());
+        if (data) {
+            data->folding.folded = false;
+        }
+    }
+
+    for (auto lineNumber : foldedLines) {
+        auto block = document()->findBlockByNumber(lineNumber);
+        if (block.isValid()) {
+            auto data = static_cast<TextBlockUserData *>(block.userData());
+            if (data) {
+                data->folding.folded = true;
+            }
+        }
+    }
+    viewport()->update();
+}
 
 void Qutepart::keyPressEvent(QKeyEvent *event) {
     // Fixme: Handle copy/paste shortcuts

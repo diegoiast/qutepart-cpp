@@ -432,6 +432,12 @@ class Qutepart : public QPlainTextEdit {
     /// Find matching bracket for this position
     inline QAction *findMatchingBracketAction() const { return findMatchingBracketAction_; }
 
+    /// Returns a list of folded line numbers
+    QVector<int> getFoldedLines() const;
+
+    /// Restores the folding state from a list of line numbers
+    void setFoldedLines(const QVector<int> &foldedLines);
+
     // Convenience functions
     void resetSelection();
 
