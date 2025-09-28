@@ -13,11 +13,11 @@
  * See also hl_factory.h if you need only syntax highlighter.
  */
 
-#include <QTextBlock>
 #include <QColor>
 #include <QDebug>
 #include <QPlainTextEdit>
 #include <QSharedPointer>
+#include <QTextBlock>
 
 class QSyntaxHighlighter;
 

@@ -475,14 +475,9 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
     auto block = qpart_->firstVisibleBlock();
     auto top = qRound(qpart_->blockBoundingRect(block).translated(qpart_->contentOffset()).top());
     auto bottom = top + qRound(qpart_->blockBoundingRect(block).height());
-
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
-            auto const data = static_cast<TextBlockUserData *>(block.userData());
-            if (data) {
-                // qDebug() << "Block" << block.blockNumber() << "folding level" <<
-                // data->folding.level;
-            }
+            auto const *data = static_cast<TextBlockUserData *>(block.userData());
 
             TextBlockUserData *prevData = nullptr;
             auto prevBlock = block.previous();
@@ -496,9 +491,8 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
             }
 
             if (data && data->folding.level > prevLevel) {
-                // qDebug() << "  - Drawing folding marker for block" << block.blockNumber();
                 painter.setPen(textColor);
-                QRect r(1, top, width() - 2, qpart_->fontMetrics().height());
+                QRect r(1, top + 1, width() - 2, qpart_->fontMetrics().height() - 2);
                 painter.drawRect(r);
 
                 if (block.next().isVisible()) {
@@ -517,13 +511,12 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
 
 QTextBlock FoldingArea::blockAt(const QPoint& pos) const {
     QTextBlock block = qpart_->firstVisibleBlock();
-    if ( ! block.isValid()) {
+    if (!block.isValid()) {
         return QTextBlock();
     }
 
-    int top = qRound(qpart_->blockBoundingRect(block).translated(qpart_->contentOffset()).top());
-    int bottom = top + qRound(qpart_->blockBoundingRect(block).height());
-
+    auto top = qRound(qpart_->blockBoundingRect(block).translated(qpart_->contentOffset()).top());
+    auto bottom = top + qRound(qpart_->blockBoundingRect(block).height());
     while (block.isValid() && top <= pos.y()) {
         if (block.isVisible() && bottom >= pos.y()) {
             return block;
@@ -538,9 +531,9 @@ QTextBlock FoldingArea::blockAt(const QPoint& pos) const {
 
 void FoldingArea::mousePressEvent(QMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
-        QTextBlock block = blockAt(event->pos());
+        auto block = blockAt(event->pos());
         if (block.isValid()) {
-            TextBlockUserData *data = static_cast<TextBlockUserData *>(block.userData());
+            auto const *data = static_cast<TextBlockUserData *>(block.userData());
             if (data && data->folding.level > 0) {
                 emit foldClicked(block.blockNumber());
                 event->accept();

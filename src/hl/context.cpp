@@ -6,11 +6,11 @@
 
 #include <QDebug>
 #include <QScopedPointer>
-#include <text_block_user_data.h>
 
 #include "context.h"
 #include "match_result.h"
 #include "rules.h"
+#include "text_block_user_data.h"
 #include "text_to_match.h"
 #include "theme.h"
 
@@ -174,7 +174,7 @@ void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult
 const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToMatch &textToMatch,
                                        QVector<QTextLayout::FormatRange> &formats,
                                        QString &textTypeMap, bool &lineContinue,
-                                       TextBlockUserData *data) {
+                                       TextBlockUserData *data) const {
     textToMatch.contextData = &contextStack.currentData();
 
     if (textToMatch.isEmpty() && (!_lineEmptyContext.isNull())) {
@@ -184,26 +184,26 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
     while (!textToMatch.isEmpty()) {
         auto matchRes = tryMatch(textToMatch);
 
-                    if (matchRes) {
-                        lineContinue = matchRes->lineContinue;
-        
-                        if (data && !matchRes->rule->beginRegion.isEmpty()) {
-                            data->regions.push(matchRes->rule->beginRegion);
-                        }
-        
-                        if (data && !matchRes->rule->endRegion.isEmpty()) {
-                            if (!data->regions.isEmpty() &&
-                                data->regions.top() == matchRes->rule->endRegion) {
-                                data->regions.pop();
-                            }
-                        }
-        
-                        if (data) {
-                            data->folding.level = data->regions.size();
-                            data->folding.processed = true;
-                        }
-        
-                        if (matchRes->nextContext.isNull()) {                applyMatchResult(textToMatch, matchRes, this, formats, textTypeMap);
+        if (matchRes) {
+            lineContinue = matchRes->lineContinue;
+
+            if (data && !matchRes->rule->beginRegion.isEmpty()) {
+                data->regions.push(matchRes->rule->beginRegion);
+            }
+
+            if (data && !matchRes->rule->endRegion.isEmpty()) {
+                if (!data->regions.isEmpty() && data->regions.top() == matchRes->rule->endRegion) {
+                    data->regions.pop();
+                }
+            }
+
+            if (data) {
+                data->folding.level = data->regions.size();
+                data->folding.processed = true;
+            }
+
+            if (matchRes->nextContext.isNull()) {
+                applyMatchResult(textToMatch, matchRes, this, formats, textTypeMap);
                 textToMatch.shift(matchRes->length);
                 delete matchRes;
             } else {

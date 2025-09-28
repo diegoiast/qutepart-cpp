@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <QDebug>
 #include <algorithm>
 
 #include "context_switcher.h"
@@ -55,9 +54,6 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
     if (!data) {
         data = new TextBlockUserData(textTypeMap, contextStack);
         block.setUserData(data);
-        qDebug() << "Language: Created new TextBlockUserData for block" << block.blockNumber();
-    } else {
-        qDebug() << "Language: Reusing existing TextBlockUserData for block" << block.blockNumber();
     }
 
     data->folding.processed = false;
@@ -69,13 +65,14 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
             data->regions = prevData->regions;
         }
     }
-    qDebug() << "Language: Block" << block.blockNumber() << "final folding level:" << data->folding.level;
+    if (data) {
+        data->folding.level = data->regions.size();
+    }
 
     do {
-        // qDebug() << "\tIn context " << contextStack.currentContext()->name();
-        Context *context = const_cast<Context*>(contextStack.currentContext()); // Cast to non-const
-        contextStack =
-            context->parseBlock(contextStack, textToMatch, formats, textTypeMap, lineContinue, data);
+        auto const context = contextStack.currentContext();
+        contextStack = context->parseBlock(contextStack, textToMatch, formats, textTypeMap,
+                                           lineContinue, data);
     } while (!textToMatch.isEmpty());
 
     if (!lineContinue) {
@@ -123,13 +120,13 @@ ContextStack Language::switchAtEndOfLine(ContextStack contextStack) {
     while (!contextStack.currentContext()->lineEndContext().isNull()) {
         ContextStack oldStack = contextStack;
         contextStack = contextStack.switchContext(contextStack.currentContext()->lineEndContext());
-        if (oldStack == contextStack) { // avoid infinite while loop if nothing to switch
+        if (oldStack == contextStack) {
+            // avoid infinite while loop if nothing to switch
             break;
         }
     }
 
-    // this code is not tested, because lineBeginContext is not defined by any
-    // xml file
+    // this code is not tested, because lineBeginContext is not defined by any xml file
     if (!contextStack.currentContext()->lineBeginContext().isNull()) {
         contextStack =
             contextStack.switchContext(contextStack.currentContext()->lineBeginContext());

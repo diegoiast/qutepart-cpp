@@ -142,11 +142,10 @@ AbstractRuleParams parseAbstractRuleParams(const QXmlStreamAttributes &attrs, QS
         return AbstractRuleParams();
     }
 
-    QString beginRegion = getAttribute(attrs, "beginRegion");
-    QString endRegion = getAttribute(attrs, "endRegion");
-
-    int column = -1;
-    QString columnStr = getAttribute(attrs, "column");
+    auto beginRegion = getAttribute(attrs, "beginRegion");
+    auto endRegion = getAttribute(attrs, "endRegion");
+    auto column = -1;
+    auto columnStr = getAttribute(attrs, "column");
     if (!columnStr.isNull()) {
         column = parseIntAttribute(columnStr, error);
         if (!error.isNull()) {

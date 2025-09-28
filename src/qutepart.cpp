@@ -1509,7 +1509,7 @@ void Qutepart::unIndentBlock(const QTextBlock &block, bool withSpace) const {
         charsToRemove = std::min(qsizetype(1), currentIndent.length());
     } else {
         if (indenter_->useTabs()) {
-            charsToRemove = indenter_->width();
+            charsToRemove = std::min(spaceAtEndCount(currentIndent), indenter_->width());
         } else {                                                   // spaces
             if (currentIndent.endsWith(indenter_->indentText())) { // remove indent level
                 charsToRemove = indenter_->width();
@@ -2029,56 +2029,44 @@ void Qutepart::onShortcutHome(QTextCursor::MoveMode moveMode) {
     updateExtraSelections();
 }
 
+/// Try and un/fold a block.
 void Qutepart::onFoldClicked(int lineNumber) {
-    qDebug() << "Qutepart: onFoldClicked for line" << lineNumber;
-    QTextBlock clickedBlock = document()->findBlockByNumber(lineNumber);
+    auto clickedBlock = document()->findBlockByNumber(lineNumber);
     if (!clickedBlock.isValid()) {
-        qDebug() << "  - Invalid block";
         return;
     }
 
-    TextBlockUserData *data = static_cast<TextBlockUserData *>(clickedBlock.userData());
+    auto data = static_cast<TextBlockUserData *>(clickedBlock.userData());
     if (!data) {
-        qDebug() << "  - No folding data (data is null)";
         return;
     }
 
-    qDebug() << "  - Block" << clickedBlock.blockNumber() << "folding level from onFoldClicked:" << data->folding.level;
-
-    if (data->folding.level == 0) {
-        qDebug() << "  - Folding level is 0, returning";
+    auto currentFoldLevel = data->folding.level;
+    if (currentFoldLevel == 0) {
         return;
     }
 
-    int currentFoldLevel = data->folding.level;
-    qDebug() << "  - Current fold level:" << currentFoldLevel;
-
-    QTextBlock nextBlock = clickedBlock.next();
-    if (!nextBlock.isValid()) {
-        qDebug() << "  - No next block";
-        return;
-    }
-
-    bool isFolded = !nextBlock.isVisible();
-    qDebug() << "  - isFolded:" << isFolded;
-
-    QTextBlock block = nextBlock;
+    data->folding.folded = !data->folding.folded;
+    auto doFold = data->folding.folded;
+    auto block = clickedBlock.next();
     while (block.isValid()) {
-        TextBlockUserData *blockData = static_cast<TextBlockUserData *>(block.userData());
-        if (blockData && blockData->folding.level <= currentFoldLevel) {
-            qDebug() << "  - Stopping at block" << block.blockNumber() << "with level" << blockData->folding.level;
-            break; // End of the foldable region
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (blockData && blockData->folding.level < currentFoldLevel) {
+            break;
         }
-
-        qDebug() << "  - Setting block" << block.blockNumber() << "visible to" << isFolded;
-        block.setVisible(isFolded);
+        block.setVisible(!doFold);
+        block.setLineCount(doFold ? 0 : 1);
         block = block.next();
     }
 
-    qDebug() << "  - Updating views";
-    document()->markContentsDirty(clickedBlock.position(), clickedBlock.length());
-    updateViewport();
+    viewport()->update();
     foldingArea_->update();
+    if (lineNumberArea_) {
+        lineNumberArea_->update();
+    }
+    if (markArea_) {
+        markArea_->update();
+    }
 }
 
 /// Smart end behaviour. Move to last non-space or to end of line

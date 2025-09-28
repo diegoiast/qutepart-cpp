@@ -24,6 +24,7 @@ class TextBlockUserData : public QTextBlockUserData {
     struct {
         int level = 0;
         bool processed = false;
+        bool folded = false;
     } folding;
     QStack<QString> regions;
 

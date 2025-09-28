@@ -7,8 +7,6 @@
 #pragma once
 
 #include <QStringList>
-#include <QHash>
-#include <QVector>
 
 namespace Qutepart {
 
@@ -32,7 +30,6 @@ struct ContextStackItem {
 
 class ContextStack {
   public:
-    ContextStack() = default;
     ContextStack(Context *context);
 
     bool operator==(const ContextStack &other) const;
