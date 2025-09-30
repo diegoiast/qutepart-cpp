@@ -1,0 +1,25 @@
+name: Codespell
+
+on:
+  push:
+    branches:
+     - main
+     - github-actions
+  pull_request:
+    branches:
+     - main
+
+jobs:
+  codespell:
+    name: Check for spelling errors
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: codespell-project/actions-codespell@master
+      with:
+        check_filenames: true
+        path: ./src/
+        skip: "*.lua,*.ui,./src/stb/stb_*.h,./src/hl/language_db_generated.cpp"
+        ignore_words_list: "doubleclick,msdos"
+        ignore_words_file: .codespellignore

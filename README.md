@@ -96,7 +96,7 @@ Planned features
 2. Toggle folding sections of code/text.
 3. Markdown specific indentator.
 
-To see the API in action, see [editor](editor.cpp).
+To see the API in action, see [editor](exammple/editor.cpp).
 
 ## Build dependencies
 * C++17 compiler (tested under MSVC 2022, GCC 13, Clang17 or newer versions)

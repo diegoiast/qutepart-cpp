@@ -13,8 +13,7 @@ include(cmake/mold-linker.cmake)
 cpmaddpackage(
   NAME
   Format.cmake
-  VERSION
-  1.7.3
+  VERSION 1.8.2
   GITHUB_REPOSITORY
   TheLartians/Format.cmake
   OPTIONS
@@ -101,7 +100,7 @@ else()
 endif()
 
 # Build example executable
-add_executable(editor editor.cpp)
+add_executable(editor example/editor.cpp)
 target_link_libraries(editor Qt::Core Qt::Widgets qutepart)
 
 # Install only library, not binaries

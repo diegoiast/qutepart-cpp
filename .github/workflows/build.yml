@@ -1,0 +1,91 @@
+name: Build on all platforms
+
+on:
+  push:
+    branches:
+      - main
+      - github-actions
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }} Qt${{ matrix.qt_version }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "Windows MSVC (amd64)"
+            build_dir: "windows-msvc"
+            os: windows-2022
+            cc: "cl"
+            cxx: "cl"
+          # - name: "Windows MSVC (arm64)"
+          #   build_dir: "windows-11-arm"
+          #   os: windows-2022
+          #   cc: "cl"
+          #   cxx: "cl"
+          - name: "Windows clang 19.1.7 (amd64)"
+            build_dir: "windows-clang"
+            os: windows-2022
+            cc: "clang"
+            cxx: "clang++"
+          - name: "Ubuntu 22.04 gcc (amd64)"
+            build_dir: "linux-gcc"
+            os: ubuntu-22.04
+            cc: "gcc"
+            cxx: "g++"
+          - name: "Ubuntu 22.04 gcc (arm64)"
+            build_dir: "linux-gcc"
+            os:  ubuntu-24.04-arm
+            cc: "gcc"
+            cxx: "g++"
+          - name: "Ubuntu 22.04 clang (amd64)"
+            build_dir: "linux-clang"
+            os: ubuntu-22.04
+            cc: "clang"
+            cxx: "clang++"
+          - name: "macOS (Apple silicon)"
+            build_dir: "macos"
+            os: macos-latest
+            cc: "clang"
+            cxx: "clang++"
+
+        qt_version:
+          - "6.9.2"
+          - "6.8.3"
+
+        include:
+          - generators: "Ninja"
+          - build_type: "Release"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.31.0"
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4.1.1
+        with:
+          version: ${{ matrix.qt_version }}
+          cache: true
+      - name: Set up Clang 19.1.7
+        if: matrix.config.os == 'windows-2022' && matrix.config.cc == 'clang'
+        uses: egor-tensin/setup-clang@v1.4
+        with:
+          version: 19.1.7
+          platform: x64
+      - name: Setup MSVC (Windows)
+        if: ${{ matrix.config.cxx == 'cl' }}
+        uses: ilammy/msvc-dev-cmd@v1.13.0
+      - name: Configure
+        working-directory: ${{ github.workspace }}
+        id: runcmake
+        run: cmake -B "build/${{ matrix.config.build_dir }}" -G "${{ matrix.generators }}" -DCMAKE_BUILD_TYPE="${{ matrix.build_type }}" -DCMAKE_C_COMPILER=${{ matrix.config.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
+      - name: Build
+        working-directory: ${{ github.workspace }}
+        id: runcmakebuild
+        run: |
+          cmake --build "build/${{ matrix.config.build_dir }}" --parallel --verbose
