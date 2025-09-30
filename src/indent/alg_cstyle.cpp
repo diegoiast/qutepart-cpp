@@ -187,7 +187,7 @@ QString IndentAlgCstyle::tryCComment(const QTextBlock &block) const {
     }
 
     if (prevNonEmptyBlock != block.previous()) {
-        // inbetween was an empty line, so do not copy the "*" character
+        // in between was an empty line, so do not copy the "*" character
         return QString();
     }
 
@@ -597,20 +597,20 @@ properly:
 */
 QString IndentAlgCstyle::tryMatchedAnchor(const QTextBlock &block, bool autoIndent) const {
     QChar ch = firstNonSpaceChar(block);
-    QChar oposite;
+    QChar opposite;
 
     if (ch == ')') {
-        oposite = '(';
+        opposite = '(';
     } else if (ch == '}') {
-        oposite = '{';
+        opposite = '{';
     } else if (ch == ']') {
-        oposite = '[';
+        opposite = '[';
     } else {
         return QString();
     }
 
     // we pressed enter in e.g. ()
-    TextPosition foundPos = findOpeningBracketBackward(oposite, TextPosition(block, 0));
+    TextPosition foundPos = findOpeningBracketBackward(opposite, TextPosition(block, 0));
     if (!foundPos.isValid()) {
         return QString();
     }

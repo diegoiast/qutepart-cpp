@@ -277,7 +277,7 @@ class CompletionList : public QListView {
     }
 
   private:
-    /* List should be plased such way, that typed text in the list is under
+    /* List should be placed such way, that typed text in the list is under
     typed text in the editor
     */
     int horizontalShift() const {
