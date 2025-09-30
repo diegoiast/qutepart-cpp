@@ -149,8 +149,6 @@ class CompletionModel : public QAbstractItemModel {
 
     QString canCompleteText() const { return canCompleteText_; }
 
-
-
   private:
     const QSet<QString> &wordSet_;
     QString typedText_;
