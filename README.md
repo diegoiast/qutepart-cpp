@@ -5,6 +5,10 @@ A code editor component for Qt6/C++. Easy to embed into your build system, packe
 
 ![qutepart.png](qutepart.png)
 
+[![Build](https://github.com/diegoiast/qutepart-cpp/actions/workflows/build.yml/badge.svg)](https://github.com/diegoiast/qutepart-cpp/actions/workflows/build.yml)
+[![clang-format](https://github.com/diegoiast/qutepart-cpp/actions/workflows/clang-format.yml/badge.svg)](https://github.com/diegoiast/qutepart-cpp/actions/workflows/clang-format.yml)
+[![Codespell](https://github.com/diegoiast/qutepart-cpp/actions/workflows/codespell.yml/badge.svg)](https://github.com/diegoiast/qutepart-cpp/actions/workflows/codespell.yml)
+
 Does your application need a code editor component? Display
 source code? This library is easy to integrate, easy to use.
 
