@@ -73,22 +73,24 @@ QList<QTextEdit::ExtraSelection> BracketHighlighter::extraSelections(const TextP
 // Make matched or unmatched QTextEdit.ExtraSelection
 QTextEdit::ExtraSelection BracketHighlighter::makeMatchSelection(const TextPosition &pos,
                                                                  bool matched) {
-    auto palette = qpart->palette();
-    auto matchedColor = palette.color(QPalette::Highlight).lighter();
-    auto nonMatchedColor = palette.color(QPalette::LinkVisited).lighter();
-
     QTextEdit::ExtraSelection selection;
-    if (auto theme = qpart->getTheme()) {
-        if (theme->getEditorColors().contains(Theme::Colors::BracketMatching)) {
-            matchedColor = theme->getEditorColors()[Theme::Colors::BracketMatching];
-            nonMatchedColor = theme->getEditorColors()[Theme::Colors::MarkError];
-        }
-    }
+    if (qpart) {
+        auto palette = qpart->palette();
+        auto matchedColor = palette.color(QPalette::Highlight).lighter();
+        auto nonMatchedColor = palette.color(QPalette::LinkVisited).lighter();
 
-    if (matched) {
-        selection.format.setBackground(matchedColor);
-    } else {
-        selection.format.setBackground(nonMatchedColor);
+        if (auto theme = qpart->getTheme()) {
+            if (theme->getEditorColors().contains(Theme::Colors::BracketMatching)) {
+                matchedColor = theme->getEditorColors()[Theme::Colors::BracketMatching];
+                nonMatchedColor = theme->getEditorColors()[Theme::Colors::MarkError];
+            }
+        }
+
+        if (matched) {
+            selection.format.setBackground(matchedColor);
+        } else {
+            selection.format.setBackground(nonMatchedColor);
+        }
     }
 
     selection.cursor = QTextCursor(pos.block);
