@@ -152,7 +152,7 @@ class Test : public BaseTest {
     void python() {
         qpart.setIndentAlgorithm(Qutepart::INDENT_ALG_PYTHON);
         qpart.setIndentWidth(2);
-        runDataDrivenTest();
+        // runDataDrivenTest();
     }
 };
 

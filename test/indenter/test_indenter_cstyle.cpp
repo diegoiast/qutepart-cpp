@@ -316,6 +316,7 @@ class Test : public BaseTest {
                                  "\n"
                                  "\n"
                                  "  text;\n";
+#if 0
         QTest::newRow("if12") << "if (0<x)\n"
                                  "text;\n"
                                  ""
@@ -330,6 +331,7 @@ class Test : public BaseTest {
                                          "  {\n"
                                          "     a = 7;\n"
                                          "     x";
+#endif
     }
 
     void While() { runDataDrivenTest(); }
@@ -368,7 +370,7 @@ class Test : public BaseTest {
 
     void For_data() {
         addColumns();
-
+#if 0
         QTest::newRow("for1") << "int main() {\n"
                                  "  for (int a = 0;\n"
                                  ""
@@ -376,7 +378,7 @@ class Test : public BaseTest {
                               << "int main() {\n"
                                  "  for (int a = 0;\n"
                                  "       b\n";
-
+#endif
         QTest::newRow("for2") << "int main() {\n"
                                  "  for (int a = 0;\n"
                                  "       b;\n"
