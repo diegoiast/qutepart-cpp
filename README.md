@@ -8,6 +8,7 @@ A code editor component for Qt6/C++. Easy to embed into your build system, packe
 [![Build](https://github.com/diegoiast/qutepart-cpp/actions/workflows/build.yml/badge.svg)](https://github.com/diegoiast/qutepart-cpp/actions/workflows/build.yml)
 [![clang-format](https://github.com/diegoiast/qutepart-cpp/actions/workflows/clang-format.yml/badge.svg)](https://github.com/diegoiast/qutepart-cpp/actions/workflows/clang-format.yml)
 [![Codespell](https://github.com/diegoiast/qutepart-cpp/actions/workflows/codespell.yml/badge.svg)](https://github.com/diegoiast/qutepart-cpp/actions/workflows/codespell.yml)
+[![Tests](https://github.com/diegoiast/qutepart-cpp/actions/workflows/test.yml/badge.svg)](https://github.com/diegoiast/qutepart-cpp/actions/workflows/test.yml)
 
 Does your application need a code editor component? Display
 source code? This library is easy to integrate, easy to use.
@@ -27,13 +28,15 @@ source code? This library is easy to integrate, easy to use.
     font.setFamily("Monospace");
     qutepart.setFont(font);
 
-    // load text, and set an highlighter:
-    auto file = QFile(filePath);
+    // Set an highlighter:
     auto langInfo = Qutepart::chooseLanguage(QString(), QString(), filePath);
     if (langInfo.isValid()) {
         qutepart->setHighlighter(langInfo.id);
         qutepart->setIndentAlgorithm(langInfo.indentAlg);
     }
+
+    // Load text to the editor
+    auto file = QFile(filePath);
     file.open(QIODevice::ReadOnly);
     auto data = file.readAll();
     auto text = QString::fromUtf8(data);
@@ -50,7 +53,7 @@ All features are configurable
 4. Derives QPlainTextEdit.
 5. Follows dark themes.
 6. Supported on Windows, Linux and OSX (probably BSD, untested - basically
-   all platforms supported by Qt6).
+   all platforms supported by Qt6). Including ARM64.
 7. Good Unicode support: Supports BIDI (Arabic, Farsi, Hebrew), CJK and Hindu languages.
 8. Integration is a simple as adding a few lines in your CMake file.
 9. Uses Kate syntax highlighter, with more than 380 supported languages.
