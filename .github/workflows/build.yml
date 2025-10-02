@@ -1,6 +1,8 @@
 name: Build on all platforms
 
 on:
+  push:
+    branches: [main]
   workflow_call:
     inputs:
       qt_versions:
@@ -8,6 +10,7 @@ on:
         required: false
         type: string
         default: '["6.9.2", "6.8.3"]'
+  workflow_dispatch:
 
 jobs:
   build:
