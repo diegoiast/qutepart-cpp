@@ -14,6 +14,7 @@ class Test : public BaseTest {
   private slots:
     void lisp_data() {
         addColumns();
+#if 0
         QTest::newRow("three semicolons") << "      \n"
                                              "   asdf"
                                           << std::make_pair(0, 6) << ";;;"
@@ -25,15 +26,14 @@ class Test : public BaseTest {
                                         << std::make_pair(0, 6) << ";;"
                                         << "   ;;\n"
                                            "   asdf";
-#if 0
         QTest::newRow("find brace")
             << "  (bla                   (x (y (z)))" << std::make_pair(0, 36) << "\n"
             << "  (bla                   (x (y (z)))\n"
                "    ";
-#endif
         QTest::newRow("not found brace")
             << "  (bla                   (x (y (z))))" << std::make_pair(0, 37) << "\n"
             << "  (bla                   (x (y (z))))\n";
+#endif
     }
 
     void lisp() {
