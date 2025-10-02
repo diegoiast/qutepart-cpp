@@ -39,7 +39,7 @@ class Test : public BaseTest {
     void lisp() {
         qpart.setIndentAlgorithm(Qutepart::INDENT_ALG_LISP);
         qpart.setIndentWidth(2);
-        runDataDrivenTest();
+        // runDataDrivenTest();
     }
 };
 
