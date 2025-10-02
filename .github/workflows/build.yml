@@ -1,15 +1,10 @@
-name: Build on all platforms
+name: Build (release) on all platforms
 
 on:
   push:
-    branches: [main]
-  workflow_call:
-    inputs:
-      qt_versions:
-        description: "List of Qt versions to build"
-        required: false
-        type: string
-        default: '["6.9.2", "6.8.3"]'
+    branches:
+      - main
+      - github-actions
   workflow_dispatch:
 
 jobs:
@@ -26,37 +21,43 @@ jobs:
             cc: "cl"
             cxx: "cl"
             qtArch: "win64_msvc2022_64"
+
           - name: "Windows MSVC (arm64)"
             build_dir: "windows-arm64"
-            os: "windows-11-arm"
+            os: windows-11-arm
             cc: "cl"
             cxx: "cl"
             arch: "arm64"
             qtArch: "win64_msvc2022_arm64"
+
           - name: "Windows clang 19.1.7 (amd64)"
             build_dir: "windows-clang"
             os: windows-2022
             cc: "clang"
             cxx: "clang++"
             qtArch: "win64_clang_amd64"
+
           - name: "Ubuntu 22.04 gcc (amd64)"
             build_dir: "linux-gcc-amd"
             os: ubuntu-22.04
             cc: "gcc"
             cxx: "g++"
             qtArch: "gcc_64"
+
           - name: "Ubuntu 22.04 gcc (arm64)"
             build_dir: "linux-gcc-arm64"
             os: ubuntu-24.04-arm
             cc: "gcc"
             cxx: "g++"
             qtArch: "linux_arm64"
+
           - name: "Ubuntu 22.04 clang (amd64)"
             build_dir: "linux-clang-arm64"
             os: ubuntu-22.04
             cc: "clang"
             cxx: "clang++"
             qtArch: "gcc_64"
+
           - name: "macOS (Apple silicon)"
             build_dir: "macos"
             os: macos-latest
@@ -64,7 +65,9 @@ jobs:
             cxx: "clang++"
             qtArch: "macos_arm64"
 
-        qt_version: ${{ fromJson(inputs.qt_versions) }}
+        qt_version:
+          - "6.9.2"
+          - "6.8.3"
 
         include:
           - generators: "Ninja"
@@ -72,40 +75,40 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: lukka/get-cmake@latest
         with:
           cmakeVersion: "~3.31.0"
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v4.3.0
         with:
           version: ${{ matrix.qt_version }}
-          arch: ${{ matrix.qtArch }}
+          arch: ${{ matrix.config.qtArch }}
           cache: true
+
       - name: Set up Clang 19.1.7
         if: matrix.config.os == 'windows-2022' && matrix.config.cc == 'clang'
         uses: egor-tensin/setup-clang@v1.4
         with:
           version: 19.1.7
           platform: x64
+
       - name: Setup MSVC (Windows)
-        if: ${{ matrix.config.cxx == 'cl' }}
+        if: matrix.config.cxx == 'cl'
         uses: ilammy/msvc-dev-cmd@v1.13.0
         with:
           arch: ${{ matrix.config.arch || 'x64' }}
+
       - name: Configure
-        working-directory: ${{ github.workspace }}
-        id: runcmake
         run: >
-          cmake -B "build/${{ matrix.config.build_dir }}"
+          cmake -B build/${{ matrix.config.build_dir }}
           -G "${{ matrix.generators }}"
-          -DCMAKE_BUILD_TYPE="${{ matrix.build_type }}"
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_C_COMPILER=${{ matrix.config.cc }}
           -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
+
       - name: Build
         run: >
-          cmake --build "build/${{ matrix.config.build_dir }}" --parallel --verbose
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-${{ matrix.config.build_dir }}-qt${{ matrix.qt_version }}
-          path: build/${{ matrix.config.build_dir }}
+          cmake --build build/${{ matrix.config.build_dir }} --parallel
+
