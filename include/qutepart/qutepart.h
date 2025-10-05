@@ -447,6 +447,15 @@ class Qutepart : public QPlainTextEdit {
     /// Toggle the block at this line, fail silently
     void toggleFold(int lineNumber);
 
+    /// Fold the current block
+    void foldCurrentBlock();
+
+    /// Unfold the current block
+    void unfoldCurrentBlock();
+
+    /// Toggle folding of the current block
+    void toggleCurrentFold();
+
 
     // Convenience functions
     void resetSelection();

@@ -12,6 +12,7 @@
 #include <QPainter>
 #include <QScrollBar>
 #include <QStyle>
+#include <qtextobject.h>
 
 #include "bracket_highlighter.h"
 #include "completer.h"
@@ -682,15 +683,52 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
         return;
     }
 
+    if (data->folding.folded == folded) {
+        return; // Nothing to do
+    }
+
+    if (folded) { // We are folding
+        QTextCursor newCursor(block);
+        setTextCursor(newCursor);
+    }
+
     data->folding.folded = folded;
 
-    for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
-        auto blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
-        if (blockData && blockData->folding.level < currentFoldLevel) {
-            break;
+    if (folded) { // Folding
+        for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
+            auto blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
+            if (blockData && blockData->folding.level < currentFoldLevel) {
+                break;
+            }
+            nextBlock.setVisible(false);
+            nextBlock.setLineCount(0);
         }
-        nextBlock.setVisible(!folded);
-        nextBlock.setLineCount(folded ? 0 : 1);
+    } else { // Unfolding
+        for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
+            auto blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
+            if (blockData && blockData->folding.level < currentFoldLevel) {
+                break;
+            }
+            nextBlock.setVisible(true);
+            nextBlock.setLineCount(1);
+
+            if (blockData && blockData->folding.folded) {
+                auto innerFoldLevel = blockData->folding.level;
+                auto blockToSkip = nextBlock.next();
+                while(blockToSkip.isValid()) {
+                    auto skipData = static_cast<TextBlockUserData *>(blockToSkip.userData());
+                    if (skipData && skipData->folding.level < innerFoldLevel) {
+                        nextBlock = blockToSkip.previous();
+                        break;
+                    }
+                    if (!blockToSkip.next().isValid()) {
+                        nextBlock = blockToSkip;
+                        break;
+                    }
+                    blockToSkip = blockToSkip.next();
+                }
+            }
+        }
     }
 
     viewport()->update();
@@ -725,6 +763,113 @@ void Qutepart::toggleFold(int lineNumber) {
         return;
     }
     setBlockFolded(block, !data->folding.folded);
+}
+
+void Qutepart::foldCurrentBlock()
+{
+    QTextCursor cursor = textCursor();
+    QTextBlock block = cursor.block();
+    auto data = static_cast<TextBlockUserData *>(block.userData());
+    if (!data) {
+        return;
+    }
+
+    if (data->folding.level == 0) {
+        auto prev = block.previous();
+        if (prev.isValid()) {
+            auto prevData = static_cast<TextBlockUserData *>(prev.userData());
+            if (prevData && prevData->folding.level > data->folding.level) {
+                block = prev;
+                data = prevData;
+            } else {
+                return;
+            }
+        }
+    } else {
+        auto prev = block.previous();
+        if (prev.isValid()) {
+            auto prevData = static_cast<TextBlockUserData *>(prev.userData());
+            if (prevData && prevData->folding.level > data->folding.level) {
+                block = prev;
+                data = prevData;
+            }
+        }
+    }
+
+    auto level = data->folding.level;
+    auto blockToSearch = block.previous();
+    while (blockToSearch.isValid()) {
+        auto searchData = static_cast<TextBlockUserData *>(blockToSearch.userData());
+        if (searchData && searchData->folding.level < level) {
+            foldBlock(blockToSearch.next().blockNumber());
+            return;
+        }
+        blockToSearch = blockToSearch.previous();
+    }
+
+    auto firstBlock = document()->firstBlock();
+    foldBlock(firstBlock.blockNumber());
+}
+
+void Qutepart::unfoldCurrentBlock()
+{
+    QTextCursor cursor = textCursor();
+    QTextBlock block = cursor.block();
+
+    while (block.isValid()) {
+        auto data = static_cast<TextBlockUserData *>(block.userData());
+        if (data && data->folding.folded) {
+            unfoldBlock(block.blockNumber());
+            return;
+        }
+        block = block.previous();
+    }
+}
+
+void Qutepart::toggleCurrentFold()
+{
+    QTextCursor cursor = textCursor();
+    QTextBlock block = cursor.block();
+    auto data = static_cast<TextBlockUserData *>(block.userData());
+    if (!data) {
+        return;
+    }
+
+    if (data->folding.level == 0) {
+        auto prev = block.previous();
+        if (prev.isValid()) {
+            auto prevData = static_cast<TextBlockUserData *>(prev.userData());
+            if (prevData && prevData->folding.level > data->folding.level) {
+                block = prev;
+                data = prevData;
+            } else {
+                return;
+            }
+        }
+    } else {
+        auto prev = block.previous();
+        if (prev.isValid()) {
+            auto prevData = static_cast<TextBlockUserData *>(prev.userData());
+            if (prevData && prevData->folding.level > data->folding.level) {
+                block = prev;
+                data = prevData;
+            }
+        }
+    }
+
+    auto level = data->folding.level;
+    auto blockToSearch = block.previous();
+    while (blockToSearch.isValid()) {
+        auto searchData = static_cast<TextBlockUserData *>(blockToSearch.userData());
+        if (searchData && searchData->folding.level < level) {
+            toggleFold(blockToSearch.next().blockNumber());
+            return;
+        }
+        blockToSearch = blockToSearch.previous();
+    }
+
+    auto firstBlock = document()->firstBlock();
+    toggleFold(firstBlock.blockNumber());
 }
 
 void Qutepart::keyPressEvent(QKeyEvent *event) {
@@ -1246,6 +1391,21 @@ void Qutepart::initActions() {
             }
         }
     });
+
+    auto *foldAction = new QAction(this);
+    foldAction->setShortcut(QKeySequence(Qt::ALT | Qt::Key_Minus));
+    connect(foldAction, &QAction::triggered, this, &Qutepart::foldCurrentBlock);
+    this->addAction(foldAction);
+
+    auto *unfoldAction = new QAction(this);
+    unfoldAction->setShortcuts({QKeySequence(Qt::ALT | Qt::Key_Plus), QKeySequence(Qt::ALT | Qt::Key_Equal)});
+    connect(unfoldAction, &QAction::triggered, this, &Qutepart::unfoldCurrentBlock);
+    this->addAction(unfoldAction);
+
+    auto *toggleFoldAction = new QAction(this);
+    toggleFoldAction->setShortcut(QKeySequence(Qt::ALT | Qt::Key_Asterisk));
+    connect(toggleFoldAction, &QAction::triggered, this, &Qutepart::toggleCurrentFold);
+    this->addAction(toggleFoldAction);
 }
 
 QAction *Qutepart::createAction(const QString &text, QKeySequence shortcut,
