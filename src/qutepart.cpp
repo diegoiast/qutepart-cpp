@@ -12,6 +12,7 @@
 #include <QPainter>
 #include <QScrollBar>
 #include <QStyle>
+#include <qnamespace.h>
 #include <qtextobject.h>
 
 #include "bracket_highlighter.h"
@@ -1312,10 +1313,10 @@ void Qutepart::initActions() {
 
     findMatchingBracketAction_ = new QAction(tr("Matching bracket"), this);
     findMatchingBracketAction_->setShortcuts({
-        QKeySequence(Qt::CTRL | Qt::Key_BracketLeft),
-        QKeySequence(Qt::CTRL | Qt::Key_BracketRight),
-        QKeySequence(Qt::CTRL | Qt::Key_BraceLeft),
-        QKeySequence(Qt::CTRL | Qt::Key_BraceRight),
+        QKeySequence(Qt::ALT | Qt::Key_BracketLeft),
+        QKeySequence(Qt::ALT | Qt::Key_BracketRight),
+        QKeySequence(Qt::ALT | Qt::Key_BraceLeft),
+        QKeySequence(Qt::ALT | Qt::Key_BraceRight),
     });
     connect(findMatchingBracketAction_, &QAction::triggered, findMatchingBracketAction_, [this]() {
         if (bracketHighlighter_) {
@@ -1348,12 +1349,12 @@ void Qutepart::initActions() {
     });
 
     auto *foldAction = new QAction(this);
-    foldAction->setShortcut(QKeySequence(Qt::ALT | Qt::Key_Minus));
+    foldAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_BracketLeft));
     connect(foldAction, &QAction::triggered, this, &Qutepart::foldCurrentBlock);
     this->addAction(foldAction);
 
     auto *unfoldAction = new QAction(this);
-    unfoldAction->setShortcuts({QKeySequence(Qt::ALT | Qt::Key_Plus), QKeySequence(Qt::ALT | Qt::Key_Equal)});
+    unfoldAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_BracketRight));
     connect(unfoldAction, &QAction::triggered, this, &Qutepart::unfoldCurrentBlock);
     this->addAction(unfoldAction);
 
