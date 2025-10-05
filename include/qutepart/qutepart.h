@@ -438,6 +438,16 @@ class Qutepart : public QPlainTextEdit {
     /// Restores the folding state from a list of line numbers
     void setFoldedLines(const QVector<int> &foldedLines);
 
+    /// Fold the block at this line, fail silently
+    void foldBlock(int lineNumber);
+
+    /// Unfold the block at this line, fail silently
+    void unfoldBlock(int lineNumber);
+
+    /// Toggle the block at this line, fail silently
+    void toggleFold(int lineNumber);
+
+
     // Convenience functions
     void resetSelection();
 
@@ -501,6 +511,8 @@ class Qutepart : public QPlainTextEdit {
     void unIndentBlock(const QTextBlock &block, bool withSpace) const;
     void changeSelectedBlocksIndent(bool increase, bool withSpace);
 
+    void setBlockFolded(QTextBlock &block, bool folded);
+
     void scrollByOffset(int offset);
 
     void duplicateSelection();
@@ -523,7 +535,6 @@ class Qutepart : public QPlainTextEdit {
   private slots:
     void updateViewport();
     void updateExtraSelections();
-    void onFoldClicked(int lineNumber);
 
     void onShortcutHome(QTextCursor::MoveMode moveMode);
     void onShortcutEnd(QTextCursor::MoveMode moveMode);

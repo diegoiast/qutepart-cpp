@@ -41,7 +41,7 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     setMinimapVisible(true);
     setMarkCurrentWord(true);
     foldingArea_->show();
-    connect(foldingArea_, &FoldingArea::foldClicked, this, &Qutepart::onFoldClicked);
+    connect(foldingArea_, &FoldingArea::foldClicked, this, &Qutepart::toggleFold);
     setDrawSolidEdge(drawSolidEdge_);
 
     setDefaultColors();
@@ -665,6 +665,66 @@ void Qutepart::setFoldedLines(const QVector<int> &foldedLines) {
         }
     }
     viewport()->update();
+}
+
+void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
+    if (!block.isValid()) {
+        return;
+    }
+
+    auto data = static_cast<TextBlockUserData *>(block.userData());
+    if (!data) {
+        return;
+    }
+
+    auto currentFoldLevel = data->folding.level;
+    if (currentFoldLevel == 0) {
+        return;
+    }
+
+    data->folding.folded = folded;
+
+    for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
+        auto blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
+        if (blockData && blockData->folding.level < currentFoldLevel) {
+            break;
+        }
+        nextBlock.setVisible(!folded);
+        nextBlock.setLineCount(folded ? 0 : 1);
+    }
+
+    viewport()->update();
+    if (foldingArea_) {
+        foldingArea_->update();
+    }
+    if (lineNumberArea_) {
+        lineNumberArea_->update();
+    }
+    if (markArea_) {
+        markArea_->update();
+    }
+}
+
+void Qutepart::foldBlock(int lineNumber) {
+    auto block = document()->findBlockByNumber(lineNumber);
+    setBlockFolded(block, true);
+}
+
+void Qutepart::unfoldBlock(int lineNumber) {
+    auto block = document()->findBlockByNumber(lineNumber);
+    setBlockFolded(block, false);
+}
+
+void Qutepart::toggleFold(int lineNumber) {
+    auto block = document()->findBlockByNumber(lineNumber);
+    if (!block.isValid()) {
+        return;
+    }
+    auto data = static_cast<TextBlockUserData *>(block.userData());
+    if (!data) {
+        return;
+    }
+    setBlockFolded(block, !data->folding.folded);
 }
 
 void Qutepart::keyPressEvent(QKeyEvent *event) {
@@ -2058,46 +2118,6 @@ void Qutepart::onShortcutHome(QTextCursor::MoveMode moveMode) {
         extraCursor.setPosition(targetPosition, moveMode);
     }
     updateExtraSelections();
-}
-
-/// Try and un/fold a block.
-void Qutepart::onFoldClicked(int lineNumber) {
-    auto clickedBlock = document()->findBlockByNumber(lineNumber);
-    if (!clickedBlock.isValid()) {
-        return;
-    }
-
-    auto data = static_cast<TextBlockUserData *>(clickedBlock.userData());
-    if (!data) {
-        return;
-    }
-
-    auto currentFoldLevel = data->folding.level;
-    if (currentFoldLevel == 0) {
-        return;
-    }
-
-    data->folding.folded = !data->folding.folded;
-    auto doFold = data->folding.folded;
-    auto block = clickedBlock.next();
-    while (block.isValid()) {
-        auto blockData = static_cast<TextBlockUserData *>(block.userData());
-        if (blockData && blockData->folding.level < currentFoldLevel) {
-            break;
-        }
-        block.setVisible(!doFold);
-        block.setLineCount(doFold ? 0 : 1);
-        block = block.next();
-    }
-
-    viewport()->update();
-    foldingArea_->update();
-    if (lineNumberArea_) {
-        lineNumberArea_->update();
-    }
-    if (markArea_) {
-        markArea_->update();
-    }
 }
 
 /// Smart end behaviour. Move to last non-space or to end of line
