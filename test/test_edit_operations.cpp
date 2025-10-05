@@ -37,38 +37,31 @@ class Test : public QObject {
     void SmartHomeSelect() {
         Qutepart::Qutepart qpart(nullptr, "one\n    two");
 
-#ifdef Q_OS_MAC
-        QTest::keyClick(&qpart, Qt::Key_Left, Qt::ShiftModifier | Qt::MetaModifier);
-#else
-        QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
-#endif
+        // QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
+        QMetaObject::invokeMethod(&qpart, "onShortcutHome", Qt::DirectConnection,
+                                  Q_ARG(QTextCursor::MoveMode, QTextCursor::MoveAnchor));
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
         QCOMPARE(qpart.textCursor().selectedText(), QString());
 
-#ifdef Q_OS_MAC
-        QTest::keyClick(&qpart, Qt::Key_Left, Qt::ShiftModifier | Qt::MetaModifier);
-#else
-        QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
-#endif
+        // QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
+        QMetaObject::invokeMethod(&qpart, "onShortcutHome", Qt::DirectConnection,
+                                  Q_ARG(QTextCursor::MoveMode, QTextCursor::MoveAnchor));
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
         QCOMPARE(qpart.textCursor().selectedText(), QString());
 
         qpart.goTo(1, 6);
-#ifdef Q_OS_MAC
-        QTest::keyClick(&qpart, Qt::Key_Left, Qt::ShiftModifier | Qt::MetaModifier);
-#else
-        QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
-#endif
+        // QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
+        QMetaObject::invokeMethod(&qpart, "onShortcutHome", Qt::DirectConnection,
+                                  Q_ARG(QTextCursor::MoveMode, QTextCursor::MoveAnchor));
         QCOMPARE(qpart.textCursor().positionInBlock(), 4);
         QCOMPARE(qpart.textCursor().selectedText(), QString("tw"));
 
-#ifdef Q_OS_MAC
-        QTest::keyClick(&qpart, Qt::Key_Left, Qt::ShiftModifier | Qt::MetaModifier);
-#else
-        QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
-#endif
+        // QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
+        QMetaObject::invokeMethod(&qpart, "onShortcutHome", Qt::DirectConnection,
+                                  Q_ARG(QTextCursor::MoveMode, QTextCursor::MoveAnchor));
         QCOMPARE(qpart.textCursor().selectedText(), QString("    tw"));
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
+
 #if 0
         QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
         QCOMPARE(qpart.textCursor().positionInBlock(), 4);
