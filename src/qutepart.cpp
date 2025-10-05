@@ -684,17 +684,17 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
     }
 
     if (data->folding.folded == folded) {
-        return; // Nothing to do
+        return;
     }
 
-    if (folded) { // We are folding
+    if (folded) {
         QTextCursor newCursor(block);
         setTextCursor(newCursor);
     }
 
     data->folding.folded = folded;
 
-    if (folded) { // Folding
+    if (folded) {
         for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
             auto blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
             if (blockData && blockData->folding.level < currentFoldLevel) {
@@ -703,7 +703,7 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
             nextBlock.setVisible(false);
             nextBlock.setLineCount(0);
         }
-    } else { // Unfolding
+    } else {
         for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
             auto blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
             if (blockData && blockData->folding.level < currentFoldLevel) {
@@ -765,34 +765,21 @@ void Qutepart::toggleFold(int lineNumber) {
     setBlockFolded(block, !data->folding.folded);
 }
 
-void Qutepart::foldCurrentBlock()
+QTextBlock Qutepart::findBlockToFold(QTextBlock block)
 {
-    QTextCursor cursor = textCursor();
-    QTextBlock block = cursor.block();
     auto data = static_cast<TextBlockUserData *>(block.userData());
     if (!data) {
-        return;
+        return QTextBlock();
     }
 
-    if (data->folding.level == 0) {
-        auto prev = block.previous();
-        if (prev.isValid()) {
-            auto prevData = static_cast<TextBlockUserData *>(prev.userData());
-            if (prevData && prevData->folding.level > data->folding.level) {
-                block = prev;
-                data = prevData;
-            } else {
-                return;
-            }
-        }
-    } else {
-        auto prev = block.previous();
-        if (prev.isValid()) {
-            auto prevData = static_cast<TextBlockUserData *>(prev.userData());
-            if (prevData && prevData->folding.level > data->folding.level) {
-                block = prev;
-                data = prevData;
-            }
+    auto prev = block.previous();
+    if (prev.isValid()) {
+        auto prevData = static_cast<TextBlockUserData *>(prev.userData());
+        if (prevData && prevData->folding.level > data->folding.level) {
+            block = prev;
+            data = prevData;
+        } else if (data->folding.level == 0) {
+            return QTextBlock();
         }
     }
 
@@ -801,20 +788,26 @@ void Qutepart::foldCurrentBlock()
     while (blockToSearch.isValid()) {
         auto searchData = static_cast<TextBlockUserData *>(blockToSearch.userData());
         if (searchData && searchData->folding.level < level) {
-            foldBlock(blockToSearch.next().blockNumber());
-            return;
+            return blockToSearch.next();
         }
         blockToSearch = blockToSearch.previous();
     }
 
-    auto firstBlock = document()->firstBlock();
-    foldBlock(firstBlock.blockNumber());
+    return document()->firstBlock();
+}
+
+void Qutepart::foldCurrentBlock()
+{
+    auto blockToFold = findBlockToFold(textCursor().block());
+    if (blockToFold.isValid()) {
+        foldBlock(blockToFold.blockNumber());
+    }
 }
 
 void Qutepart::unfoldCurrentBlock()
 {
-    QTextCursor cursor = textCursor();
-    QTextBlock block = cursor.block();
+    auto cursor = textCursor();
+    auto block = cursor.block();
 
     while (block.isValid()) {
         auto data = static_cast<TextBlockUserData *>(block.userData());
@@ -828,48 +821,10 @@ void Qutepart::unfoldCurrentBlock()
 
 void Qutepart::toggleCurrentFold()
 {
-    QTextCursor cursor = textCursor();
-    QTextBlock block = cursor.block();
-    auto data = static_cast<TextBlockUserData *>(block.userData());
-    if (!data) {
-        return;
+    QTextBlock blockToFold = findBlockToFold(textCursor().block());
+    if (blockToFold.isValid()) {
+        toggleFold(blockToFold.blockNumber());
     }
-
-    if (data->folding.level == 0) {
-        auto prev = block.previous();
-        if (prev.isValid()) {
-            auto prevData = static_cast<TextBlockUserData *>(prev.userData());
-            if (prevData && prevData->folding.level > data->folding.level) {
-                block = prev;
-                data = prevData;
-            } else {
-                return;
-            }
-        }
-    } else {
-        auto prev = block.previous();
-        if (prev.isValid()) {
-            auto prevData = static_cast<TextBlockUserData *>(prev.userData());
-            if (prevData && prevData->folding.level > data->folding.level) {
-                block = prev;
-                data = prevData;
-            }
-        }
-    }
-
-    auto level = data->folding.level;
-    auto blockToSearch = block.previous();
-    while (blockToSearch.isValid()) {
-        auto searchData = static_cast<TextBlockUserData *>(blockToSearch.userData());
-        if (searchData && searchData->folding.level < level) {
-            toggleFold(blockToSearch.next().blockNumber());
-            return;
-        }
-        blockToSearch = blockToSearch.previous();
-    }
-
-    auto firstBlock = document()->firstBlock();
-    toggleFold(firstBlock.blockNumber());
 }
 
 void Qutepart::keyPressEvent(QKeyEvent *event) {

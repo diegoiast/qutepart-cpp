@@ -520,6 +520,7 @@ class Qutepart : public QPlainTextEdit {
     void unIndentBlock(const QTextBlock &block, bool withSpace) const;
     void changeSelectedBlocksIndent(bool increase, bool withSpace);
 
+    QTextBlock findBlockToFold(QTextBlock currentBlock);
     void setBlockFolded(QTextBlock &block, bool folded);
 
     void scrollByOffset(int offset);
