@@ -500,6 +500,11 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
                 } else {
                     painter.drawText(r, Qt::AlignCenter, "+");
                 }
+            } else if (m_debugFolding) {
+                // Debug: print folding level for non-foldable lines
+                painter.setPen(textColor);
+                QRect r(1, top + 1, width() - 2, qpart_->fontMetrics().height() - 2);
+                painter.drawText(r, Qt::AlignCenter, QString::number(data ? data->folding.level : 0));
             }
         }
 

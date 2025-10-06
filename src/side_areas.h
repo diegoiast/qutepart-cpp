@@ -102,6 +102,7 @@ class FoldingArea : public SideArea {
 
   private:
     QTextBlock blockAt(const QPoint &pos) const;
+    bool m_debugFolding = false;
 };
 
 } // namespace Qutepart
