@@ -56,8 +56,6 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
         block.setUserData(data);
     }
 
-    data->folding.processed = false;
-
     QTextBlock prevBlock = block.previous();
     if (prevBlock.isValid()) {
         TextBlockUserData* prevData = static_cast<TextBlockUserData*>(prevBlock.userData());
