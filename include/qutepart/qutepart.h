@@ -340,6 +340,13 @@ class Qutepart : public QPlainTextEdit {
     /// Visual option. Color of current line highlighting. `QColor()` if disabled.
     void setCurrentLineColor(QColor);
 
+    /// Smart folding: when you ask to fold a block, it its already foldede
+    /// it will fold the parent block. When unfolding, all child blocks will be unfolded.
+    /// If disabled, fold/unfold work on the current block only.
+    bool smartFolding() const;
+    /// Enable or disable smart folding.
+    void setSmartFolding(bool enabled);
+
     bool bracketHighlightingEnabled() const;
     void setBracketHighlightingEnabled(bool value);
 
@@ -455,7 +462,6 @@ class Qutepart : public QPlainTextEdit {
 
     /// Toggle folding of the current block
     void toggleCurrentFold();
-
 
     // Convenience functions
     void resetSelection();
@@ -580,6 +586,7 @@ class Qutepart : public QPlainTextEdit {
     bool drawSolidEdge_;
     bool enableSmartHomeEnd_;
     bool softLineWrapping_;
+    bool smartFolding_ = true;
 
     int lineLengthEdge_;
     QColor lineNumberColor;

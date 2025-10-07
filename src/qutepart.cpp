@@ -34,7 +34,7 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     : QPlainTextEdit(text, parent), indenter_(new Indenter(this)), markArea_(new MarkArea(this)),
       completer_(new Completer(this)), foldingArea_(new FoldingArea(this)), drawIndentations_(true),
       drawAnyWhitespace_(false), drawIncorrectIndentation_(true), drawSolidEdge_(true),
-      enableSmartHomeEnd_(true), softLineWrapping_(true), lineLengthEdge_(80),
+      enableSmartHomeEnd_(true), softLineWrapping_(true), smartFolding_(true), lineLengthEdge_(80),
       brakcetsQutoEnclose(true), completionEnabled_(true), completionThreshold_(3),
       viewportMarginStart_(0) {
     extraCursorBlinkTimer_ = new QTimer(this);
@@ -279,6 +279,10 @@ void Qutepart::setDrawSolidEdge(bool draw) {
 bool Qutepart::softLineWrapping() const { return softLineWrapping_; }
 
 void Qutepart::setSoftLineWrapping(bool enable) { softLineWrapping_ = enable; }
+
+bool Qutepart::smartFolding() const { return smartFolding_; }
+
+void Qutepart::setSmartFolding(bool enabled) { smartFolding_ = enabled; }
 
 int Qutepart::lineLengthEdge() const { return lineLengthEdge_; }
 
@@ -713,10 +717,14 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
             nextBlock.setVisible(true);
             nextBlock.setLineCount(1);
 
-            if (blockData && blockData->folding.folded) {
+            if (smartFolding_) {
+                if (blockData && blockData->folding.folded) {
+                    blockData->folding.folded = false;
+                }
+            } else if (blockData && blockData->folding.folded) {
                 auto innerFoldLevel = blockData->folding.level;
                 auto blockToSkip = nextBlock.next();
-                while(blockToSkip.isValid()) {
+                while (blockToSkip.isValid()) {
                     auto skipData = static_cast<TextBlockUserData *>(blockToSkip.userData());
                     if (skipData && skipData->folding.level < innerFoldLevel) {
                         nextBlock = blockToSkip.previous();
@@ -746,6 +754,18 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
 
 void Qutepart::foldBlock(int lineNumber) {
     auto block = document()->findBlockByNumber(lineNumber);
+
+    if (smartFolding_) {
+        auto data = static_cast<TextBlockUserData *>(block.userData());
+        if (data->folding.folded) {
+            auto parentBlock = findBlockToFold(block.previous());
+            if (parentBlock.isValid() && parentBlock != block) {
+                setBlockFolded(parentBlock, true);
+                return;
+            }
+        }
+    }
+
     setBlockFolded(block, true);
 }
 
