@@ -463,6 +463,13 @@ class Qutepart : public QPlainTextEdit {
     /// Toggle folding of the current block
     void toggleCurrentFold();
 
+    /// Fold all top-level blocks, with special handling for a single top-level block
+    void foldTopLevelBlocks();
+
+    /// Unfold all folded blocks in the document
+    void unfoldAll();
+
+
     // Convenience functions
     void resetSelection();
 

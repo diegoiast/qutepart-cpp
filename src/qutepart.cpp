@@ -12,8 +12,6 @@
 #include <QPainter>
 #include <QScrollBar>
 #include <QStyle>
-#include <qnamespace.h>
-#include <qtextobject.h>
 
 #include "bracket_highlighter.h"
 #include "completer.h"
@@ -692,9 +690,21 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
         return;
     }
 
+    auto currentCursor = textCursor();
+    auto cursorInFoldedRegion = false;
     if (folded) {
-        QTextCursor newCursor(block);
-        setTextCursor(newCursor);
+        if (currentCursor.block().blockNumber() > block.blockNumber()) {
+            for (auto it = block.next(); it.isValid(); it = it.next()) {
+                auto itData = static_cast<TextBlockUserData *>(it.userData());
+                if (itData && itData->folding.level < currentFoldLevel) {
+                    break; // end of region
+                }
+                if (it == currentCursor.block()) {
+                    cursorInFoldedRegion = true;
+                    break;
+                }
+            }
+        }
     }
 
     data->folding.folded = folded;
@@ -738,6 +748,11 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
                 }
             }
         }
+    }
+
+    if (cursorInFoldedRegion) {
+        QTextCursor newCursor(block);
+        setTextCursor(newCursor);
     }
 
     viewport()->update();
@@ -844,7 +859,55 @@ void Qutepart::toggleCurrentFold()
 {
     QTextBlock blockToFold = findBlockToFold(textCursor().block());
     if (blockToFold.isValid()) {
+        auto data = static_cast<TextBlockUserData *>(blockToFold.userData());
+        if (data && data->folding.folded) {
+            auto parentBlock = findBlockToFold(blockToFold.previous());
+            if (parentBlock.isValid() && parentBlock != blockToFold) {
+                setBlockFolded(parentBlock, true); // Fold parent
+                return;
+            }
+        }
         toggleFold(blockToFold.blockNumber());
+    }
+}
+
+void Qutepart::foldTopLevelBlocks() {
+    QTextBlock firstLevel1AreaStart;
+    auto level1AreaCount = 0;
+    auto prevLevel = 0;
+
+    for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
+        auto data = static_cast<TextBlockUserData *>(block.userData());
+        auto currentLevel = data ? data->folding.level : 0;
+        if (currentLevel == 1 && prevLevel == 0) {
+            level1AreaCount++;
+            if (level1AreaCount == 1) {
+                firstLevel1AreaStart = block;
+            }
+        }
+        prevLevel = currentLevel;
+    }
+
+    // If we have a single top level folding area, keep it open, and fold only the nested ones
+    auto levelsToFold = (level1AreaCount == 1) ? 2 : 1;
+    auto block = firstLevel1AreaStart.next();
+    while (block.isValid()) {
+        auto data = static_cast<TextBlockUserData *>(block.userData());
+        if (data) {
+            if (data->folding.level == levelsToFold) {
+                setBlockFolded(block, true);
+            }
+        }
+        block = block.next();
+    }
+}
+
+void Qutepart::unfoldAll() {
+    for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
+        auto data = static_cast<TextBlockUserData *>(block.userData());
+        if (data && data->folding.folded) {
+            setBlockFolded(block, false);
+        }
     }
 }
 
@@ -1382,6 +1445,16 @@ void Qutepart::initActions() {
     toggleFoldAction->setShortcut(QKeySequence(Qt::ALT | Qt::Key_Asterisk));
     connect(toggleFoldAction, &QAction::triggered, this, &Qutepart::toggleCurrentFold);
     this->addAction(toggleFoldAction);
+
+    auto *foldTopLevelAction = new QAction(this);
+    foldTopLevelAction->setShortcut(QKeySequence(Qt::ALT | Qt::Key_0));
+    connect(foldTopLevelAction, &QAction::triggered, this, &Qutepart::foldTopLevelBlocks);
+    this->addAction(foldTopLevelAction);
+
+    auto *unfoldAllAction = new QAction(this);
+    unfoldAllAction->setShortcut(QKeySequence(Qt::ALT | Qt::SHIFT | Qt::Key_0));
+    connect(unfoldAllAction, &QAction::triggered, this, &Qutepart::unfoldAll);
+    this->addAction(unfoldAllAction);
 }
 
 QAction *Qutepart::createAction(const QString &text, QKeySequence shortcut,
