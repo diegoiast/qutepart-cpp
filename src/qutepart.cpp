@@ -696,12 +696,12 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
         if (currentCursor.block().blockNumber() > block.blockNumber()) {
             for (auto it = block.next(); it.isValid(); it = it.next()) {
                 auto itData = static_cast<TextBlockUserData *>(it.userData());
-                if (itData && itData->folding.level < currentFoldLevel) {
-                    break; // end of region
-                }
                 if (it == currentCursor.block()) {
                     cursorInFoldedRegion = true;
                     break;
+                }
+                if (itData && itData->folding.level < currentFoldLevel) {
+                    break; // end of region
                 }
             }
         }
@@ -712,18 +712,15 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
     if (folded) {
         for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
             auto blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
+            nextBlock.setVisible(false);
+            nextBlock.setLineCount(0);
             if (blockData && blockData->folding.level < currentFoldLevel) {
                 break;
             }
-            nextBlock.setVisible(false);
-            nextBlock.setLineCount(0);
         }
     } else {
         for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
             auto blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
-            if (blockData && blockData->folding.level < currentFoldLevel) {
-                break;
-            }
             nextBlock.setVisible(true);
             nextBlock.setLineCount(1);
 
@@ -746,6 +743,10 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
                     }
                     blockToSkip = blockToSkip.next();
                 }
+            }
+
+            if (blockData && blockData->folding.level < currentFoldLevel) {
+                break;
             }
         }
     }
