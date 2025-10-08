@@ -1936,6 +1936,19 @@ void Qutepart::moveSelectedLines(int offsetLines) {
         originalSelections.append({startBlock, endBlock});
     }
 
+    auto line = (offsetLines < 0) ? minSelectedBlock - 1 : maxSelectedBlock + 1;
+    if (line >= 0 && line < document()->blockCount()) {
+        auto block = document()->findBlockByNumber(line);
+        if (block.isValid() && !block.isVisible()) {
+            while (block.isValid() && !block.isVisible()) {
+                block = (offsetLines < 0) ? block.previous() : block.next();
+                if (block.isValid()) {
+                    unfoldBlock(block.blockNumber());
+                }
+            }
+        }
+    }
+
     if (offsetLines < 0 && minSelectedBlock == 0) {
         return;
     }
