@@ -315,25 +315,49 @@ QFont Minimap::minimapFont() const {
 
 void Minimap::updateScroll(const QPoint &pos) {
     auto doc = qpart_->document();
-    auto totalLines = doc->blockCount();
-    auto minimapContentHeight = totalLines * lineHeight;
+
+    int visibleLineCount = 0;
+    for (auto b = doc->firstBlock(); b.isValid(); b = b.next()) {
+        if (b.isVisible()) {
+            visibleLineCount++;
+        }
+    }
+
+    auto minimapContentHeight = visibleLineCount * lineHeight;
     auto minimapVisibleHeight = height();
 
     auto minimapOffset = 0;
     if (minimapContentHeight > minimapVisibleHeight) {
         auto viewportStartLine = qpart_->verticalScrollBar()->value();
-        auto scrollRatio = static_cast<float>(viewportStartLine) / totalLines;
+        auto scrollRatio = static_cast<float>(viewportStartLine) / doc->blockCount();
         minimapOffset =
             static_cast<int>(scrollRatio * (minimapContentHeight - minimapVisibleHeight));
+        minimapOffset = std::min(minimapOffset, minimapContentHeight - minimapVisibleHeight);
     }
 
     auto clickedLine = static_cast<int>((pos.y() + minimapOffset) / lineHeight);
-    clickedLine = qBound(0, clickedLine, totalLines - 1); // Ensure within bounds
+    clickedLine = qBound(0, clickedLine, visibleLineCount - 1); // Ensure within bounds
+
+    QTextBlock clickedBlock;
+    int visibleIndex = 0;
+    for (auto b = doc->firstBlock(); b.isValid(); b = b.next()) {
+        if (b.isVisible()) {
+            if (visibleIndex == clickedLine) {
+                clickedBlock = b;
+                break;
+            }
+            visibleIndex++;
+        }
+    }
+
+    if (!clickedBlock.isValid()) {
+        return;
+    }
 
     // Center the clicked line in the viewport
     auto visibleLines = qpart_->viewport()->height() / qpart_->fontMetrics().height();
-    auto scrollToLine = qMax(0, clickedLine - visibleLines / 2);
-    auto cursor = QTextCursor(doc->findBlockByNumber(clickedLine));
+    auto scrollToLine = qMax(0, clickedBlock.blockNumber() - visibleLines / 2);
+    auto cursor = QTextCursor(clickedBlock);
     qpart_->setTextCursor(cursor);
     qpart_->verticalScrollBar()->setValue(scrollToLine);
 }
@@ -348,7 +372,28 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     auto totalLines = doc->blockCount();
     auto viewportLines = qpart_->viewport()->height() / qpart_->fontMetrics().height();
     auto viewportStartLine = qpart_->verticalScrollBar()->value();
-    auto minimapContentHeight = totalLines * lineHeight;
+
+    int visibleLineCount = 0;
+    int visibleViewportStartLine = 0;
+    int visibleCurrentLineIndex = 0;
+    auto currentLineNumber = qpart_->textCursor().blockNumber();
+
+    for (auto b = doc->firstBlock(); b.isValid(); b = b.next()) {
+        if (b.isVisible()) {
+            if (b.blockNumber() < viewportStartLine) {
+                visibleViewportStartLine++;
+            }
+            if (b.blockNumber() < currentLineNumber) {
+                visibleCurrentLineIndex++;
+            }
+            visibleLineCount++;
+        }
+    }
+    if (!doc->findBlockByNumber(currentLineNumber).isVisible()) {
+        visibleCurrentLineIndex = -1; // don't highlight if not visible
+    }
+
+    auto minimapContentHeight = visibleLineCount * lineHeight;
     auto minimapVisibleHeight = minimapArea.height();
 
     auto minimapOffset = 0;
@@ -359,15 +404,17 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
         minimapOffset = std::min(minimapOffset, minimapContentHeight - minimapVisibleHeight);
     }
 
-    auto viewportStartY = viewportStartLine * lineHeight - minimapOffset;
+    auto viewportStartY = visibleViewportStartLine * lineHeight - minimapOffset;
     auto viewportHeight = viewportLines * lineHeight;
-    auto viewportRect = 
-        QRect(minimapArea.left(),
-              std::max(0, std::min(viewportStartY, minimapVisibleHeight - viewportHeight)),
-              minimapArea.width(), std::min(viewportHeight, minimapArea.height()));
+    auto viewportRect = QRect(minimapArea.left(),
+                              std::max(0, std::min(viewportStartY, minimapVisibleHeight - viewportHeight)),
+                              minimapArea.width(), std::min(viewportHeight, minimapArea.height()));
 
-    auto currentLineNumber = qpart_->textCursor().blockNumber();
-    auto currentLineY = currentLineNumber * lineHeight - minimapOffset;
+    auto currentLineY = -1;
+    if (visibleCurrentLineIndex != -1) {
+        currentLineY = visibleCurrentLineIndex * lineHeight - minimapOffset;
+    }
+
     auto currentLineRect = QRect(
         minimapArea.left(), std::max(0, std::min(currentLineY, minimapVisibleHeight - lineHeight)),
         minimapArea.width(), lineHeight);
@@ -394,54 +441,62 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     }
     painter->save();
     painter->fillRect(viewportRect, minimapBackground);
-    painter->fillRect(currentLineRect, qpart_->currentLineColor());
+    if (visibleCurrentLineIndex != -1) {
+        painter->fillRect(currentLineRect, qpart_->currentLineColor());
+    }
     painter->setFont(minimapFont());
 
     auto lineNumber = 0;
+    auto drawnLines = 0;
     while (block.isValid()) {
-        auto y = lineNumber * lineHeight - minimapOffset;
-        if (y >= minimapArea.height()) {
-            break;
-        }
+        if (block.isVisible()) {
+            auto y = drawnLines * lineHeight - minimapOffset;
+            if (y >= minimapArea.height()) {
+                break;
+            }
 
-        auto backgronud = QColor(Qt::transparent);
-        int flags[] = {BOOMARK_BIT, MODIFIED_BIT,   WARNING_BIT,  ERROR_BIT,
-                       INFO_BIT,    BREAKPOINT_BIT, EXECUTING_BIT};
-        if (lineNumber == currentLineNumber) {
-            backgronud = qpart_->currentLineColor();
-        }
-        for (auto flag : flags) {
-            if (hasFlag(block, flag)) {
-                auto color = qpart_->getColorForLineFlag(flag);
-                if (color.alpha() != 0) {
-                    backgronud = blendColors(color, backgronud);
+            if (y + lineHeight >= 0) {
+                auto backgronud = QColor(Qt::transparent);
+                int flags[] = {BOOMARK_BIT, MODIFIED_BIT,   WARNING_BIT,  ERROR_BIT,
+                               INFO_BIT,    BREAKPOINT_BIT, EXECUTING_BIT};
+                if (lineNumber == currentLineNumber) {
+                    backgronud = qpart_->currentLineColor();
+                }
+                for (auto flag : flags) {
+                    if (hasFlag(block, flag)) {
+                        auto color = qpart_->getColorForLineFlag(flag);
+                        if (color.alpha() != 0) {
+                            backgronud = blendColors(color, backgronud);
+                        }
+                    }
+                }
+                if (backgronud.alpha() != 0) {
+                    painter->setPen(Qt::NoPen);
+                    painter->setBrush(backgronud);
+                    painter->drawRect(minimapArea.left(), y, minimapArea.width(), lineHeight);
+                }
+                painter->setPen(textColor);
+                if (simple) {
+                    auto lineText = block.text();
+                    for (auto charIndex = 0; charIndex < lineText.length(); ++charIndex) {
+                        auto dotX = minimapArea.left() + charIndex * charWidth;
+                        if (dotX >= minimapArea.right()) {
+                            break;
+                        }
+                        auto isDrawable = lineText.at(charIndex).isLetterOrNumber() ||
+                                          lineText.at(charIndex).isPunct();
+                        if (isDrawable) {
+                            painter->drawPoint(dotX, y);
+                        }
+                    }
+                } else {
+                    auto padding = 5;
+                    auto textRect = QRectF(minimapArea.left() + padding, y,
+                                           minimapArea.width() - padding * 2, lineHeight);
+                    painter->drawText(textRect, Qt::AlignLeft, block.text());
                 }
             }
-        }
-        if (backgronud.alpha() != 0) {
-            painter->setPen(Qt::NoPen);
-            painter->setBrush(backgronud);
-            painter->drawRect(minimapArea.left(), y, minimapArea.width(), lineHeight);
-        }
-        painter->setPen(textColor);
-        if (simple) {
-            auto lineText = block.text();
-            for (auto charIndex = 0; charIndex < lineText.length(); ++charIndex) {
-                auto dotX = minimapArea.left() + charIndex * charWidth;
-                if (dotX >= minimapArea.right()) {
-                    break;
-                }
-                auto isDrawable =
-                    lineText.at(charIndex).isLetterOrNumber() || lineText.at(charIndex).isPunct();
-                if (isDrawable) {
-                    painter->drawPoint(dotX, y);
-                }
-            }
-        } else {
-            auto padding = 5;
-            auto textRect = QRectF(minimapArea.left() + padding, y,
-                                   minimapArea.width() - padding * 2, lineHeight);
-            painter->drawText(textRect, Qt::AlignLeft, block.text());
+            drawnLines++;
         }
         block = block.next();
         lineNumber++;
