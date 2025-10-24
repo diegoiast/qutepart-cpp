@@ -802,8 +802,7 @@ void Qutepart::toggleFold(int lineNumber) {
     setBlockFolded(block, !data->folding.folded);
 }
 
-QTextBlock Qutepart::findBlockToFold(QTextBlock block)
-{
+QTextBlock Qutepart::findBlockToFold(QTextBlock block) {
     auto data = static_cast<TextBlockUserData *>(block.userData());
     if (!data) {
         return QTextBlock();
@@ -833,16 +832,14 @@ QTextBlock Qutepart::findBlockToFold(QTextBlock block)
     return document()->firstBlock();
 }
 
-void Qutepart::foldCurrentBlock()
-{
+void Qutepart::foldCurrentBlock() {
     auto blockToFold = findBlockToFold(textCursor().block());
     if (blockToFold.isValid()) {
         foldBlock(blockToFold.blockNumber());
     }
 }
 
-void Qutepart::unfoldCurrentBlock()
-{
+void Qutepart::unfoldCurrentBlock() {
     auto cursor = textCursor();
     auto block = cursor.block();
 
@@ -856,8 +853,7 @@ void Qutepart::unfoldCurrentBlock()
     }
 }
 
-void Qutepart::toggleCurrentFold()
-{
+void Qutepart::toggleCurrentFold() {
     QTextBlock blockToFold = findBlockToFold(textCursor().block());
     if (blockToFold.isValid()) {
         auto data = static_cast<TextBlockUserData *>(blockToFold.userData());

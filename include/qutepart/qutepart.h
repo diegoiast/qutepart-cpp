@@ -469,7 +469,6 @@ class Qutepart : public QPlainTextEdit {
     /// Unfold all folded blocks in the document
     void unfoldAll();
 
-
     // Convenience functions
     void resetSelection();
 

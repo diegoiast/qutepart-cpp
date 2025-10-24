@@ -63,13 +63,11 @@ ContextStack ContextStack::switchContext(const ContextSwitcher &operation,
 
 bool ContextStack::operator!=(const ContextStack &other) const { return !(*this == other); }
 
-uint qHash(const ContextStackItem &key, uint seed)
-{
+uint qHash(const ContextStackItem &key, uint seed) {
     return ::qHash(key.context, seed) ^ ::qHash(key.data, seed);
 }
 
-uint qHash(const ContextStack &key, uint seed)
-{
+uint qHash(const ContextStack &key, uint seed) {
     return qHashRange(key.items.begin(), key.items.end(), seed);
 }
 

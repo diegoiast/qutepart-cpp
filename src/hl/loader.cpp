@@ -154,7 +154,8 @@ AbstractRuleParams parseAbstractRuleParams(const QXmlStreamAttributes &attrs, QS
         }
     }
 
-    return AbstractRuleParams{attribute, context, lookAhead, firstNonSpace, column, dynamic, beginRegion, endRegion};
+    return AbstractRuleParams{attribute, context, lookAhead,   firstNonSpace,
+                              column,    dynamic, beginRegion, endRegion};
 }
 
 template <class RuleClass>

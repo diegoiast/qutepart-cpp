@@ -7,12 +7,12 @@
 #include <QApplication>
 #include <QDebug>
 #include <QIcon>
+#include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QScrollBar>
 #include <QTextBlock>
 #include <QToolTip>
-#include <QMouseEvent>
 
 #include "qutepart.h"
 #include "text_block_flags.h"
@@ -228,8 +228,7 @@ void MarkArea::paintEvent(QPaintEvent *event) {
     painter.fillRect(event->rect(), backgruoundColor);
 
     auto block = qpart_->firstVisibleBlock();
-    auto blockBoundingRect =
-        qpart_->blockBoundingRect(block).translated(qpart_->contentOffset());
+    auto blockBoundingRect = qpart_->blockBoundingRect(block).translated(qpart_->contentOffset());
     auto top = blockBoundingRect.top();
 
     while (block.isValid() && top <= event->rect().bottom()) {
@@ -406,9 +405,10 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
 
     auto viewportStartY = visibleViewportStartLine * lineHeight - minimapOffset;
     auto viewportHeight = viewportLines * lineHeight;
-    auto viewportRect = QRect(minimapArea.left(),
-                              std::max(0, std::min(viewportStartY, minimapVisibleHeight - viewportHeight)),
-                              minimapArea.width(), std::min(viewportHeight, minimapArea.height()));
+    auto viewportRect =
+        QRect(minimapArea.left(),
+              std::max(0, std::min(viewportStartY, minimapVisibleHeight - viewportHeight)),
+              minimapArea.width(), std::min(viewportHeight, minimapArea.height()));
 
     auto currentLineY = -1;
     if (visibleCurrentLineIndex != -1) {
@@ -505,9 +505,7 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     painter->restore();
 }
 
-FoldingArea::FoldingArea(Qutepart *editor) : SideArea(editor) {
-    setMouseTracking(true);
-}
+FoldingArea::FoldingArea(Qutepart *editor) : SideArea(editor) { setMouseTracking(true); }
 
 int FoldingArea::widthHint() const {
     return qpart_->fontMetrics().horizontalAdvance(QLatin1Char('9')) + 6;
@@ -559,7 +557,8 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
                 // Debug: print folding level for non-foldable lines
                 painter.setPen(textColor);
                 QRect r(1, top + 1, width() - 2, qpart_->fontMetrics().height() - 2);
-                painter.drawText(r, Qt::AlignCenter, QString::number(data ? data->folding.level : 0));
+                painter.drawText(r, Qt::AlignCenter,
+                                 QString::number(data ? data->folding.level : 0));
             }
         }
 
@@ -569,7 +568,7 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
     }
 }
 
-QTextBlock FoldingArea::blockAt(const QPoint& pos) const {
+QTextBlock FoldingArea::blockAt(const QPoint &pos) const {
     QTextBlock block = qpart_->firstVisibleBlock();
     if (!block.isValid()) {
         return QTextBlock();

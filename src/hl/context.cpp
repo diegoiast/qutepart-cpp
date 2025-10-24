@@ -199,7 +199,6 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
 
             if (data) {
                 data->folding.level = data->regions.size();
-
             }
 
             if (matchRes->nextContext.isNull()) {

@@ -17,8 +17,7 @@ namespace Qutepart {
 AbstractRule::AbstractRule(const AbstractRuleParams &params)
     : lookAhead(params.lookAhead), attribute(params.attribute), contextSwitcher(params.context),
       firstNonSpace(params.firstNonSpace), column(params.column), dynamic(params.dynamic),
-      beginRegion(params.beginRegion),
-      endRegion(params.endRegion) {}
+      beginRegion(params.beginRegion), endRegion(params.endRegion) {}
 
 void AbstractRule::printDescription(QTextStream &out) const {
     out << "\t\t" << description() << "\n";

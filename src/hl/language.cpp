@@ -58,7 +58,7 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
 
     QTextBlock prevBlock = block.previous();
     if (prevBlock.isValid()) {
-        TextBlockUserData* prevData = static_cast<TextBlockUserData*>(prevBlock.userData());
+        TextBlockUserData *prevData = static_cast<TextBlockUserData *>(prevBlock.userData());
         if (prevData) {
             data->regions = prevData->regions;
         }
@@ -81,7 +81,7 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
     data->contexts = contextStack;
 
     uint regionsHash = 0;
-    for(const auto& region : data->regions) {
+    for (const auto &region : data->regions) {
         regionsHash = qHash(region, regionsHash);
     }
 
