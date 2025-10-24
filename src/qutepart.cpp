@@ -1428,30 +1428,35 @@ void Qutepart::initActions() {
         }
     });
 
-    auto *foldAction = new QAction(this);
-    foldAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_BracketLeft));
-    connect(foldAction, &QAction::triggered, this, &Qutepart::foldCurrentBlock);
-    this->addAction(foldAction);
+    foldAction_ = new QAction(tr("Fold current block"), this);
+    foldAction_->setShortcutContext(Qt::WidgetShortcut);
+    foldAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_BracketLeft));
+    connect(foldAction_, &QAction::triggered, this, &Qutepart::foldCurrentBlock);
+    this->addAction(foldAction_);
 
-    auto *unfoldAction = new QAction(this);
-    unfoldAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_BracketRight));
-    connect(unfoldAction, &QAction::triggered, this, &Qutepart::unfoldCurrentBlock);
-    this->addAction(unfoldAction);
+    unfoldAction_ = new QAction(tr("Unfold current block"), this);
+    unfoldAction_->setShortcutContext(Qt::WidgetShortcut);
+    unfoldAction_->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_BracketRight));
+    connect(unfoldAction_, &QAction::triggered, this, &Qutepart::unfoldCurrentBlock);
+    this->addAction(unfoldAction_);
 
-    auto *toggleFoldAction = new QAction(this);
-    toggleFoldAction->setShortcut(QKeySequence(Qt::ALT | Qt::Key_Asterisk));
-    connect(toggleFoldAction, &QAction::triggered, this, &Qutepart::toggleCurrentFold);
-    this->addAction(toggleFoldAction);
+    toggleFoldAction_ = new QAction(tr("Toggle fold current block"), this);
+    toggleFoldAction_->setShortcutContext(Qt::WidgetShortcut);
+    toggleFoldAction_->setShortcut(QKeySequence(Qt::ALT | Qt::Key_Asterisk));
+    connect(toggleFoldAction_, &QAction::triggered, this, &Qutepart::toggleCurrentFold);
+    this->addAction(toggleFoldAction_);
 
-    auto *foldTopLevelAction = new QAction(this);
-    foldTopLevelAction->setShortcut(QKeySequence(Qt::ALT | Qt::Key_0));
-    connect(foldTopLevelAction, &QAction::triggered, this, &Qutepart::foldTopLevelBlocks);
-    this->addAction(foldTopLevelAction);
+    foldTopLevelAction_ = new QAction(tr("Fold top level blocks"), this);
+    foldTopLevelAction_->setShortcutContext(Qt::WidgetShortcut);
+    foldTopLevelAction_->setShortcut(QKeySequence(Qt::ALT | Qt::Key_0));
+    connect(foldTopLevelAction_, &QAction::triggered, this, &Qutepart::foldTopLevelBlocks);
+    this->addAction(foldTopLevelAction_);
 
-    auto *unfoldAllAction = new QAction(this);
-    unfoldAllAction->setShortcut(QKeySequence(Qt::ALT | Qt::SHIFT | Qt::Key_0));
-    connect(unfoldAllAction, &QAction::triggered, this, &Qutepart::unfoldAll);
-    this->addAction(unfoldAllAction);
+    unfoldAllAction_ = new QAction(tr("Unfold all"), this);
+    unfoldAllAction_->setShortcutContext(Qt::WidgetShortcut);
+    unfoldAllAction_->setShortcut(QKeySequence(Qt::ALT | Qt::SHIFT | Qt::Key_0));
+    connect(unfoldAllAction_, &QAction::triggered, this, &Qutepart::unfoldAll);
+    this->addAction(unfoldAllAction_);
 }
 
 QAction *Qutepart::createAction(const QString &text, QKeySequence shortcut,
@@ -1464,14 +1469,10 @@ QAction *Qutepart::createAction(const QString &text, QKeySequence shortcut,
     if iconFileName is not None:
          action.setIcon(getIcon(iconFileName))
 #endif
-
     action->setShortcut(shortcut);
     action->setShortcutContext(Qt::WidgetShortcut);
-
     connect(action, &QAction::triggered, handler);
-
     addAction(action);
-
     return action;
 }
 

@@ -430,6 +430,12 @@ class Qutepart : public QPlainTextEdit {
     inline QAction *insertLineAboveAction() const { return insertLineAboveAction_; }
     inline QAction *insertLineBelowAction() const { return insertLineBelowAction_; }
     inline QAction *joinLinesAction() const { return joinLinesAction_; }
+    inline QAction *foldAction() const { return foldAction_; };
+    inline QAction *unfoldAction() const { return unfoldAction_; };
+    inline QAction *toggleFoldAction() const { return toggleFoldAction_; }
+    inline QAction *foldTopLevelAction() const { return foldTopLevelAction_; }
+    inline QAction *unfoldAllAction() const { return unfoldAllAction_; }
+
     /// Zoom In the document by scaling fonts
     inline QAction *zoomInAction() const { return zoomInAction_; }
     /// Zoom Out the document by scaling fonts
@@ -635,6 +641,11 @@ class Qutepart : public QPlainTextEdit {
     QAction *zoomOutAction_;
     QAction *toggleActionComment_;
     QAction *findMatchingBracketAction_;
+    QAction *foldAction_ = nullptr;
+    QAction *unfoldAction_ = nullptr;
+    QAction *toggleFoldAction_ = nullptr;
+    QAction *foldTopLevelAction_ = nullptr;
+    QAction *unfoldAllAction_ = nullptr;
 
     friend class LineNumberArea;
     friend class MarkArea;

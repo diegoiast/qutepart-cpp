@@ -96,12 +96,19 @@ All features are configurable
 37. Zoom document (change font size on the fly).
 38. Change indentation of text (tab/shift+tab).
 39. Preview side mini-map.
+40. Toogle folding.
+41. Smart toggle folding - when folding a nested fold, parent level will get folded.
+    `auto f() { while (){ if` ... - assume you are on `if`, this will get folded,
+    then `while` then `f()`, all with the same shortcut key
+42. Top level folding. On Java, will fold all classes, keeping first level open (same for XML,
+    top level fold will be open, but the first childs gets folded).
 
 Planned features
 
 1. Spell check.
-2. Toggle folding sections of code/text.
+2. Inline marking (linter warnings, debugger hints etc).
 3. Markdown specific indentator.
+
 
 To see the API in action, see [editor](exammple/editor.cpp).
 
