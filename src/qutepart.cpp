@@ -53,6 +53,9 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
         lastWordUnderCursor.clear();
         updateExtraSelections();
         viewport()->update();
+        if (miniMap_) {
+            miniMap_->update();
+        }        
     });
 
     connect(document(), &QTextDocument::contentsChange, this, [this]() {
@@ -765,6 +768,9 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
     }
     if (markArea_) {
         markArea_->update();
+    }
+    if (miniMap_) {
+        miniMap_->update();
     }
 }
 
@@ -1887,22 +1893,22 @@ void Qutepart::scrollByOffset(int offset) {
 
 void Qutepart::duplicateSelection() {
     AtomicEditOperation op(this);
-    QTextCursor cursor = textCursor();
+    auto cursor = textCursor();
 
     if (cursor.hasSelection()) {
         // duplicate selection
-        QString text = cursor.selectedText();
+        auto text = cursor.selectedText();
         cursor.setPosition(std::max(cursor.position(), cursor.anchor()));
-        int anchor = cursor.position();
+        auto anchor = cursor.position();
         cursor.insertText(text);
-        int pos = cursor.position();
+        auto pos = cursor.position();
         cursor.setPosition(anchor);
         cursor.setPosition(pos, QTextCursor::KeepAnchor);
         setTextCursor(cursor);
     } else {
         // duplicate current line
-        int cursorColumn = cursor.positionInBlock();
-        QString text = cursor.block().text();
+        auto cursorColumn = cursor.positionInBlock();
+        auto text = cursor.block().text();
         cursor.movePosition(QTextCursor::EndOfBlock);
         cursor.insertBlock();
         cursor.insertText(text);
