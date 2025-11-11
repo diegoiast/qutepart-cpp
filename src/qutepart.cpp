@@ -47,6 +47,7 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     setDefaultColors();
     initActions();
     setAttribute(Qt::WA_KeyCompression, false); // vim can't process compressed keys
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
     updateTabStopWidth();
     connect(this, &Qutepart::cursorPositionChanged, this, [this]() {

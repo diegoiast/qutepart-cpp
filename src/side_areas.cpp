@@ -41,6 +41,13 @@ auto static blendColors(const QColor &color1, const QColor &color2, float r = 0.
                   (1 - r) * color1.blue() + color2.blue() * r, 255);
 }
 
+auto static countDigits(int n) -> int {
+    if (n == 0) {
+        return 1;
+    }
+    return floor(log10(abs(n))) + 1;
+}
+
 } // namespace
 
 SideArea::SideArea(Qutepart *textEdit) : QWidget(textEdit), qpart_(textEdit) {
@@ -108,8 +115,8 @@ LineNumberArea::LineNumberArea(Qutepart *textEdit) : SideArea(textEdit) {
 }
 
 int LineNumberArea::widthHint() const {
-    int lines = std::max(1, qpart_->document()->blockCount());
-    int digits = QString("%1").arg(lines).length();
+    auto lines = std::max(1, qpart_->document()->blockCount());
+    auto digits = std::max(4, countDigits(lines));
 
     return LEFT_LINE_NUM_MARGIN + qpart_->fontMetrics().horizontalAdvance('9') * digits +
            RIGHT_LINE_NUM_MARGIN;
