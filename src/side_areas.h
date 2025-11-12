@@ -54,13 +54,16 @@ class MarkArea : public SideArea {
   public:
     MarkArea(Qutepart *qpart);
     int widthHint() const;
+    virtual void changeEvent(QEvent *event) override;
 
   private:
-    QPixmap loadIcon(const QString &name) const;
-
     virtual void paintEvent(QPaintEvent *event) override;
 
-    QPixmap bookmarkPixmap_;
+    QIcon bookmarkPixmap_;
+    QHash<QString, QPixmap> scaledIconCache;
+
+    QPixmap getCachedIcon(QIcon icon, int targetSize, QHash<QString, QPixmap> &cache);
+    QPixmap getCachedPixmap(QPixmap pixmap, int targetSize, QHash<QString, QPixmap> &cache);
 };
 
 class Minimap : public SideArea {

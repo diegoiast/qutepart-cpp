@@ -211,28 +211,33 @@ void LineNumberArea::changeEvent(QEvent *event) {
 
 MarkArea::MarkArea(Qutepart *textEdit) : SideArea(textEdit) {
     setMouseTracking(true);
-    bookmarkPixmap_ = loadIcon("emblem-favorite");
+    bookmarkPixmap_ = QIcon::fromTheme("emblem-favorite");
     connect(textEdit->document(), &QTextDocument::blockCountChanged, [this] { this->update(); });
     connect(textEdit->verticalScrollBar(), &QScrollBar::valueChanged, [this] { this->update(); });
+    scaledIconCache.clear();
 }
 
-QPixmap MarkArea::loadIcon(const QString &name) const {
-    auto icon = QIcon::fromTheme(name);
-    auto size = qpart_->cursorRect(qpart_->document()->begin(), 0, 0).height() - 6;
-    return icon.pixmap(size, size);
+void MarkArea::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::IconTextChange) {
+        scaledIconCache.clear();
+    }
+    QWidget::changeEvent(event);
 }
 
-int MarkArea::widthHint() const { return MARK_MARGIN + bookmarkPixmap_.width() + MARK_MARGIN; }
+int MarkArea::widthHint() const {
+    return qpart_->cursorRect(qpart_->document()->begin(), 0, 0).height();
+}
 
 void MarkArea::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
-    auto backgruoundColor = palette().color(QPalette::AlternateBase);
+    auto backgroundColor = palette().color(QPalette::AlternateBase);
     if (auto theme = qpart_->getTheme()) {
-        if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
-            backgruoundColor = theme->getEditorColors()[Theme::Colors::IconBorder];
+        auto const &colors = theme->getEditorColors();
+        if (colors.contains(Theme::Colors::IconBorder)) {
+            backgroundColor = colors[Theme::Colors::IconBorder];
         }
     }
-    painter.fillRect(event->rect(), backgruoundColor);
+    painter.fillRect(event->rect(), backgroundColor);
 
     auto block = qpart_->firstVisibleBlock();
     auto blockBoundingRect = qpart_->blockBoundingRect(block).translated(qpart_->contentOffset());
@@ -243,35 +248,106 @@ void MarkArea::paintEvent(QPaintEvent *event) {
         auto bottom = top + height;
 
         if (block.isVisible() && bottom >= event->rect().top()) {
-            if (hasFlag(block, ERROR_BIT)) {
-                auto icon = iconForStatus(ERROR_BIT);
-                auto scaledSize = height - 4;
-                auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
-                auto yPos = top + ((height - scaledSize) / 2);
-                painter.drawPixmap(0, yPos, scaledIcon);
+            struct MarkInfo {
+                bool active;
+                int bit;
+                QColor color;
+            };
+            const MarkInfo marks[] = {
+                {hasFlag(block, ERROR_BIT), ERROR_BIT, QColor(Qt::red).lighter(170)},
+                {hasFlag(block, WARNING_BIT), WARNING_BIT, QColor(Qt::yellow).lighter(150)},
+                {hasFlag(block, INFO_BIT), INFO_BIT, QColor(Qt::cyan).lighter(170)}};
+
+            for (auto const &mark : marks) {
+                if (!mark.active) {
+                    continue;
+                }
+                auto pixmap = getCachedIcon(iconForStatus(mark.bit), width(), scaledIconCache);
+                auto xPos = 0;
+                auto yPos = top;
+                painter.drawPixmap(xPos, yPos, pixmap);
             }
-            if (hasFlag(block, WARNING_BIT)) {
-                auto icon = iconForStatus(WARNING_BIT);
-                auto scaledSize = height - 4;
-                auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
-                auto yPos = top + ((height - scaledSize) / 2);
-                painter.drawPixmap(0, yPos, scaledIcon);
-            }
-            if (hasFlag(block, INFO_BIT)) {
-                auto icon = iconForStatus(INFO_BIT);
-                auto scaledSize = height - 4;
-                auto scaledIcon = icon.pixmap(scaledSize, scaledSize);
-                auto yPos = top + ((height - scaledSize) / 2);
-                painter.drawPixmap(0, yPos, scaledIcon);
-            }
+
             if (isBookmarked(block)) {
-                auto yPos = top + ((height - bookmarkPixmap_.height()) / 2); // centered
-                painter.drawPixmap(0, yPos, bookmarkPixmap_);
+                auto pixmap = getCachedIcon(bookmarkPixmap_, width(), scaledIconCache);
+                auto xPos = 0;
+                auto yPos = top;
+                painter.drawPixmap(xPos, yPos, pixmap);
             }
         }
 
         top += height;
         block = block.next();
+    }
+}
+
+QPixmap MarkArea::getCachedIcon(QIcon icon, int targetSize, QHash<QString, QPixmap> &cache) {
+    QString key = QString::number(icon.cacheKey()) + "_" + QString::number(targetSize);
+    if (cache.contains(key)) {
+        return cache.value(key);
+    }
+
+    QSize chosenSize;
+    auto const dpr = qpart_->devicePixelRatioF();
+    auto const iconSize = qRound(targetSize / dpr);
+    auto availableSizes = icon.availableSizes();
+    if (!availableSizes.isEmpty()) {
+        chosenSize = availableSizes.first();
+        for (auto const s : availableSizes) {
+            if (s.width() <= iconSize && s.height() <= iconSize) {
+                chosenSize = s;
+            } else {
+                break;
+            }
+        }
+        if (chosenSize.width() > iconSize && availableSizes.first().width() > iconSize) {
+            chosenSize = availableSizes.first();
+        }
+        if (chosenSize.width() < iconSize && availableSizes.last().width() < iconSize) {
+            chosenSize = availableSizes.last();
+        }
+    } else {
+        chosenSize = QSize(iconSize, iconSize);
+    }
+
+    auto iconPixmap = icon.pixmap(chosenSize);
+    iconPixmap.setDevicePixelRatio(dpr);
+    auto actualSize = iconPixmap.size() / iconPixmap.devicePixelRatio();
+    if (actualSize.width() > targetSize || actualSize.height() > targetSize) {
+        auto scaledSize = targetSize * dpr;
+        iconPixmap = iconPixmap.scaled(scaledSize, scaledSize, Qt::KeepAspectRatio,
+                                       Qt::SmoothTransformation);
+        iconPixmap.setDevicePixelRatio(dpr);
+        actualSize = iconPixmap.size() / iconPixmap.devicePixelRatio();
+    }
+
+    QPixmap finalPixmap(targetSize * dpr, targetSize * dpr);
+    QPoint topLeft((targetSize - actualSize.width()) / 2, (targetSize - actualSize.height()) / 2);
+    finalPixmap.setDevicePixelRatio(dpr);
+    finalPixmap.fill(Qt::transparent);
+    {
+        QPainter painter(&finalPixmap);
+        painter.drawPixmap(topLeft, iconPixmap);
+    }
+    cache.insert(key, finalPixmap);
+    return finalPixmap;
+}
+
+QPixmap MarkArea::getCachedPixmap(QPixmap pixmap, int targetSize, QHash<QString, QPixmap> &cache) {
+    QString key = QString::number(pixmap.cacheKey()) + "_" + QString::number(targetSize);
+    if (cache.contains(key)) {
+        return cache.value(key);
+    } else {
+        QPixmap pixmapToReturn;
+        if (targetSize < pixmap.width() || targetSize < pixmap.height()) {
+            pixmapToReturn = pixmap.scaled(targetSize, targetSize, Qt::KeepAspectRatio,
+                                           Qt::SmoothTransformation);
+        } else {
+            pixmapToReturn = pixmap;
+        }
+        qDebug() << "Getting icon of size " << targetSize;
+        cache.insert(key, pixmapToReturn);
+        return pixmapToReturn;
     }
 }
 
