@@ -56,7 +56,7 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
         viewport()->update();
         if (miniMap_) {
             miniMap_->update();
-        }        
+        }
     });
 
     connect(document(), &QTextDocument::contentsChange, this, [this]() {
