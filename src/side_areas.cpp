@@ -27,7 +27,6 @@ namespace {
 
 const int LEFT_LINE_NUM_MARGIN = 5;
 const int RIGHT_LINE_NUM_MARGIN = 3;
-const int MARK_MARGIN = 1;
 
 auto static blendColors(const QColor &color1, const QColor &color2, float r = 0.5) -> QColor {
     if (!color2.isValid()) {
