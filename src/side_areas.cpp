@@ -590,13 +590,14 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
 FoldingArea::FoldingArea(Qutepart *editor) : SideArea(editor) { setMouseTracking(true); }
 
 int FoldingArea::widthHint() const {
-    return qpart_->fontMetrics().horizontalAdvance(QLatin1Char('9')) + 6;
+    return qpart_->fontMetrics().height();
 }
 
 void FoldingArea::paintEvent(QPaintEvent *event) {
     auto palette = qpart_->palette();
-    auto textColor = palette.color(QPalette::Text);
     auto background = palette.color(QPalette::AlternateBase);
+    auto textColor = palette.color(QPalette::Text);
+    textColor.setAlpha(85);
 
     if (auto theme = qpart_->getTheme()) {
         if (theme->getEditorColors().contains(Theme::Colors::IconBorder)) {
@@ -625,23 +626,34 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
                 prevLevel = prevData->folding.level;
             }
 
-            if (data && data->folding.level > prevLevel) {
-                painter.setPen(textColor);
-                QRect r(1, top + 1, width() - 2, qpart_->fontMetrics().height() - 2);
-                painter.drawRect(r);
+            if (!data) {
+                continue;
+            }
 
-                if (block.next().isVisible()) {
-                    painter.drawText(r, Qt::AlignCenter, "-");
-                } else {
-                    painter.drawText(r, Qt::AlignCenter, "+");
-                }
-            } else if (m_debugFolding) {
-                // Debug: print folding level for non-foldable lines
+            // Debug: print folding level for non-foldable lines
+            if (m_debugFolding) {
+                auto r = QRect (1, top + 1, width() - 2, qpart_->fontMetrics().height() - 2);
                 painter.setPen(textColor);
-                QRect r(1, top + 1, width() - 2, qpart_->fontMetrics().height() - 2);
                 painter.drawText(r, Qt::AlignCenter,
                                  QString::number(data ? data->folding.level : 0));
-            }
+            } else {
+                if (data->folding.level > prevLevel) {
+                    auto symbol = block.next().isVisible() ? "-" : "+";
+                    auto lineHeight = (int)qpart_->blockBoundingRect(block).height();
+                    auto lineRect = QRect (1, top, width() - 2, lineHeight);
+                    auto side = qMin(lineRect.width(), lineRect.height());
+                    auto squareRect = QRect(
+                        lineRect.x() + (lineRect.width()  -2 - side) / 2,
+                        lineRect.y() + (lineRect.height() -2 - side) / 2,
+                        side - 1,
+                        side - 1
+                        );
+
+                    painter.setPen(textColor);
+                    painter.drawRect(squareRect);
+                    painter.drawText(squareRect, Qt::AlignCenter, symbol);
+                }
+            };
         }
 
         block = block.next();
