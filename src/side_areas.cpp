@@ -626,10 +626,6 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
                 prevLevel = prevData->folding.level;
             }
 
-            if (!data) {
-                continue;
-            }
-
             // Debug: print folding level for non-foldable lines
             if (m_debugFolding) {
                 auto r = QRect (1, top + 1, width() - 2, qpart_->fontMetrics().height() - 2);
@@ -637,7 +633,7 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
                 painter.drawText(r, Qt::AlignCenter,
                                  QString::number(data ? data->folding.level : 0));
             } else {
-                if (data->folding.level > prevLevel) {
+                if (data && data->folding.level > prevLevel) {
                     auto symbol = block.next().isVisible() ? "-" : "+";
                     auto lineHeight = (int)qpart_->blockBoundingRect(block).height();
                     auto lineRect = QRect (1, top, width() - 2, lineHeight);
