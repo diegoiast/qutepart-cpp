@@ -589,9 +589,7 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
 
 FoldingArea::FoldingArea(Qutepart *editor) : SideArea(editor) { setMouseTracking(true); }
 
-int FoldingArea::widthHint() const {
-    return qpart_->fontMetrics().height();
-}
+int FoldingArea::widthHint() const { return qpart_->fontMetrics().height(); }
 
 void FoldingArea::paintEvent(QPaintEvent *event) {
     auto palette = qpart_->palette();
@@ -628,7 +626,7 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
 
             // Debug: print folding level for non-foldable lines
             if (m_debugFolding) {
-                auto r = QRect (1, top + 1, width() - 2, qpart_->fontMetrics().height() - 2);
+                auto r = QRect(1, top + 1, width() - 2, qpart_->fontMetrics().height() - 2);
                 painter.setPen(textColor);
                 painter.drawText(r, Qt::AlignCenter,
                                  QString::number(data ? data->folding.level : 0));
@@ -636,14 +634,11 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
                 if (data && data->folding.level > prevLevel) {
                     auto symbol = block.next().isVisible() ? "-" : "+";
                     auto lineHeight = (int)qpart_->blockBoundingRect(block).height();
-                    auto lineRect = QRect (1, top, width() - 2, lineHeight);
+                    auto lineRect = QRect(1, top, width() - 2, lineHeight);
                     auto side = qMin(lineRect.width(), lineRect.height());
-                    auto squareRect = QRect(
-                        lineRect.x() + (lineRect.width()  -2 - side) / 2,
-                        lineRect.y() + (lineRect.height() -2 - side) / 2,
-                        side - 1,
-                        side - 1
-                        );
+                    auto squareRect = QRect(lineRect.x() + (lineRect.width() - 2 - side) / 2,
+                                            lineRect.y() + (lineRect.height() - 2 - side) / 2,
+                                            side - 1, side - 1);
 
                     painter.setPen(textColor);
                     painter.drawRect(squareRect);
