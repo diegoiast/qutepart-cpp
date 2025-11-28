@@ -760,7 +760,11 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
         setTextCursor(newCursor);
     }
 
+    // TODO: this will be a faster update
+    // document()->markContentsDirty(startBlock.position(), endBlock.position() - startBlock.position() + 1);
     viewport()->update();
+    emit document()->documentLayout()->documentSizeChanged(document()->documentLayout()->documentSize());
+
     if (foldingArea_) {
         foldingArea_->update();
     }
