@@ -99,9 +99,12 @@ else()
   target_compile_options(qutepart PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
+include(hunspellminimal.cmake)
+include(sonnetminimal.cmake)
+
 # Build example executable
 add_executable(editor example/editor.cpp)
-target_link_libraries(editor Qt::Core Qt::Widgets qutepart)
+target_link_libraries(editor Qt::Core Qt::Widgets qutepart hunspell sonnet-minimal)
 
 # Install only library, not binaries
 install(TARGETS qutepart DESTINATION lib)

@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <stdio.h>
-
 #include <QApplication>
 #include <QByteArray>
 #include <QDebug>
@@ -16,6 +14,9 @@
 #include <QMenuBar>
 #include <QString>
 #include <QXmlStreamReader>
+
+#include <Sonnet/Speller>
+#include <Sonnet/Highlighter>
 
 #include "qutepart.h"
 #include "theme.h"
@@ -248,6 +249,9 @@ int main(int argc, char **argv) {
     // alt + arrow moves line
     font.setFamily("Monospace");
     qutepart.setFont(font);
+
+    auto s = new Sonnet::Highlighter(&qutepart);
+    qDebug() << "Sonnet active: " << s->isActive();
 
     // toggle comment a line, block
     auto filePath = QString(":/qutepart/syntax/c.xml");
