@@ -210,11 +210,13 @@ void Qutepart::setTheme(const Theme *newTheme) {
     if (theme->getEditorColors().contains(Theme::Colors::TextSelection) &&
         theme->getEditorColors()[Theme::Colors::TextSelection].isValid()) {
         auto c = theme->getEditorColors()[Theme::Colors::TextSelection];
+        c.setAlpha(180);
         palette.setBrush(QPalette::Highlight, c);
         palette.setBrush(QPalette::HighlightedText, QBrush(Qt::NoBrush));
     }
 
     setPalette(palette);
+    viewport()->setPalette(palette);
 
     updateExtraSelections();
 }
