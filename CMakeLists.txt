@@ -108,7 +108,7 @@ target_link_libraries(editor Qt::Core Qt::Widgets qutepart)
 
 # Install only library, not binaries
 install(TARGETS qutepart DESTINATION lib)
-install(FILES include/qutepart/hl_factory.h include/qutepart/qutepart.h
+install(FILES include/qutepart/theme.h include/qutepart/qutepart.h
         DESTINATION include/qutepart)
 
 # Tests
