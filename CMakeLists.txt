@@ -3,23 +3,27 @@ cmake_minimum_required(VERSION 3.20.0)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 option(QUTEPART_ENABLE_DOCS "Should we build documentation for qutepart" OFF)
 option(QUTEPART_USE_MOLD "Should we link using mold?" ON)
+option(QUTEPART_USE_CMAKEFORMAT "Should we add an clang-format target" ON)
+option(QUTEPART_TESTS "Should we build tests" ON)
 
 project(qutepart)
 
-include(FetchContent)
-include(cmake/CPM.cmake)
 include(cmake/mold-linker.cmake)
 
-cpmaddpackage(
-  NAME
-  Format.cmake
-  VERSION 1.8.2
-  GITHUB_REPOSITORY
-  TheLartians/Format.cmake
-  OPTIONS
-  "FORMAT_SKIP_CMAKE NO"
-  "FORMAT_SKIP_CLANG NO"
-  "CMAKE_FORMAT_EXCLUDE cmake/CPM.cmake")
+if (QUTEPART_USE_CMAKEFORMAT)
+  include(FetchContent)
+  include(cmake/CPM.cmake)
+  cpmaddpackage(
+    NAME
+    Format.cmake
+    VERSION 1.8.2
+    GITHUB_REPOSITORY
+    TheLartians/Format.cmake
+    OPTIONS
+    "FORMAT_SKIP_CMAKE NO"
+    "FORMAT_SKIP_CLANG NO"
+    "CMAKE_FORMAT_EXCLUDE cmake/CPM.cmake")
+endif()
 
 if(QUTEPART_ENABLE_DOCS)
   add_subdirectory("docs")
@@ -31,7 +35,6 @@ set(QUTEPART_VERSION_PATCH 0)
 set(QUTEPART_VERSION
     ${QUTEPART_VERSION_MAJOR}.${QUTEPART_VERSION_MINOR}.${QUTEPART_VERSION_PATCH}
 )
-# set(QUTEPART_VERSION ${QUTEPART_VERSION} PARENT_SCOPE)
 
 # Instruct CMake to run moc automatically when needed
 set(CMAKE_AUTOMOC ON)
@@ -109,7 +112,7 @@ install(FILES include/qutepart/hl_factory.h include/qutepart/qutepart.h
         DESTINATION include/qutepart)
 
 # Tests
-if(NOT DEFINED DISABLE_QUTEPART_TESTS)
+if(DEFINED QUTEPART_TESTS)
   enable_testing()
 
   function(indent_test name)
