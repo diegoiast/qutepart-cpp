@@ -511,10 +511,10 @@ void Qutepart::setLineExecuting(int lineNumber, bool status) {
 
 void Qutepart::removeMetaData() {
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
-        auto data = static_cast<TextBlockUserData *>(block.userData());
-        if (data) {
-            data->metaData.message.clear();
-            data->state = 0;
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (blockData) {
+            blockData->metaData.message.clear();
+            blockData->state = 0;
         }
     }
     persitentSelections.clear();
@@ -522,12 +522,12 @@ void Qutepart::removeMetaData() {
 
 void Qutepart::setLineMessage(int lineNumber, const QString &message) {
     auto block = document()->findBlockByNumber(lineNumber);
-    auto data = static_cast<TextBlockUserData *>(block.userData());
-    if (!data) {
-        data = new TextBlockUserData({}, {nullptr});
-        block.setUserData(data);
+    auto blockData = static_cast<TextBlockUserData *>(block.userData());
+    if (!blockData) {
+        blockData = new TextBlockUserData({}, {nullptr});
+        block.setUserData(blockData);
     }
-    data->metaData.message = message;
+    blockData->metaData.message = message;
 }
 
 auto Qutepart::getColorForLineFlag(int flag) -> QColor {
@@ -649,8 +649,8 @@ static void addBrackets(QTextCursor &cursor, QChar openBracket, QChar closeBrack
 QVector<int> Qutepart::getFoldedLines() const {
     QVector<int> foldedLines;
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
-        auto data = static_cast<TextBlockUserData *>(block.userData());
-        if (data && data->folding.folded) {
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (blockData && blockData->folding.folded) {
             foldedLines << block.blockNumber();
         }
     }
@@ -659,18 +659,18 @@ QVector<int> Qutepart::getFoldedLines() const {
 
 void Qutepart::setFoldedLines(const QVector<int> &foldedLines) {
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
-        auto data = static_cast<TextBlockUserData *>(block.userData());
-        if (data) {
-            data->folding.folded = false;
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (blockData) {
+            blockData->folding.folded = false;
         }
     }
 
     for (auto lineNumber : foldedLines) {
         auto block = document()->findBlockByNumber(lineNumber);
         if (block.isValid()) {
-            auto data = static_cast<TextBlockUserData *>(block.userData());
-            if (data) {
-                data->folding.folded = true;
+            auto blockData = static_cast<TextBlockUserData *>(block.userData());
+            if (blockData) {
+                blockData->folding.folded = true;
             }
         }
     }
@@ -682,17 +682,17 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
         return;
     }
 
-    auto data = static_cast<TextBlockUserData *>(block.userData());
-    if (!data) {
+    auto blockData = static_cast<TextBlockUserData *>(block.userData());
+    if (!blockData) {
         return;
     }
 
-    auto currentFoldLevel = data->folding.level;
+    auto currentFoldLevel = blockData->folding.level;
     if (currentFoldLevel == 0) {
         return;
     }
 
-    if (data->folding.folded == folded) {
+    if (blockData->folding.folded == folded) {
         return;
     }
 
@@ -712,12 +712,11 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
             }
         }
     }
-
-    data->folding.folded = folded;
+    blockData->folding.folded = folded;
 
     if (folded) {
         for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
-            auto blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
+            blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
             nextBlock.setVisible(false);
             nextBlock.setLineCount(0);
             if (blockData && blockData->folding.level < currentFoldLevel) {
@@ -726,7 +725,7 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
         }
     } else {
         for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
-            auto blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
+            blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
             nextBlock.setVisible(true);
             nextBlock.setLineCount(1);
 
@@ -787,8 +786,8 @@ void Qutepart::foldBlock(int lineNumber) {
     auto block = document()->findBlockByNumber(lineNumber);
 
     if (smartFolding_) {
-        auto data = static_cast<TextBlockUserData *>(block.userData());
-        if (data->folding.folded) {
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (blockData->folding.folded) {
             auto parentBlock = findBlockToFold(block.previous());
             if (parentBlock.isValid() && parentBlock != block) {
                 setBlockFolded(parentBlock, true);
@@ -810,31 +809,31 @@ void Qutepart::toggleFold(int lineNumber) {
     if (!block.isValid()) {
         return;
     }
-    auto data = static_cast<TextBlockUserData *>(block.userData());
-    if (!data) {
+    auto blockData = static_cast<TextBlockUserData *>(block.userData());
+    if (!blockData) {
         return;
     }
-    setBlockFolded(block, !data->folding.folded);
+    setBlockFolded(block, !blockData->folding.folded);
 }
 
 QTextBlock Qutepart::findBlockToFold(QTextBlock block) {
-    auto data = static_cast<TextBlockUserData *>(block.userData());
-    if (!data) {
+    auto blockData = static_cast<TextBlockUserData *>(block.userData());
+    if (!blockData) {
         return QTextBlock();
     }
 
     auto prev = block.previous();
     if (prev.isValid()) {
         auto prevData = static_cast<TextBlockUserData *>(prev.userData());
-        if (prevData && prevData->folding.level > data->folding.level) {
+        if (prevData && prevData->folding.level > blockData->folding.level) {
             block = prev;
-            data = prevData;
-        } else if (data->folding.level == 0) {
+            blockData = prevData;
+        } else if (blockData->folding.level == 0) {
             return QTextBlock();
         }
     }
 
-    auto level = data->folding.level;
+    auto level = blockData->folding.level;
     auto blockToSearch = block.previous();
     while (blockToSearch.isValid()) {
         auto searchData = static_cast<TextBlockUserData *>(blockToSearch.userData());
@@ -859,8 +858,8 @@ void Qutepart::unfoldCurrentBlock() {
     auto block = cursor.block();
 
     while (block.isValid()) {
-        auto data = static_cast<TextBlockUserData *>(block.userData());
-        if (data && data->folding.folded) {
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (blockData && blockData->folding.folded) {
             unfoldBlock(block.blockNumber());
             return;
         }
@@ -871,8 +870,8 @@ void Qutepart::unfoldCurrentBlock() {
 void Qutepart::toggleCurrentFold() {
     QTextBlock blockToFold = findBlockToFold(textCursor().block());
     if (blockToFold.isValid()) {
-        auto data = static_cast<TextBlockUserData *>(blockToFold.userData());
-        if (data && data->folding.folded) {
+        auto blockData = static_cast<TextBlockUserData *>(blockToFold.userData());
+        if (blockData && blockData->folding.folded) {
             auto parentBlock = findBlockToFold(blockToFold.previous());
             if (parentBlock.isValid() && parentBlock != blockToFold) {
                 setBlockFolded(parentBlock, true); // Fold parent
@@ -889,8 +888,8 @@ void Qutepart::foldTopLevelBlocks() {
     auto prevLevel = 0;
 
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
-        auto data = static_cast<TextBlockUserData *>(block.userData());
-        auto currentLevel = data ? data->folding.level : 0;
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        auto currentLevel = blockData ? blockData->folding.level : 0;
         if (currentLevel == 1 && prevLevel == 0) {
             level1AreaCount++;
             if (level1AreaCount == 1) {
@@ -904,9 +903,9 @@ void Qutepart::foldTopLevelBlocks() {
     auto levelsToFold = (level1AreaCount == 1) ? 2 : 1;
     auto block = firstLevel1AreaStart.next();
     while (block.isValid()) {
-        auto data = static_cast<TextBlockUserData *>(block.userData());
-        if (data) {
-            if (data->folding.level == levelsToFold) {
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (blockData) {
+            if (blockData->folding.level == levelsToFold) {
                 setBlockFolded(block, true);
             }
         }
@@ -916,8 +915,8 @@ void Qutepart::foldTopLevelBlocks() {
 
 void Qutepart::unfoldAll() {
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
-        auto data = static_cast<TextBlockUserData *>(block.userData());
-        if (data && data->folding.folded) {
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (blockData && blockData->folding.folded) {
             setBlockFolded(block, false);
         }
     }
@@ -982,14 +981,14 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                     desiredCursorPositions.insert(oldMainCursor.position());
                 }
 
-                for (const auto &ec : extraCursors) {
+                for (const auto &ec : std::as_const(extraCursors)) {
                     desiredCursorPositions.insert(ec.position());
                 }
 
                 desiredCursorPositions.insert(newMainCursor.position());
 
                 QList<QTextCursor> updatedExtraCursors;
-                for (int pos : desiredCursorPositions) {
+                for (auto pos : desiredCursorPositions) {
                     if (pos == newMainCursor.position()) {
                         continue;
                     }
@@ -1297,7 +1296,7 @@ void Qutepart::paintEvent(QPaintEvent *event) {
         auto extraCursorColor = Qt::darkCyan;
         painter.setPen(QPen(extraCursorColor, 1));
 
-        for (const auto &extraCursor : extraCursors) {
+        for (const auto &extraCursor : std::as_const(extraCursors)) {
             auto cursorRect =
                 this->cursorRect(extraCursor.block(), extraCursor.positionInBlock(), 0);
             painter.drawLine(cursorRect.topLeft(), cursorRect.bottomLeft());
@@ -2013,7 +2012,7 @@ void Qutepart::moveSelectedLines(int offsetLines) {
 
     // Reapply selections after move
     auto newCursors = QList<QTextCursor>();
-    for (const auto &[startBlock, endBlock] : originalSelections) {
+    for (const auto &[startBlock, endBlock] : std::as_const(originalSelections)) {
         auto cursor = QTextCursor(document());
         auto newStartBlock = startBlock + offsetLines;
         auto newEndBlock = endBlock + offsetLines;
@@ -2142,11 +2141,12 @@ void Qutepart::toggleComment() {
     auto selectionStart = cursor.selectionStart();
     auto selectionEnd = cursor.selectionEnd();
 
-    auto data = static_cast<TextBlockUserData *>(cursor.block().userData());
-    if (!data || !data->contexts.currentContext() || !data->contexts.currentContext()->language) {
+    auto blockData = static_cast<TextBlockUserData *>(cursor.block().userData());
+    if (!blockData || !blockData->contexts.currentContext() ||
+        !blockData->contexts.currentContext()->language) {
         return;
     }
-    auto language = data->contexts.currentContext()->language;
+    auto language = blockData->contexts.currentContext()->language;
 
     cursor.setPosition(selectionStart);
     auto startComment = language->getStartMultilineComment();
@@ -2316,7 +2316,7 @@ void Qutepart::updateExtraSelections() {
             }
         }
     } else {
-        for (const auto &extraCursor : extraCursors) {
+        for (const auto &extraCursor : std::as_const(extraCursors)) {
             if (extraCursor.hasSelection()) {
                 auto extraSelection = QTextEdit::ExtraSelection();
                 extraSelection.format.setBackground(
@@ -2517,7 +2517,7 @@ void Qutepart::mousePressEvent(QMouseEvent *event) {
         if (textCursor().position() == cursor.position()) {
             exists = true;
         }
-        for (const auto &extraCursor : extraCursors) {
+        for (const auto &extraCursor : std::as_const(extraCursors)) {
             if (extraCursor.position() == cursor.position()) {
                 exists = true;
                 break;
@@ -2599,7 +2599,7 @@ void Qutepart::multipleCursorPaste() {
             cursor.insertText(lines[i]);
         }
     } else {
-        for (const auto &cursor : allCursors) {
+        for (const auto &cursor : std::as_const(allCursors)) {
             auto cur = cursor;
             cur.insertText(clipboardText);
         }

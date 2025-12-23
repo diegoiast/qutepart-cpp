@@ -142,8 +142,8 @@ QString IndentAlgCstyle::tryAccessModifiers(const QTextBlock &block) const {
         return QString();
     }
 
-    QRegularExpression rx("^\\s*((public|protected|private)\\s*(slots|Q_SLOTS)?"
-                          "|(signals|Q_SIGNALS)\\s*):\\s*$");
+    static QRegularExpression rx("^\\s*((public|protected|private)\\s*(slots|Q_SLOTS)?"
+                                 "|(signals|Q_SIGNALS)\\s*):\\s*$");
 
     if (!rx.match(block.text()).hasMatch()) {
         return QString();

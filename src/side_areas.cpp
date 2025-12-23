@@ -72,12 +72,11 @@ void SideArea::mouseMoveEvent(QMouseEvent *event) {
 
     if (line != this->lastHoeveredLine) {
         lastHoeveredLine = line;
-        auto data = static_cast<TextBlockUserData *>(block.userData());
-        if (data && !data->metaData.message.isEmpty()) {
-
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (blockData && !blockData->metaData.message.isEmpty()) {
             auto lines = QStringList();
             auto lineLength = 100;
-            for (auto &s : data->metaData.message.split("\n")) {
+            for (auto &s : blockData->metaData.message.split("\n")) {
                 for (auto i = 0u; i < s.length(); i += lineLength) {
                     lines.append(s.mid(i, lineLength));
                 }
@@ -292,7 +291,7 @@ QPixmap MarkArea::getCachedIcon(QIcon icon, int targetSize, QHash<QString, QPixm
     auto availableSizes = icon.availableSizes();
     if (!availableSizes.isEmpty()) {
         chosenSize = availableSizes.first();
-        for (auto const s : availableSizes) {
+        for (auto s : std::as_const(availableSizes)) {
             if (s.width() <= iconSize && s.height() <= iconSize) {
                 chosenSize = s;
             } else {
@@ -611,11 +610,10 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
     auto bottom = top + qRound(qpart_->blockBoundingRect(block).height());
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
-            auto const *data = static_cast<TextBlockUserData *>(block.userData());
-
-            TextBlockUserData *prevData = nullptr;
+            auto blockData = static_cast<TextBlockUserData *>(block.userData());
             auto prevBlock = block.previous();
             auto prevLevel = 0;
+            TextBlockUserData *prevData = nullptr;
             if (prevBlock.isValid()) {
                 prevData = static_cast<TextBlockUserData *>(prevBlock.userData());
             }
@@ -629,9 +627,9 @@ void FoldingArea::paintEvent(QPaintEvent *event) {
                 auto r = QRect(1, top + 1, width() - 2, qpart_->fontMetrics().height() - 2);
                 painter.setPen(textColor);
                 painter.drawText(r, Qt::AlignCenter,
-                                 QString::number(data ? data->folding.level : 0));
+                                 QString::number(blockData ? blockData->folding.level : 0));
             } else {
-                if (data && data->folding.level > prevLevel) {
+                if (blockData && blockData->folding.level > prevLevel) {
                     auto symbol = block.next().isVisible() ? "-" : "+";
                     auto lineHeight = (int)qpart_->blockBoundingRect(block).height();
                     auto lineRect = QRect(1, top, width() - 2, lineHeight);
@@ -675,11 +673,11 @@ QTextBlock FoldingArea::blockAt(const QPoint &pos) const {
 
 void FoldingArea::mousePressEvent(QMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
-        auto block = blockAt(event->pos());
-        if (block.isValid()) {
-            auto const *data = static_cast<TextBlockUserData *>(block.userData());
-            if (data && data->folding.level > 0) {
-                emit foldClicked(block.blockNumber());
+        auto textBlock = blockAt(event->pos());
+        if (textBlock.isValid()) {
+            auto const *blockData = static_cast<TextBlockUserData *>(textBlock.userData());
+            if (blockData && blockData->folding.level > 0) {
+                emit foldClicked(textBlock.blockNumber());
                 event->accept();
                 return;
             }
