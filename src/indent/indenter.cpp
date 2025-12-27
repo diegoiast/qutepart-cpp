@@ -169,10 +169,20 @@ void Indenter::onShortcutIndentAfterCursor(QTextCursor cursor) const {
 
 // Backspace pressed
 void Indenter::onShortcutUnindentWithBackspace(QTextCursor &cursor) const {
-    int charsToRemove = textBeforeCursor(cursor).length() % indentText().length();
+    int posInBlock = cursor.positionInBlock();
+    if (posInBlock <= 0) {
+        return;
+    }
+
+    int indentLen = indentText().length();
+    int charsToRemove = posInBlock % indentLen;
 
     if (charsToRemove == 0) {
-        charsToRemove = indentText().length();
+        charsToRemove = indentLen;
+    }
+
+    if (charsToRemove > posInBlock) {
+        charsToRemove = posInBlock;
     }
 
     cursor.setPosition(cursor.position() - charsToRemove, QTextCursor::KeepAnchor);

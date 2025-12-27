@@ -1822,11 +1822,22 @@ void Qutepart::unIndentBlock(const QTextBlock &block, bool withSpace) const {
     } else {
         if (indenter_->useTabs()) {
             charsToRemove = std::min(spaceAtEndCount(currentIndent), indenter_->width());
-        } else {                                                   // spaces
-            if (currentIndent.endsWith(indenter_->indentText())) { // remove indent level
-                charsToRemove = indenter_->width();
-            } else { // remove all spaces
-                charsToRemove = std::min(spaceAtEndCount(currentIndent), indenter_->width());
+        } else { // spaces
+            int trailingSpaces = currentIndent.length();
+            int width = indenter_->width();
+            int remainder = trailingSpaces % width;
+
+            if (remainder == 0) {
+                // aligned. Remove one level.
+                // Ensure we actually have enough spaces
+                if (trailingSpaces >= width) {
+                    charsToRemove = width;
+                } else {
+                    charsToRemove = trailingSpaces;
+                }
+            } else {
+                // Not aligned. Remove remainder to align.
+                charsToRemove = remainder;
             }
         }
     }
@@ -1882,7 +1893,7 @@ void Qutepart::changeSelectedBlocksIndent(bool increase, bool withSpace) {
                 if (increase) {
                     indenter_->onShortcutIndentAfterCursor(currentCursor);
                 } else {
-                    indenter_->onShortcutUnindentWithBackspace(currentCursor);
+                    unIndentBlock(currentCursor.block(), withSpace);
                 }
             }
         },
