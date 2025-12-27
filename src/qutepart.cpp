@@ -184,6 +184,7 @@ void Qutepart::setTheme(const Theme *newTheme) {
         palette.setBrush(QPalette::Highlight, c);
         palette.setBrush(QPalette::HighlightedText, QBrush(Qt::NoBrush));
         setPalette(palette);
+        viewport()->setPalette(palette);
 
         update();
         updateExtraSelections();

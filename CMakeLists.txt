@@ -112,7 +112,7 @@ install(FILES include/qutepart/theme.h include/qutepart/qutepart.h
         DESTINATION include/qutepart)
 
 # Tests
-if(DEFINED QUTEPART_TESTS)
+if(QUTEPART_TESTS)
   enable_testing()
 
   function(indent_test name)
