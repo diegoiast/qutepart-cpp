@@ -65,7 +65,6 @@ class Context {
 
     QString _name;
     QString attribute;
-    const Theme *theme = nullptr;
     ContextSwitcher _lineEndContext;
     ContextSwitcher _lineBeginContext;
     ContextSwitcher _lineEmptyContext;
