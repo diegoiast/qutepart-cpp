@@ -995,13 +995,13 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                     }
                     QTextBlock block = document()->findBlock(pos);
                     if (block.isValid()) {
-                        QTextCursor cursor(block);
+                        QTextCursor c(block);
                         int colInBlock = pos - block.position();
                         if (colInBlock < 0) {
                             colInBlock = 0;
                         }
-                        cursor.setPosition(block.position() + qMin(colInBlock, block.length() - 1));
-                        updatedExtraCursors.append(cursor);
+                        c.setPosition(block.position() + qMin(colInBlock, block.length() - 1));
+                        updatedExtraCursors.append(c);
                     }
                 }
 
@@ -2025,15 +2025,15 @@ void Qutepart::moveSelectedLines(int offsetLines) {
     // Reapply selections after move
     auto newCursors = QList<QTextCursor>();
     for (const auto &[startBlock, endBlock] : std::as_const(originalSelections)) {
-        auto cursor = QTextCursor(document());
+        auto c = QTextCursor(document());
         auto newStartBlock = startBlock + offsetLines;
         auto newEndBlock = endBlock + offsetLines;
         auto startPos = document()->findBlockByNumber(newStartBlock).position();
         auto endBlockObj = document()->findBlockByNumber(newEndBlock);
         auto endPos = endBlockObj.position() + endBlockObj.length() - 1;
-        cursor.setPosition(startPos);
-        cursor.setPosition(endPos, QTextCursor::KeepAnchor);
-        newCursors.append(cursor);
+        c.setPosition(startPos);
+        c.setPosition(endPos, QTextCursor::KeepAnchor);
+        newCursors.append(c);
     }
 
     if (!newCursors.isEmpty()) {
@@ -2148,7 +2148,8 @@ void Qutepart::toggleComment() {
         return;
     }
 
-    auto cursor = applyOperationToAllCursors([](QTextCursor &cursor) {
+    auto cursor = applyOperationToAllCursors(
+        [](QTextCursor &cursor) {
             auto selectionStart = cursor.selectionStart();
             auto selectionEnd = cursor.selectionEnd();
 
@@ -2180,8 +2181,9 @@ void Qutepart::toggleComment() {
                     }
                 } else if (!startComment.isEmpty() && !endComment.isEmpty()) {
                     if (text.startsWith(startComment) && text.endsWith(endComment)) {
-                        text = text.mid(startComment.length(),
-                                        text.length() - startComment.length() - endComment.length());
+                        text =
+                            text.mid(startComment.length(),
+                                     text.length() - startComment.length() - endComment.length());
                         originalPosition -= startComment.length();
                     } else {
                         text = startComment + text + endComment;
