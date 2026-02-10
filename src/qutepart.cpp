@@ -519,6 +519,7 @@ void Qutepart::removeMetaData() {
         }
     }
     persitentSelections.clear();
+    updateExtraSelections();
 }
 
 void Qutepart::setLineMessage(int lineNumber, const QString &message) {
