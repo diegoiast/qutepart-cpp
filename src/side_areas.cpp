@@ -162,7 +162,6 @@ void LineNumberArea::paintEvent(QPaintEvent *event) {
     auto top = int(qpart_->blockBoundingRect(block).translated(qpart_->contentOffset()).top());
     auto bottom = top + int(qpart_->blockBoundingRect(block).height());
     auto singleBlockHeight = qpart_->cursorRect(block, 0, 0).height();
-
     auto boundingRect = qpart_->blockBoundingRect(block);
     auto availableWidth = width() - RIGHT_LINE_NUM_MARGIN - LEFT_LINE_NUM_MARGIN;
     auto availableHeight = qpart_->fontMetrics().height();
@@ -395,31 +394,34 @@ QFont Minimap::minimapFont() const {
 
 void Minimap::updateScroll(const QPoint &pos) {
     auto doc = qpart_->document();
-
-    int visibleLineCount = 0;
+    auto visibleLines = qpart_->viewport()->height() / qpart_->fontMetrics().height();
+    auto visibleLineCount = 0;
+    auto visibleViewportStartLine = 0;
+    auto viewportStartLine = qpart_->verticalScrollBar()->value();
     for (auto b = doc->firstBlock(); b.isValid(); b = b.next()) {
         if (b.isVisible()) {
+            if (b.blockNumber() < viewportStartLine) {
+                visibleViewportStartLine++;
+            }
             visibleLineCount++;
         }
     }
 
     auto minimapContentHeight = visibleLineCount * lineHeight;
     auto minimapVisibleHeight = height();
-
     auto minimapOffset = 0;
     if (minimapContentHeight > minimapVisibleHeight) {
-        auto viewportStartLine = qpart_->verticalScrollBar()->value();
-        auto scrollRatio = static_cast<float>(viewportStartLine) / doc->blockCount();
+        auto viewportCenterLineIndex = visibleViewportStartLine + (visibleLines / 2);
+        auto targetContentY = viewportCenterLineIndex * lineHeight;
+        minimapOffset = targetContentY - (minimapVisibleHeight / 2);
         minimapOffset =
-            static_cast<int>(scrollRatio * (minimapContentHeight - minimapVisibleHeight));
-        minimapOffset = std::min(minimapOffset, minimapContentHeight - minimapVisibleHeight);
+            std::max(0, std::min(minimapOffset, minimapContentHeight - minimapVisibleHeight));
     }
 
     auto clickedLine = static_cast<int>((pos.y() + minimapOffset) / lineHeight);
+    auto clickedBlock = QTextBlock();
+    auto visibleIndex = 0;
     clickedLine = qBound(0, clickedLine, visibleLineCount - 1); // Ensure within bounds
-
-    QTextBlock clickedBlock;
-    int visibleIndex = 0;
     for (auto b = doc->firstBlock(); b.isValid(); b = b.next()) {
         if (b.isVisible()) {
             if (visibleIndex == clickedLine) {
@@ -435,7 +437,6 @@ void Minimap::updateScroll(const QPoint &pos) {
     }
 
     // Center the clicked line in the viewport
-    auto visibleLines = qpart_->viewport()->height() / qpart_->fontMetrics().height();
     auto scrollToLine = qMax(0, clickedBlock.blockNumber() - visibleLines / 2);
     auto cursor = QTextCursor(clickedBlock);
     qpart_->setTextCursor(cursor);
@@ -449,39 +450,29 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     auto minimapArea = rect();
     auto doc = qpart_->document();
     auto block = doc->firstBlock();
-    auto totalLines = doc->blockCount();
     auto viewportLines = qpart_->viewport()->height() / qpart_->fontMetrics().height();
     auto viewportStartLine = qpart_->verticalScrollBar()->value();
-
-    int visibleLineCount = 0;
-    int visibleViewportStartLine = 0;
-    int visibleCurrentLineIndex = 0;
+    auto visibleLineCount = 0;
+    auto visibleViewportStartLine = 0;
     auto currentLineNumber = qpart_->textCursor().blockNumber();
-
     for (auto b = doc->firstBlock(); b.isValid(); b = b.next()) {
         if (b.isVisible()) {
             if (b.blockNumber() < viewportStartLine) {
                 visibleViewportStartLine++;
             }
-            if (b.blockNumber() < currentLineNumber) {
-                visibleCurrentLineIndex++;
-            }
             visibleLineCount++;
         }
-    }
-    if (!doc->findBlockByNumber(currentLineNumber).isVisible()) {
-        visibleCurrentLineIndex = -1; // don't highlight if not visible
     }
 
     auto minimapContentHeight = visibleLineCount * lineHeight;
     auto minimapVisibleHeight = minimapArea.height();
-
     auto minimapOffset = 0;
     if (minimapContentHeight > minimapVisibleHeight) {
-        auto scrollRatio = static_cast<float>(viewportStartLine) / totalLines;
+        auto viewportCenterLineIndex = visibleViewportStartLine + (viewportLines / 2);
+        auto targetContentY = viewportCenterLineIndex * lineHeight;
+        minimapOffset = targetContentY - (minimapVisibleHeight / 2);
         minimapOffset =
-            static_cast<int>(scrollRatio * (minimapContentHeight - minimapVisibleHeight));
-        minimapOffset = std::min(minimapOffset, minimapContentHeight - minimapVisibleHeight);
+            std::max(0, std::min(minimapOffset, minimapContentHeight - minimapVisibleHeight));
     }
 
     auto viewportStartY = visibleViewportStartLine * lineHeight - minimapOffset;
@@ -490,15 +481,6 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
         QRect(minimapArea.left(),
               std::max(0, std::min(viewportStartY, minimapVisibleHeight - viewportHeight)),
               minimapArea.width(), std::min(viewportHeight, minimapArea.height()));
-
-    auto currentLineY = -1;
-    if (visibleCurrentLineIndex != -1) {
-        currentLineY = visibleCurrentLineIndex * lineHeight - minimapOffset;
-    }
-
-    auto currentLineRect = QRect(
-        minimapArea.left(), std::max(0, std::min(currentLineY, minimapVisibleHeight - lineHeight)),
-        minimapArea.width(), lineHeight);
 
     auto palette = qpart_->palette();
     auto textColor = palette.color(QPalette::Text);
@@ -522,9 +504,6 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     }
     painter->save();
     painter->fillRect(viewportRect, minimapBackground);
-    if (visibleCurrentLineIndex != -1) {
-        painter->fillRect(currentLineRect, qpart_->currentLineColor());
-    }
     painter->setFont(minimapFont());
 
     auto lineNumber = 0;
