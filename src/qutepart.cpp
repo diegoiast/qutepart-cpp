@@ -1944,20 +1944,44 @@ void Qutepart::moveSelectedLines(int offsetLines) {
         return;
     }
 
+    struct CursorState {
+        int startBlock;
+        int startColumn;
+        int endBlock;
+        int endColumn;
+        bool positionAtEnd;
+    };
+
     auto minSelectedBlock = INT_MAX;
     auto maxSelectedBlock = INT_MIN;
     auto allCursors = extraCursors;
-    auto originalSelections = QVector<QPair<int, int>>();
+    auto originalSelections = QVector<CursorState>();
 
     allCursors.append(textCursor());
-    for (const auto &cursor : allCursors) {
+    for (auto &cursor : allCursors) {
         auto posBlock = cursor.block().blockNumber();
         auto anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
-        auto startBlock = std::min(posBlock, anchorBlock);
-        auto endBlock = std::max(posBlock, anchorBlock);
-        minSelectedBlock = std::min(minSelectedBlock, startBlock);
-        maxSelectedBlock = std::max(maxSelectedBlock, endBlock);
-        originalSelections.append({startBlock, endBlock});
+
+        CursorState state;
+        if (cursor.position() >= cursor.anchor()) {
+            state.startBlock = anchorBlock;
+            state.startColumn =
+                cursor.anchor() - document()->findBlockByNumber(anchorBlock).position();
+            state.endBlock = posBlock;
+            state.endColumn = cursor.positionInBlock();
+            state.positionAtEnd = true;
+        } else {
+            state.startBlock = posBlock;
+            state.startColumn = cursor.positionInBlock();
+            state.endBlock = anchorBlock;
+            state.endColumn =
+                cursor.anchor() - document()->findBlockByNumber(anchorBlock).position();
+            state.positionAtEnd = false;
+        }
+
+        minSelectedBlock = std::min(minSelectedBlock, state.startBlock);
+        maxSelectedBlock = std::max(maxSelectedBlock, state.endBlock);
+        originalSelections.append(state);
     }
 
     auto line = (offsetLines < 0) ? minSelectedBlock - 1 : maxSelectedBlock + 1;
@@ -1984,24 +2008,19 @@ void Qutepart::moveSelectedLines(int offsetLines) {
         linesContentSnapshot.append(lines().at(i).text());
     }
 
-    QMap<int, int> originalBlockToFinalPhysicalIndexMap;
-    auto cursor = applyOperationToAllCursors(
+    applyOperationToAllCursors(
         [&](QTextCursor &cursor) {
             auto posBlock = cursor.block().blockNumber();
             auto anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
             auto startBlock = std::min(posBlock, anchorBlock);
             auto endBlock = std::max(posBlock, anchorBlock);
             if (offsetLines < 0 && startBlock == 0) {
-                return cursor;
+                return;
             }
             if (offsetLines > 0 && endBlock == document()->blockCount() - 1) {
-                return cursor;
+                return;
             }
-            auto column = cursor.positionInBlock();
             auto targetStartBlock = startBlock + offsetLines;
-            for (int i = startBlock; i <= endBlock; ++i) {
-                originalBlockToFinalPhysicalIndexMap[i] = targetStartBlock + (i - startBlock);
-            }
             auto linesToMove = QStringList();
             for (auto i = startBlock; i <= endBlock; ++i) {
                 linesToMove.append(linesContentSnapshot[i]);
@@ -2012,9 +2031,6 @@ void Qutepart::moveSelectedLines(int offsetLines) {
             for (auto i = 0; i < linesToMove.size(); ++i) {
                 lines().insertAt(targetStartBlock + i, linesToMove[i]);
             }
-            auto targetBlock = document()->findBlockByNumber(targetStartBlock);
-            cursor.setPosition(targetBlock.position() + qMin(column, targetBlock.length() - 1));
-            return cursor;
         },
         [offsetLines](const QTextCursor &a, const QTextCursor &b) {
             // When moving down, process from bottom to top
@@ -2025,15 +2041,21 @@ void Qutepart::moveSelectedLines(int offsetLines) {
 
     // Reapply selections after move
     auto newCursors = QList<QTextCursor>();
-    for (const auto &[startBlock, endBlock] : std::as_const(originalSelections)) {
+    for (const auto &state : originalSelections) {
         auto c = QTextCursor(document());
-        auto newStartBlock = startBlock + offsetLines;
-        auto newEndBlock = endBlock + offsetLines;
-        auto startPos = document()->findBlockByNumber(newStartBlock).position();
-        auto endBlockObj = document()->findBlockByNumber(newEndBlock);
-        auto endPos = endBlockObj.position() + endBlockObj.length() - 1;
-        c.setPosition(startPos);
-        c.setPosition(endPos, QTextCursor::KeepAnchor);
+        auto newStartBlockNum = state.startBlock + offsetLines;
+        auto newEndBlockNum = state.endBlock + offsetLines;
+        auto startBlock = document()->findBlockByNumber(newStartBlockNum);
+        auto endBlock = document()->findBlockByNumber(newEndBlockNum);
+        auto startPos = startBlock.position() + qMin(state.startColumn, startBlock.length() - 1);
+        auto endPos = endBlock.position() + qMin(state.endColumn, endBlock.length() - 1);
+        if (state.positionAtEnd) {
+            c.setPosition(startPos);
+            c.setPosition(endPos, QTextCursor::KeepAnchor);
+        } else {
+            c.setPosition(endPos);
+            c.setPosition(startPos, QTextCursor::KeepAnchor);
+        }
         newCursors.append(c);
     }
 
@@ -2044,25 +2066,27 @@ void Qutepart::moveSelectedLines(int offsetLines) {
 
     updateExtraSelections();
     markArea_->update();
+    if (miniMap_) {
+        miniMap_->update();
+    }
     ensureCursorVisible();
 }
 
 void Qutepart::deleteLine() {
-    QTextCursor cursor = textCursor();
-    int posBlock = cursor.block().blockNumber();
-    int anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
-    int startBlock = std::min(posBlock, anchorBlock);
-    int endBlock = std::max(posBlock, anchorBlock);
+    auto cursor = textCursor();
+    auto posBlock = cursor.block().blockNumber();
+    auto anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
+    auto startBlock = std::min(posBlock, anchorBlock);
+    auto endBlock = std::max(posBlock, anchorBlock);
+    auto op = AtomicEditOperation (this);
 
-    AtomicEditOperation op(this);
-    for (int i = endBlock; i >= startBlock; i--) {
+    for (auto i = endBlock; i >= startBlock; i--) {
         lines().popAt(i);
     }
 
     if (anchorBlock != 0) {
         cursor.movePosition(QTextCursor::NextBlock);
     }
-
     setTextCursor(cursor);
 }
 
@@ -2072,17 +2096,15 @@ void Qutepart::cutLine() {
 }
 
 void Qutepart::copyLine() {
-    QTextCursor cursor = textCursor();
+    auto cursor = textCursor();
+    auto smallerPos = std::min(cursor.anchor(), cursor.position());
+    auto biggerPos = std::max(cursor.anchor(), cursor.position());
+    auto block = document()->findBlock(smallerPos);
+    auto lastBlock = document()->findBlock(biggerPos);
+    auto lines = QStringList();
 
-    int smallerPos = std::min(cursor.anchor(), cursor.position());
-    int biggerPos = std::max(cursor.anchor(), cursor.position());
-
-    QTextBlock block = document()->findBlock(smallerPos);
-    QTextBlock lastBlock = document()->findBlock(biggerPos);
-
-    QStringList lines;
     while (block.isValid() && block.blockNumber() <= lastBlock.blockNumber()) {
-        QString text = block.text();
+        auto text = block.text();
         if (text.endsWith("\u2029")) {
             text = text.left(text.length() - 1);
         }
@@ -2090,8 +2112,7 @@ void Qutepart::copyLine() {
         block = block.next();
     }
 
-    QString textToCopy = lines.join('\n');
-
+    auto textToCopy = lines.join('\n');
     QApplication::clipboard()->setText(textToCopy);
 }
 
@@ -2406,8 +2427,8 @@ void Qutepart::onShortcutToggleBookmark() {
 }
 
 void Qutepart::onShortcutPrevBookmark() {
-    QTextBlock currentBlock = textCursor().block();
-    QTextBlock block = currentBlock.previous();
+    auto currentBlock = textCursor().block();
+    auto block = currentBlock.previous();
 
     while (block.isValid()) {
         if (isBookmarked(block)) {
@@ -2427,8 +2448,8 @@ void Qutepart::onShortcutPrevBookmark() {
 }
 
 void Qutepart::onShortcutNextBookmark() {
-    QTextBlock currentBlock = textCursor().block();
-    QTextBlock block = currentBlock.next();
+    auto currentBlock = textCursor().block();
+    auto block = currentBlock.next();
 
     while (block.isValid()) {
         if (isBookmarked(block)) {
