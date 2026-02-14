@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QObject>
 #include <QTest>
+#include <QApplication>
 
 #include "qutepart.h"
 
@@ -14,20 +15,19 @@ class Test : public QObject {
     Q_OBJECT
 
   private slots:
-#if 0    
     void MoveDownOneLine() {
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\nthree\nfour");
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("two\none\nthree\nfour"));
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("two\nthree\none\nfour"));
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("two\nthree\nfour\none"));
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("two\nthree\nfour\none"));
 
         qpart.undo();
@@ -39,19 +39,19 @@ class Test : public QObject {
     void MoveDownOneLineEolAtEnd() {
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\nthree\nfour\n");
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("two\none\nthree\nfour\n"));
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("two\nthree\none\nfour\n"));
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("two\nthree\nfour\none\n"));
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("two\nthree\nfour\n\none"));
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("two\nthree\nfour\n\none"));
 
         qpart.undo();
@@ -68,16 +68,16 @@ class Test : public QObject {
         QTest::keyClick(&qpart, Qt::Key_Right);
         QCOMPARE(qpart.textCursor().positionInBlock(), 1);
 
-        QTest::keyClick(&qpart, Qt::Key_Up, Qt::AltModifier);
+        qpart.moveLineUpAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\nfour\nthree"));
 
-        QTest::keyClick(&qpart, Qt::Key_Up, Qt::AltModifier);
+        qpart.moveLineUpAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\nfour\ntwo\nthree"));
 
-        QTest::keyClick(&qpart, Qt::Key_Up, Qt::AltModifier);
+        qpart.moveLineUpAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("four\none\ntwo\nthree"));
 
-        QTest::keyClick(&qpart, Qt::Key_Up, Qt::AltModifier);
+        qpart.moveLineUpAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("four\none\ntwo\nthree"));
 
         QCOMPARE(qpart.textCursor().positionInBlock(), 1);
@@ -92,13 +92,13 @@ class Test : public QObject {
         qpart.setTextCursor(cursor);
         QCOMPARE(qpart.textCursor().selectedText(), QString("ne\u2029tw"));
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("three\none\ntwo\nfour"));
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("three\nfour\none\ntwo"));
 
-        QTest::keyClick(&qpart, Qt::Key_Down, Qt::AltModifier);
+        qpart.moveLineDownAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("three\nfour\none\ntwo"));
 
         QCOMPARE(qpart.textCursor().selectedText(), QString("ne\u2029tw"));
@@ -118,13 +118,13 @@ class Test : public QObject {
         qpart.setTextCursor(cursor);
         QCOMPARE(qpart.textCursor().selectedText(), QString("ree\u2029fo"));
 
-        QTest::keyClick(&qpart, Qt::Key_Up, Qt::AltModifier);
+        qpart.moveLineUpAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\nthree\nfour\ntwo"));
 
-        QTest::keyClick(&qpart, Qt::Key_Up, Qt::AltModifier);
+        qpart.moveLineUpAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("three\nfour\none\ntwo"));
 
-        QTest::keyClick(&qpart, Qt::Key_Up, Qt::AltModifier);
+        qpart.moveLineUpAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("three\nfour\none\ntwo"));
 
         QCOMPARE(qpart.textCursor().selectedText(), QString("ree\u2029fo"));
@@ -138,10 +138,8 @@ class Test : public QObject {
     void DuplicateLine() {
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\n   three\nfour");
 
-        QTextCursor cursor = qpart.textCursor();
-
         qpart.goTo(1, 2);
-        QTest::keyClick(&qpart, Qt::Key_D, Qt::AltModifier);
+        qpart.duplicateSelectionAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\ntwo\n   three\nfour"));
         QCOMPARE(qpart.textCursor().blockNumber(), 2);
         QCOMPARE(qpart.textCursor().positionInBlock(), 2);
@@ -150,10 +148,8 @@ class Test : public QObject {
     void DuplicateIndentedLine() {
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\n   three\nfour");
 
-        QTextCursor cursor = qpart.textCursor();
-
         qpart.goTo(2);
-        QTest::keyClick(&qpart, Qt::Key_D, Qt::AltModifier);
+        qpart.duplicateSelectionAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\n   three\n   three\nfour"));
         QCOMPARE(qpart.textCursor().blockNumber(), 3);
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
@@ -168,7 +164,7 @@ class Test : public QObject {
         cursor.setPosition(10, QTextCursor::KeepAnchor);
         qpart.setTextCursor(cursor);
         QCOMPARE(qpart.textCursor().selectedText(), QString("wo\u2029th"));
-        QTest::keyClick(&qpart, Qt::Key_D, Qt::AltModifier);
+        qpart.duplicateSelectionAction()->trigger();
         QCOMPARE(qpart.textCursor().selectedText(), QString("wo\u2029th"));
 
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\nthwo\nthree\nfour"));
@@ -185,11 +181,11 @@ class Test : public QObject {
         cursor.setPosition(5, QTextCursor::KeepAnchor);
         qpart.setTextCursor(cursor);
 
-        QTest::keyClick(&qpart, Qt::Key_X, Qt::AltModifier);
+        qpart.cutLineAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("three\nfour"));
 
         QTest::keyClick(&qpart, Qt::Key_Down);
-        QTest::keyClick(&qpart, Qt::Key_V, Qt::AltModifier);
+        qpart.pasteLineAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("three\nfour\none\ntwo"));
 
         qpart.undo();
@@ -198,7 +194,7 @@ class Test : public QObject {
         qpart.undo();
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\nthree\nfour"));
     }
-#endif
+
     void CutPasteLastLines() {
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\nthree\nfour");
 
@@ -207,11 +203,11 @@ class Test : public QObject {
         cursor.setPosition(12);
         cursor.setPosition(17, QTextCursor::KeepAnchor);
         qpart.setTextCursor(cursor);
-#if 0
-        QTest::keyClick(&qpart, Qt::Key_X, Qt::AltModifier);
+
+        qpart.cutLineAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo"));
         QTest::keyClick(&qpart, Qt::Key_Down);
-        QTest::keyClick(&qpart, Qt::Key_V, Qt::AltModifier);
+        qpart.pasteLineAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\nthree\nfour"));
 
         qpart.undo();
@@ -219,7 +215,6 @@ class Test : public QObject {
 
         qpart.undo();
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\nthree\nfour"));
-#endif
     }
 
     void CopyPasteSingleLine() {
@@ -230,11 +225,11 @@ class Test : public QObject {
         cursor.setPosition(2);
         qpart.setTextCursor(cursor);
 
-        QTest::keyClick(&qpart, Qt::Key_C, Qt::AltModifier);
+        qpart.copyLineAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\nthree\nfour"));
 
         QTest::keyClick(&qpart, Qt::Key_Down);
-        QTest::keyClick(&qpart, Qt::Key_V, Qt::AltModifier);
+        qpart.pasteLineAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\none\nthree\nfour"));
 
         qpart.undo();
@@ -249,12 +244,12 @@ class Test : public QObject {
         cursor.setPosition(17);
         qpart.setTextCursor(cursor);
 
-        QTest::keyClick(&qpart, Qt::Key_C, Qt::AltModifier);
+        qpart.copyLineAction()->trigger();
 
         QTest::keyClick(&qpart, Qt::Key_Up);
         QTest::keyClick(&qpart, Qt::Key_Up);
         QTest::keyClick(&qpart, Qt::Key_Up);
-        QTest::keyClick(&qpart, Qt::Key_V, Qt::AltModifier);
+        qpart.pasteLineAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\nfour\ntwo\nthree\nfour"));
 
         qpart.undo();
@@ -269,12 +264,12 @@ class Test : public QObject {
         cursor.setPosition(7);
         cursor.setPosition(10, QTextCursor::KeepAnchor);
         qpart.setTextCursor(cursor);
-#if 0
-        QTest::keyClick(&qpart, Qt::Key_Delete, Qt::AltModifier);
+
+        qpart.deleteLineAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one\nfour"));
         QCOMPARE(qpart.textCursor().block().text(), QString("four"));
         QCOMPARE(qpart.textCursorPosition().line, 1);
-        QTest::keyClick(&qpart, Qt::Key_Delete, Qt::AltModifier);
+        qpart.deleteLineAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one"));
         QCOMPARE(qpart.textCursorPosition().line, 0);
 
@@ -283,33 +278,25 @@ class Test : public QObject {
 
         qpart.undo();
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\nthree\nfour"));
-#endif
     }
 
     void DeleteFirstLine() {
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\nthree\nfour");
 
-        QTextCursor cursor = qpart.textCursor();
-#if 0
-        QTest::keyClick(&qpart, Qt::Key_Delete, Qt::AltModifier);
+        qpart.deleteLineAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("two\nthree\nfour"));
-#endif
         QCOMPARE(qpart.textCursorPosition().line, 0);
     }
 
     void InsertLineAbove() {
         Qutepart::Qutepart qpart(nullptr, " one\n  two\n   three\n    four");
         qpart.goTo(2, 4);
-        QTest::keyClick(&qpart, Qt::Key_Return, Qt::ShiftModifier | Qt::ControlModifier);
+        qpart.insertLineAboveAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString(" one\n  two\n  \n   three\n    four"));
 #if 0 // FIXME this fails. "x" gets undone with the rest of operations
-        qDebug() << "type X" << qpart.toPlainText();
         QTest::keyClicks(&qpart, "x");
-        qDebug() << "typed X" << qpart.toPlainText();
         QCOMPARE(qpart.toPlainText(), QString(" one\n  two\n  x\n   three\n    four"));
-        qDebug() << "undo x";
         qpart.undo();
-        qDebug() << "undo X done" << qpart.toPlainText();
         QCOMPARE(qpart.toPlainText(), QString(" one\n  two\n  \n   three\n    four"));
 #endif
         qpart.undo();
@@ -319,7 +306,7 @@ class Test : public QObject {
     void InsertLineAboveFirst() {
         Qutepart::Qutepart qpart(nullptr, " one\n  two\n   three\n    four");
         qpart.goTo(0, 0);
-        QTest::keyClick(&qpart, Qt::Key_Return, Qt::ShiftModifier | Qt::ControlModifier);
+        qpart.insertLineAboveAction()->trigger();
         QTest::keyClicks(&qpart, "x");
         QCOMPARE(qpart.toPlainText(), QString("x\n one\n  two\n   three\n    four"));
         qpart.undo();
@@ -331,17 +318,13 @@ class Test : public QObject {
     void InsertLineBelow() {
         Qutepart::Qutepart qpart(nullptr, " one\n  two\n   three\n    four");
         qpart.goTo(2, 4);
-        QTest::keyClick(&qpart, Qt::Key_Return, Qt::ControlModifier);
+        qpart.insertLineBelowAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString(" one\n  two\n   three\n   \n    four"));
 
 #if 0 // FIXME this fails. "x" gets undone with the rest of operations
-        qDebug() << "type X" << qpart.toPlainText();
         QTest::keyClicks(&qpart, "x");
-        qDebug() << "typed X" << qpart.toPlainText();
         QCOMPARE(qpart.toPlainText(), QString(" one\n  two\n   three\n   x\n    four"));
-        qDebug() << "undo x";
         qpart.undo();
-        qDebug() << "undo X done" << qpart.toPlainText();
         QCOMPARE(qpart.toPlainText(), QString(" one\n  two\n   three\n   \n    four"));
 #endif
 

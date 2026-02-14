@@ -412,6 +412,10 @@ class Qutepart : public QPlainTextEdit {
     auto fixLineFlagColors() -> void;
 
     // Actions
+    inline QAction *homeAction() const { return homeAction_; }
+    inline QAction *homeSelectAction() const { return homeSelectAction_; }
+    inline QAction *endAction() const { return endAction_; }
+    inline QAction *endSelectAction() const { return endSelectAction_; }
     inline QAction *increaseIndentAction() const { return increaseIndentAction_; }
     inline QAction *decreaseIndentAction() const { return decreaseIndentAction_; }
     inline QAction *toggleBookmarkAction() const { return toggleBookmarkAction_; }

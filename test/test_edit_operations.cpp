@@ -17,60 +17,58 @@ class Test : public QObject {
     void SmartHome() {
         Qutepart::Qutepart qpart(nullptr, "one\n    two");
 
-        QTest::keyClick(&qpart, Qt::Key_Home);
+        qpart.homeAction()->trigger();
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
 
-        QTest::keyClick(&qpart, Qt::Key_Home);
+        qpart.homeAction()->trigger();
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
 
         qpart.goTo(1, 2);
-        QTest::keyClick(&qpart, Qt::Key_Home);
+        qpart.homeAction()->trigger();
         QCOMPARE(qpart.textCursor().positionInBlock(), 4);
 
-        QTest::keyClick(&qpart, Qt::Key_Home);
+        qpart.homeAction()->trigger();
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
 
-        QTest::keyClick(&qpart, Qt::Key_Home);
+        qpart.homeAction()->trigger();
         QCOMPARE(qpart.textCursor().positionInBlock(), 4);
     }
 
     void SmartHomeSelect() {
         Qutepart::Qutepart qpart(nullptr, "one\n    two");
 
-        QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
+        qpart.homeSelectAction()->trigger();
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
         QCOMPARE(qpart.textCursor().selectedText(), QString());
 
-        QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
+        qpart.homeSelectAction()->trigger();
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
         QCOMPARE(qpart.textCursor().selectedText(), QString());
 
         qpart.goTo(1, 6);
-        QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
+        qpart.homeSelectAction()->trigger();
         QCOMPARE(qpart.textCursor().positionInBlock(), 4);
         QCOMPARE(qpart.textCursor().selectedText(), QString("tw"));
 
-        QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
+        qpart.homeSelectAction()->trigger();
         QCOMPARE(qpart.textCursor().selectedText(), QString("    tw"));
         QCOMPARE(qpart.textCursor().positionInBlock(), 0);
-#if 0
-        QTest::keyClick(&qpart, Qt::Key_Home, Qt::ShiftModifier);
+
+        qpart.homeSelectAction()->trigger();
         QCOMPARE(qpart.textCursor().positionInBlock(), 4);
-        auto s = qpart.textCursor().selectedText();
         QCOMPARE(qpart.textCursor().selectedText(), QString("tw"));
-#endif
     }
 
     void JoinLines() {
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\n    three");
 
-        QTest::keyClick(&qpart, Qt::Key_J, Qt::ControlModifier);
+        qpart.joinLinesAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one two\n    three"));
 
-        QTest::keyClick(&qpart, Qt::Key_J, Qt::ControlModifier);
+        qpart.joinLinesAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one two three"));
 
-        QTest::keyClick(&qpart, Qt::Key_J, Qt::ControlModifier);
+        qpart.joinLinesAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one two three"));
     }
 
@@ -83,13 +81,9 @@ class Test : public QObject {
         qpart.setTextCursor(cursor);
         QCOMPARE(qpart.textCursor().selectedText(), QString("ne"));
 
-#if 0
-        QTest::keyClick(&qpart, Qt::Key_J, Qt::ControlModifier);
+        qpart.joinLinesAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one two\n    three"));
-        // FIXME remove space from "ne ". Actually a bug, but will fix later (I
-        // hope)
-        QCOMPARE(qpart.textCursor().selectedText(), QString("ne "));
-#endif
+        QCOMPARE(qpart.textCursor().selectedText(), QString("ne"));
     }
 
     void JoinMultipleLines() {
@@ -101,11 +95,9 @@ class Test : public QObject {
         qpart.setTextCursor(cursor);
         QCOMPARE(qpart.textCursor().selectedText(), QString("ne\u2029two\u2029    t"));
 
-#if 0        
-        QTest::keyClick(&qpart, Qt::Key_J, Qt::ControlModifier);
+        qpart.joinLinesAction()->trigger();
         QCOMPARE(qpart.toPlainText(), QString("one two three"));
         QCOMPARE(qpart.textCursor().selectedText(), QString("ne two t"));
-#endif
     }
 };
 

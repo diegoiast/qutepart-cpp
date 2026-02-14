@@ -2452,7 +2452,6 @@ void Qutepart::onShortcutNextBookmark() {
 void Qutepart::joinNextLine(QTextCursor &cursor) {
     cursor.movePosition(QTextCursor::EndOfBlock);
     cursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor);
-
     setPositionInBlock(&cursor, firstNonSpaceColumn(cursor.block().text()),
                        QTextCursor::KeepAnchor);
     cursor.insertText(" ");
@@ -2461,18 +2460,47 @@ void Qutepart::joinNextLine(QTextCursor &cursor) {
 void Qutepart::onShortcutJoinLines() {
     QTextCursor cursor = textCursor();
     if (cursor.hasSelection()) {
-        QTextCursor editCursor(document());
-        editCursor.setPosition(std::min(cursor.position(), cursor.anchor()));
-        int posBlockNumber = cursor.blockNumber();
-        int anchorBlockNumber = document()->findBlock(cursor.anchor()).blockNumber();
-        int joinCount = std::abs(posBlockNumber - anchorBlockNumber);
+        auto op = AtomicEditOperation(this);
+        auto startPos = std::min(cursor.position(), cursor.anchor());
+        auto endPos = std::max(cursor.position(), cursor.anchor());
+        auto anchorBlock = document()->findBlock(cursor.anchor());
+        auto posBlock = document()->findBlock(cursor.position());
+        auto joinCount = std::abs(posBlock.blockNumber() - anchorBlock.blockNumber());
+
         if (joinCount == 0) {
             joinCount = 1;
         }
 
+        auto lastBlock =
+            (posBlock.blockNumber() > anchorBlock.blockNumber()) ? posBlock : anchorBlock;
+        auto offsetInLastBlock = endPos - lastBlock.position();
+
+        auto relativeOffsetInLastBlock = 0;
+        if (posBlock.blockNumber() != anchorBlock.blockNumber()) {
+            auto firstNonSpaceInLastBlock = firstNonSpaceColumn(lastBlock.text());
+            relativeOffsetInLastBlock = std::max(0, offsetInLastBlock - firstNonSpaceInLastBlock);
+        } else {
+            relativeOffsetInLastBlock = endPos - startPos;
+        }
+
+        QTextCursor editCursor(document());
+        editCursor.setPosition(startPos);
+
         for (int i = 0; i < joinCount; i++) {
             joinNextLine(editCursor);
         }
+
+        // Try to restore selection accurately
+        QTextCursor newCursor(document());
+        newCursor.setPosition(startPos);
+
+        if (posBlock.blockNumber() != anchorBlock.blockNumber()) {
+            newCursor.setPosition(editCursor.position() + relativeOffsetInLastBlock,
+                                  QTextCursor::KeepAnchor);
+        } else {
+            newCursor.setPosition(startPos + relativeOffsetInLastBlock, QTextCursor::KeepAnchor);
+        }
+        setTextCursor(newCursor);
     } else {
         if (cursor.block().next().isValid()) {
 
@@ -2482,6 +2510,10 @@ void Qutepart::onShortcutJoinLines() {
 
             setTextCursor(cursor);
         }
+    }
+
+    if (miniMap_) {
+        miniMap_->update();
     }
 }
 
