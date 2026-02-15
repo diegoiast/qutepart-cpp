@@ -14,10 +14,13 @@
 
 namespace Qutepart {
 
+class Language;
+
 class TextBlockUserData : public QTextBlockUserData {
   public:
     TextBlockUserData(const QString &textTypeMap, const ContextStack &contexts);
     QString textTypeMap;
+    QVector<QSharedPointer<Language>> languageMap;
     ContextStack contexts;
     int state = 0;
 

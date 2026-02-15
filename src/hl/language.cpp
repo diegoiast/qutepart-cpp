@@ -49,6 +49,7 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
     ContextStack contextStack = getContextStack(block);
     TextToMatch textToMatch(block.text(), contextStack.currentData());
     QString textTypeMap(textToMatch.text.length(), ' ');
+    QVector<QSharedPointer<Language>> languageMap(textToMatch.text.length());
     auto lineContinue = false;
     auto data = static_cast<TextBlockUserData *>(block.userData());
     if (!data) {
@@ -70,7 +71,7 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
     do {
         auto const context = contextStack.currentContext();
         contextStack = context->parseBlock(contextStack, textToMatch, formats, textTypeMap,
-                                           lineContinue, data);
+                                           languageMap, lineContinue, data);
     } while (!textToMatch.isEmpty());
 
     if (!lineContinue) {
@@ -78,6 +79,7 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
     }
 
     data->textTypeMap = textTypeMap;
+    data->languageMap = languageMap;
     data->contexts = contextStack;
 
     uint regionsHash = 0;

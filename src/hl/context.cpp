@@ -71,6 +71,13 @@ void Context::setTheme(const Theme *theme) {
     }
 }
 
+void Context::setLanguage(QSharedPointer<Language> language) {
+    this->language = language;
+    for (auto &rule : rules) {
+        rule->language = language;
+    }
+}
+
 void Context::resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error) {
     _lineEndContext.resolveContextReferences(contexts, error);
     if (!error.isNull()) {
@@ -149,10 +156,18 @@ void fillTextTypeMap(QString &textTypeMap, int start, int length, QChar textType
     }
 }
 
+void fillLanguageMap(QVector<QSharedPointer<Language>> &languageMap, int start, int length,
+                     QSharedPointer<Language> language) {
+    for (auto i = start; i < start + length; i++) {
+        languageMap[i] = language;
+    }
+}
+
 // Helper function for parseBlock()
 void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult *matchRes,
                                const Context *context, QVector<QTextLayout::FormatRange> &formats,
-                               QString &textTypeMap) const {
+                               QString &textTypeMap,
+                               QVector<QSharedPointer<Language>> &languageMap) const {
     auto displayFormat = matchRes->style.format();
 
     if (displayFormat.isNull()) {
@@ -168,13 +183,20 @@ void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult
         textType = context->style.textType();
     }
     fillTextTypeMap(textTypeMap, textToMatch.currentColumnIndex, matchRes->length, textType);
+
+    auto lang = matchRes->rule->language;
+    if (lang.isNull()) {
+        lang = context->language;
+    }
+    fillLanguageMap(languageMap, textToMatch.currentColumnIndex, matchRes->length, lang);
 }
 
 // Parse block. Exits, when reached end of the text, or when context is switched
 const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToMatch &textToMatch,
                                        QVector<QTextLayout::FormatRange> &formats,
-                                       QString &textTypeMap, bool &lineContinue,
-                                       TextBlockUserData *data) const {
+                                       QString &textTypeMap,
+                                       QVector<QSharedPointer<Language>> &languageMap,
+                                       bool &lineContinue, TextBlockUserData *data) const {
     textToMatch.contextData = &contextStack.currentData();
 
     if (textToMatch.isEmpty() && (!_lineEmptyContext.isNull())) {
@@ -202,7 +224,7 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
             }
 
             if (matchRes->nextContext.isNull()) {
-                applyMatchResult(textToMatch, matchRes, this, formats, textTypeMap);
+                applyMatchResult(textToMatch, matchRes, this, formats, textTypeMap, languageMap);
                 textToMatch.shift(matchRes->length);
                 delete matchRes;
             } else {
@@ -210,7 +232,7 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
                     contextStack.switchContext(matchRes->nextContext, matchRes->data);
 
                 applyMatchResult(textToMatch, matchRes, newContextStack.currentContext(), formats,
-                                 textTypeMap);
+                                 textTypeMap, languageMap);
                 textToMatch.shift(matchRes->length);
                 delete matchRes;
                 return newContextStack;
@@ -221,6 +243,7 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
                 appendFormat(formats, textToMatch.currentColumnIndex, 1, *style.format());
             }
             textTypeMap[textToMatch.currentColumnIndex] = style.textType();
+            languageMap[textToMatch.currentColumnIndex] = this->language;
             if (!this->fallthroughContext.isNull()) {
                 return contextStack.switchContext(this->fallthroughContext);
             }

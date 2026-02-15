@@ -18,6 +18,7 @@ namespace Qutepart {
 class Context;
 typedef QSharedPointer<Context> ContextPtr;
 class TextToMatch;
+class Language;
 
 struct AbstractRuleParams {
     QString attribute; // may be null
@@ -46,6 +47,7 @@ class AbstractRule {
     void setTheme(const Theme *theme);
 
     bool lookAhead;
+    QSharedPointer<Language> language;
 
     /* Matching entrypoint. Checks common params and calls tryMatchImpl()
      * Result ownership is passed to caller

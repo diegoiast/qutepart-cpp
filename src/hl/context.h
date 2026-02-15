@@ -40,6 +40,7 @@ class Context {
     QString name() const;
 
     void setTheme(const Theme *theme);
+    void setLanguage(QSharedPointer<Language> language);
     void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error);
     void setKeywordParams(const QHash<QString, QStringList> &lists, const QString &deliminators,
                           bool caseSensitive, QString &error);
@@ -51,7 +52,8 @@ class Context {
 
     const ContextStack parseBlock(const ContextStack &contextStack, TextToMatch &textToMatch,
                                   QVector<QTextLayout::FormatRange> &formats, QString &textTypeMap,
-                                  bool &lineContinue, TextBlockUserData *data) const;
+                                  QVector<QSharedPointer<Language>> &languageMap, bool &lineContinue,
+                                  TextBlockUserData *data) const;
 
     // Try to match textToMatch with nested rules
     MatchResult *tryMatch(const TextToMatch &textToMatch) const;
@@ -61,7 +63,8 @@ class Context {
   protected:
     void applyMatchResult(const TextToMatch &textToMatch, const MatchResult *matchRes,
                           const Context *context, QVector<QTextLayout::FormatRange> &formats,
-                          QString &textTypeMap) const;
+                          QString &textTypeMap,
+                          QVector<QSharedPointer<Language>> &languageMap) const;
 
     QString _name;
     QString attribute;

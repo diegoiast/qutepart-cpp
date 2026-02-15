@@ -2198,11 +2198,26 @@ void Qutepart::toggleComment() {
             auto selectionEnd = cursor.selectionEnd();
 
             auto blockData = static_cast<TextBlockUserData *>(cursor.block().userData());
-            if (!blockData || !blockData->contexts.currentContext() ||
-                !blockData->contexts.currentContext()->language) {
+            if (!blockData) {
                 return;
             }
-            auto language = blockData->contexts.currentContext()->language;
+
+            QSharedPointer<Language> language;
+            int relativePos = selectionStart - cursor.block().position();
+            if (relativePos >= 0 && relativePos < blockData->languageMap.size()) {
+                language = blockData->languageMap[relativePos];
+            }
+
+            if (language.isNull()) {
+                if (blockData->contexts.currentContext() &&
+                    blockData->contexts.currentContext()->language) {
+                    language = blockData->contexts.currentContext()->language;
+                }
+            }
+
+            if (language.isNull()) {
+                return;
+            }
 
             cursor.setPosition(selectionStart);
             auto startComment = language->getStartMultilineComment();
