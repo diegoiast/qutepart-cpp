@@ -147,12 +147,24 @@ class Test : public BaseTest {
                                                << "     return func(another_func(1,\n"
                                                   "                              2),\n"
                                                   "                 x";
+
+        QTest::newRow("indent brace") << "a = {" << std::make_pair(0, 5) << "\nx"
+                                      << "a = {\n"
+                                         "  x";
+
+        QTest::newRow("indent bracket") << "a = [" << std::make_pair(0, 5) << "\nx"
+                                        << "a = [\n"
+                                           "  x";
+
+        QTest::newRow("indent return paren") << "  return (" << std::make_pair(0, 10) << "\nx"
+                                             << "  return (\n"
+                                                "    x";
     }
 
     void python() {
         qpart.setIndentAlgorithm(Qutepart::INDENT_ALG_PYTHON);
         qpart.setIndentWidth(2);
-        // runDataDrivenTest();
+        runDataDrivenTest();
     }
 };
 

@@ -69,8 +69,23 @@ QString IndentAlgPython::computeSmartIndent(const TextPosition &pos) const {
     */
     TextPosition foundPos = findAnyOpeningBracketBackward(pos);
     // indent this way only line, which contains 'y', not 'z'
-    if (foundPos.block.blockNumber() == pos.block.blockNumber()) {
-        return makeIndentAsColumn(foundPos.block, foundPos.column + 1, width_, useTabs_);
+    if (foundPos.isValid() && foundPos.block.blockNumber() == pos.block.blockNumber()) {
+        QString textAfterBracket =
+            pos.block.text().mid(foundPos.column + 1, pos.column - (foundPos.column + 1)).trimmed();
+        if (!textAfterBracket.isEmpty()) {
+            return makeIndentAsColumn(foundPos.block, foundPos.column + 1, width_, useTabs_);
+        }
+    }
+
+    /* Generally, when a brace is on its own at the end of a regular line
+    (i.e a data structure is being started), indent is wanted.
+    For example:
+    dictionary = {
+        'foo': 'bar',
+    }
+    */
+    if (lineStripped.endsWith('{') || lineStripped.endsWith('[') || lineStripped.endsWith('(')) {
+        return increaseIndent(blockIndent(pos.block), indentText());
     }
 
     // finally, a raise, pass, and continue should unindent
@@ -89,17 +104,6 @@ QString IndentAlgPython::computeSmartIndent(const TextPosition &pos) const {
         int newColumn = spaceLen + lineStripped.length() - 1;
         QString prevIndent = computeSmartIndent(TextPosition(pos.block, newColumn));
         return increaseIndent(prevIndent, indentText());
-    }
-
-    /* Generally, when a brace is on its own at the end of a regular line
-    (i.e a data structure is being started), indent is wanted.
-    For example:
-    dictionary = {
-        'foo': 'bar',
-    }
-    */
-    if (lineStripped.endsWith("{[")) {
-        return increaseIndent(blockIndent(pos.block), indentText());
     }
 
     return blockIndent(pos.block);
