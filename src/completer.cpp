@@ -470,9 +470,9 @@ void Completer::closeCompletion() {
 
 // Get word, which is located before cursor
 QString Completer::getWordBeforeCursor() const {
-    QTextCursor cursor = qpart_->textCursor();
-    QString textBeforeCursor = cursor.block().text().right(cursor.positionInBlock());
-    QRegularExpressionMatch match = wordAtEndRegExp.match(textBeforeCursor);
+    auto cursor = qpart_->textCursor();
+    auto textBeforeCursor = cursor.block().text().left(cursor.positionInBlock());
+    auto match = wordAtEndRegExp.match(textBeforeCursor);
     if (match.hasMatch()) {
         return match.captured();
     } else {
@@ -494,10 +494,17 @@ QString Completer::getWordAfterCursor() const {
 
 // Item selected. Insert completion to editor
 void Completer::onCompletionListItemSelected(int index) {
-    CompletionModel *model = widget_->completionModel();
-    QString selectedWord = model->words()[index];
-    QString textToInsert = selectedWord.mid(model->typedText().length());
-    qpart_->textCursor().insertText(textToInsert);
+    auto model = widget_->completionModel();
+    auto selectedWord = model->words()[index];
+    auto cursor = qpart_->textCursor();
+
+    cursor.beginEditBlock();
+    cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, model->typedText().length());
+    cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
+                        model->typedText().length() + getWordAfterCursor().length());
+    cursor.insertText(selectedWord);
+    cursor.endEditBlock();
+    qpart_->setTextCursor(cursor);
     closeCompletion();
 }
 
