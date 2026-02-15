@@ -1959,28 +1959,33 @@ void Qutepart::moveSelectedLines(int offsetLines) {
 
     allCursors.append(textCursor());
     for (auto &cursor : allCursors) {
-        auto posBlock = cursor.block().blockNumber();
-        auto anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
+        int posBlock = cursor.block().blockNumber();
+        int anchorPos = cursor.anchor();
+        QTextBlock anchorBlock = document()->findBlock(anchorPos);
+        int anchorBlockNum = anchorBlock.blockNumber();
 
         CursorState state;
-        if (cursor.position() >= cursor.anchor()) {
-            state.startBlock = anchorBlock;
-            state.startColumn =
-                cursor.anchor() - document()->findBlockByNumber(anchorBlock).position();
+        if (cursor.position() >= anchorPos) {
+            state.startBlock = anchorBlockNum;
+            state.startColumn = anchorPos - anchorBlock.position();
             state.endBlock = posBlock;
             state.endColumn = cursor.positionInBlock();
             state.positionAtEnd = true;
         } else {
             state.startBlock = posBlock;
             state.startColumn = cursor.positionInBlock();
-            state.endBlock = anchorBlock;
-            state.endColumn =
-                cursor.anchor() - document()->findBlockByNumber(anchorBlock).position();
+            state.endBlock = anchorBlockNum;
+            state.endColumn = anchorPos - anchorBlock.position();
             state.positionAtEnd = false;
         }
 
+        int effectiveEndBlock = state.endBlock;
+        if (cursor.hasSelection() && state.endColumn == 0 && state.endBlock > state.startBlock) {
+            effectiveEndBlock--;
+        }
+
         minSelectedBlock = std::min(minSelectedBlock, state.startBlock);
-        maxSelectedBlock = std::max(maxSelectedBlock, state.endBlock);
+        maxSelectedBlock = std::max(maxSelectedBlock, effectiveEndBlock);
         originalSelections.append(state);
     }
 
@@ -2011,9 +2016,20 @@ void Qutepart::moveSelectedLines(int offsetLines) {
     applyOperationToAllCursors(
         [&](QTextCursor &cursor) {
             auto posBlock = cursor.block().blockNumber();
-            auto anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
-            auto startBlock = std::min(posBlock, anchorBlock);
-            auto endBlock = std::max(posBlock, anchorBlock);
+            auto anchorPos = cursor.anchor();
+            auto anchorBlockNum = document()->findBlock(anchorPos).blockNumber();
+            auto startBlock = std::min(posBlock, anchorBlockNum);
+            auto endBlock = std::max(posBlock, anchorBlockNum);
+
+            if (cursor.hasSelection()) {
+                if (posBlock > anchorBlockNum && cursor.positionInBlock() == 0) {
+                    endBlock--;
+                } else if (anchorBlockNum > posBlock &&
+                           (anchorPos - document()->findBlock(anchorPos).position()) == 0) {
+                    endBlock--;
+                }
+            }
+
             if (offsetLines < 0 && startBlock == 0) {
                 return;
             }

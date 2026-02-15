@@ -135,6 +135,38 @@ class Test : public QObject {
         QCOMPARE(qpart.toPlainText(), QString("one\ntwo\nthree\nfour"));
     }
 
+    void MoveDownTwoLinesSelectionEndsAtStartOfThird() {
+        Qutepart::Qutepart qpart(nullptr, "one\ntwo\nthree\nfour");
+
+        QTextCursor cursor = qpart.textCursor();
+        cursor.setPosition(0);
+        cursor.setPosition(8, QTextCursor::KeepAnchor); // Start of "three"
+        qpart.setTextCursor(cursor);
+        QCOMPARE(qpart.textCursor().selectedText(), QString("one\u2029two\u2029"));
+        QCOMPARE(qpart.textCursor().blockNumber(), 2);
+        QCOMPARE(qpart.textCursor().positionInBlock(), 0);
+
+        qpart.moveLineDownAction()->trigger();
+        // Should be "three\none\ntwo\nfour"
+        QCOMPARE(qpart.toPlainText(), QString("three\none\ntwo\nfour"));
+    }
+
+    void MoveUpTwoLinesSelectionEndsAtStartOfThird() {
+        Qutepart::Qutepart qpart(nullptr, "one\ntwo\nthree\nfour");
+
+        QTextCursor cursor = qpart.textCursor();
+        cursor.setPosition(4);
+        cursor.setPosition(14, QTextCursor::KeepAnchor); // Start of "four"
+        qpart.setTextCursor(cursor);
+        QCOMPARE(qpart.textCursor().selectedText(), QString("two\u2029three\u2029"));
+        QCOMPARE(qpart.textCursor().blockNumber(), 3);
+        QCOMPARE(qpart.textCursor().positionInBlock(), 0);
+
+        qpart.moveLineUpAction()->trigger();
+        // Should be "two\nthree\none\nfour"
+        QCOMPARE(qpart.toPlainText(), QString("two\nthree\none\nfour"));
+    }
+
     void DuplicateLine() {
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\n   three\nfour");
 
