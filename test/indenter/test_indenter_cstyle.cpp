@@ -316,13 +316,10 @@ class Test : public BaseTest {
                                  "\n"
                                  "\n"
                                  "  text;\n";
-#if 0
-        QTest::newRow("if12") << "if (0<x)\n"
-                                 "text;\n"
-                                 ""
-                              << std::make_pair(8, 0) << ""
+        QTest::newRow("if12") << "if (0<x)"
+                              << std::make_pair(0, 8) << "\ntext;a"
                               << "if (0<x)\n"
-                                 "    text;a\n";
+                                 "  text;a";
         QTest::newRow("if_qutepart1") << "  if (1)\n"
                                          "  {\n"
                                          "     a = 7;"
@@ -331,7 +328,6 @@ class Test : public BaseTest {
                                          "  {\n"
                                          "     a = 7;\n"
                                          "     x";
-#endif
     }
 
     void While() { runDataDrivenTest(); }
