@@ -925,6 +925,19 @@ void Qutepart::unfoldAll() {
 }
 
 void Qutepart::keyPressEvent(QKeyEvent *event) {
+    // make action shortcuts override keyboard events (non-default Qt
+    // behaviour)
+    for (auto action : actions()) {
+        for (const auto &seq : action->shortcuts()) {
+            if (seq.count() == 1 && seq[0].key() == event->key() &&
+                seq[0].keyboardModifiers() == event->modifiers()) {
+                action->trigger();
+                event->accept();
+                return;
+            }
+        }
+    }
+
     // Fixme: Handle copy/paste shortcuts
     // We should instead re-connect the original copy/paste actions. Which are
     // not accsible via API.
@@ -978,17 +991,13 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                 newMainCursor.setPosition(newBlock.position() + targetColumn);
 
                 QSet<int> desiredCursorPositions;
-
                 if (oldMainCursor.position() != newMainCursor.position()) {
                     desiredCursorPositions.insert(oldMainCursor.position());
                 }
-
                 for (const auto &ec : std::as_const(extraCursors)) {
                     desiredCursorPositions.insert(ec.position());
                 }
-
                 desiredCursorPositions.insert(newMainCursor.position());
-
                 QList<QTextCursor> updatedExtraCursors;
                 for (auto pos : desiredCursorPositions) {
                     if (pos == newMainCursor.position()) {
@@ -1246,17 +1255,6 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
             QPlainTextEdit::keyPressEvent(event);
         }
     } else {
-        // make action shortcuts override keyboard events (non-default Qt
-        // behaviour)
-        for (auto action : actions()) {
-            QKeySequence seq = action->shortcut();
-            if (seq.count() == 1 && seq[0].key() == event->key() &&
-                seq[0].keyboardModifiers() == event->modifiers()) {
-                action->trigger();
-                return;
-            }
-        }
-
         QPlainTextEdit::keyPressEvent(event);
     }
 }
@@ -2089,20 +2087,23 @@ void Qutepart::moveSelectedLines(int offsetLines) {
 }
 
 void Qutepart::deleteLine() {
-    auto cursor = textCursor();
-    auto posBlock = cursor.block().blockNumber();
-    auto anchorBlock = document()->findBlock(cursor.anchor()).blockNumber();
-    auto startBlock = std::min(posBlock, anchorBlock);
-    auto endBlock = std::max(posBlock, anchorBlock);
-    auto op = AtomicEditOperation (this);
+    auto cursor = applyOperationToAllCursors(
+        [&](QTextCursor &c) {
+            auto posBlock = c.block().blockNumber();
+            auto anchorBlock = document()->findBlock(c.anchor()).blockNumber();
+            auto startBlock = std::min(posBlock, anchorBlock);
+            auto endBlock = std::max(posBlock, anchorBlock);
 
-    for (auto i = endBlock; i >= startBlock; i--) {
-        lines().popAt(i);
-    }
+            for (auto i = endBlock; i >= startBlock; i--) {
+                lines().popAt(i);
+            }
 
-    if (anchorBlock != 0) {
-        cursor.movePosition(QTextCursor::NextBlock);
-    }
+            if (anchorBlock != 0) {
+                c.movePosition(QTextCursor::NextBlock);
+            }
+        },
+        [](const auto &a, const auto &b) { return a.position() > b.position(); });
+
     setTextCursor(cursor);
 }
 

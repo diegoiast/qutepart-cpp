@@ -320,6 +320,22 @@ class Test : public QObject {
         QCOMPARE(qpart.textCursorPosition().line, 0);
     }
 
+    void DeleteEmptyLine() {
+        Qutepart::Qutepart qpart(nullptr, "one\n\ntwo");
+        qpart.goTo(1, 0);
+        qpart.deleteLineAction()->trigger();
+        QCOMPARE(qpart.toPlainText(), QString("one\ntwo"));
+        QCOMPARE(qpart.textCursor().blockNumber(), 1);
+        QCOMPARE(qpart.textCursor().block().text(), QString("two"));
+    }
+
+    void DeleteEmptyLineWithShortcut() {
+        Qutepart::Qutepart qpart(nullptr, "one\n\ntwo");
+        qpart.goTo(1, 0);
+        QTest::keyClick(&qpart, Qt::Key_Delete, Qt::ShiftModifier);
+        QCOMPARE(qpart.toPlainText(), QString("one\ntwo"));
+    }
+
     void InsertLineAbove() {
         Qutepart::Qutepart qpart(nullptr, " one\n  two\n   three\n    four");
         qpart.goTo(2, 4);
