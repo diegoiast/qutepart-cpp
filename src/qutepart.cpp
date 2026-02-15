@@ -1990,11 +1990,16 @@ void Qutepart::moveSelectedLines(int offsetLines) {
     auto line = (offsetLines < 0) ? minSelectedBlock - 1 : maxSelectedBlock + 1;
     if (line >= 0 && line < document()->blockCount()) {
         auto block = document()->findBlockByNumber(line);
-        if (block.isValid() && !block.isVisible()) {
-            while (block.isValid() && !block.isVisible()) {
-                block = (offsetLines < 0) ? block.previous() : block.next();
-                if (block.isValid()) {
-                    unfoldBlock(block.blockNumber());
+        if (block.isValid()) {
+            QTextBlock foldStart = block;
+            while (foldStart.isValid() && !foldStart.isVisible()) {
+                foldStart = foldStart.previous();
+            }
+
+            if (foldStart.isValid()) {
+                auto data = static_cast<TextBlockUserData *>(foldStart.userData());
+                if (data && data->folding.folded) {
+                    unfoldBlock(foldStart.blockNumber());
                 }
             }
         }

@@ -15,6 +15,8 @@ class Test : public QObject {
     Q_OBJECT
 
   private slots:
+    void initTestCase() { Q_INIT_RESOURCE(qutepart_syntax_files); }
+
     void MoveDownOneLine() {
         Qutepart::Qutepart qpart(nullptr, "one\ntwo\nthree\nfour");
 
@@ -165,6 +167,39 @@ class Test : public QObject {
         qpart.moveLineUpAction()->trigger();
         // Should be "two\nthree\none\nfour"
         QCOMPARE(qpart.toPlainText(), QString("two\nthree\none\nfour"));
+    }
+
+    void MoveUpIntoFoldedEnd() {
+        Qutepart::Qutepart qpart(nullptr, "{\n    line2\n}\nline4");
+        qpart.setHighlighter("cpp.xml");
+
+        auto doc = qpart.document();
+
+        // Fold line 0
+        qpart.foldBlock(0);
+
+        // Move line 4 up. Target is line 2.
+        qpart.goTo(3, 0);
+        qpart.moveLineUpAction()->trigger();
+
+        // Should unfold
+        QVERIFY(doc->findBlockByNumber(1).isVisible());
+        QCOMPARE(qpart.toPlainText(), QString("{\n    line2\nline4\n}"));
+    }
+
+    void MoveDownOverFoldStart() {
+        Qutepart::Qutepart qpart(nullptr, "line1\n{\n    line3\n}");
+        qpart.setHighlighter("cpp.xml");
+        auto doc = qpart.document();
+
+        qpart.foldBlock(1);
+
+        // Move line 1 down. Target is line 1 ({).
+        qpart.goTo(0, 0);
+        qpart.moveLineDownAction()->trigger();
+
+        // If it unfolds, all should be visible
+        QVERIFY(doc->findBlockByNumber(2).isVisible());
     }
 
     void DuplicateLine() {
