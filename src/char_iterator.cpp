@@ -14,10 +14,10 @@ QChar CharIterator::step() {
     if (!atEnd()) {
         auto s = position_.block.text();
         auto i = position_.column;
-        if (i >= s.length()) {
-            return QChar::Null;
+        QChar retVal = QChar::Null;
+        if (i < s.length()) {
+            retVal = s[i];
         }
-        QChar retVal = s[i];
         previousPosition_ = position_;
         movePosition();
         return retVal;
