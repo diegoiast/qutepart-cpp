@@ -655,7 +655,16 @@ void FoldingArea::mousePressEvent(QMouseEvent *event) {
         auto textBlock = blockAt(event->pos());
         if (textBlock.isValid()) {
             auto const *blockData = static_cast<TextBlockUserData *>(textBlock.userData());
-            if (blockData && blockData->folding.level > 0) {
+            auto prevBlock = textBlock.previous();
+            auto prevLevel = 0;
+            if (prevBlock.isValid()) {
+                auto const *prevData = static_cast<TextBlockUserData *>(prevBlock.userData());
+                if (prevData) {
+                    prevLevel = prevData->folding.level;
+                }
+            }
+
+            if (blockData && blockData->folding.level > prevLevel) {
                 emit foldClicked(textBlock.blockNumber());
                 event->accept();
                 return;
