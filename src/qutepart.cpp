@@ -21,6 +21,7 @@
 #include "text_block_utils.h"
 
 #include "hl/syntax_highlighter.h"
+#include "hl/text_type.h"
 #include "hl_factory.h"
 #include "indent/indent_funcs.h"
 #include "indent/indenter.h"
@@ -683,21 +684,17 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
     if (!block.isValid()) {
         return;
     }
-
     auto blockData = static_cast<TextBlockUserData *>(block.userData());
     if (!blockData) {
         return;
     }
-
     auto currentFoldLevel = blockData->folding.level;
     if (currentFoldLevel == 0) {
         return;
     }
-
     if (blockData->folding.folded == folded) {
         return;
     }
-
     auto currentCursor = textCursor();
     auto cursorInFoldedRegion = false;
     if (folded) {
@@ -714,23 +711,23 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
             }
         }
     }
-    blockData->folding.folded = folded;
 
+    blockData->folding.folded = folded;
     if (folded) {
         for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
-            blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
-            nextBlock.setVisible(false);
-            nextBlock.setLineCount(0);
-            if (blockData && blockData->folding.level < currentFoldLevel) {
+            auto nextData = static_cast<TextBlockUserData *>(nextBlock.userData());
+            auto isLastLineOfRegion = (nextData && nextData->folding.level < currentFoldLevel);
+            if (isLastLineOfRegion) {
                 break;
             }
+            nextBlock.setVisible(false);
+            nextBlock.setLineCount(0);
         }
     } else {
         for (auto nextBlock = block.next(); nextBlock.isValid(); nextBlock = nextBlock.next()) {
             blockData = static_cast<TextBlockUserData *>(nextBlock.userData());
             nextBlock.setVisible(true);
             nextBlock.setLineCount(1);
-
             if (smartFolding_) {
                 if (blockData && blockData->folding.folded) {
                     blockData->folding.folded = false;
@@ -885,33 +882,54 @@ void Qutepart::toggleCurrentFold() {
 }
 
 void Qutepart::foldTopLevelBlocks() {
-    QTextBlock firstLevel1AreaStart;
-    auto level1AreaCount = 0;
-    auto prevLevel = 0;
-
+    auto minLevel = 1000;
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
         auto blockData = static_cast<TextBlockUserData *>(block.userData());
         auto currentLevel = blockData ? blockData->folding.level : 0;
-        if (currentLevel == 1 && prevLevel == 0) {
-            level1AreaCount++;
-            if (level1AreaCount == 1) {
-                firstLevel1AreaStart = block;
-            }
+        minLevel = std::min(minLevel, currentLevel);
+    }
+
+    auto prevLevel = minLevel;
+    auto level1Starts = QList<QTextBlock>();
+    for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        auto currentLevel = blockData ? blockData->folding.level : 0;
+        if (currentLevel > minLevel && prevLevel == minLevel) {
+            level1Starts.append(block);
         }
         prevLevel = currentLevel;
     }
 
-    // If we have a single top level folding area, keep it open, and fold only the nested ones
-    auto levelsToFold = (level1AreaCount == 1) ? 2 : 1;
-    auto block = firstLevel1AreaStart.next();
-    while (block.isValid()) {
-        auto blockData = static_cast<TextBlockUserData *>(block.userData());
-        if (blockData) {
-            if (blockData->folding.level == levelsToFold) {
-                setBlockFolded(block, true);
+    if (level1Starts.isEmpty()) {
+        return;
+    }
+
+    if (level1Starts.size() > 1) {
+        for (auto &block : level1Starts) {
+            setBlockFolded(block, true);
+        }
+    } else {
+        // Only one top-level block (e.g. a namespace or a large multiline comment).
+        // Fold its immediate children.
+        auto startBlock = level1Starts[0];
+        auto targetLevel = static_cast<TextBlockUserData *>(startBlock.userData())->folding.level;
+        auto childLevel = targetLevel + 1;
+        for (auto block = startBlock.next(); block.isValid(); block = block.next()) {
+            auto blockData = static_cast<TextBlockUserData *>(block.userData());
+            if (blockData) {
+                if (blockData->folding.level < targetLevel) {
+                    break; // End of the single top-level block
+                }
+                if (blockData->folding.level == childLevel) {
+                    // Only fold if the PREVIOUS block was at a lower level (it's a start)
+                    auto prev = block.previous();
+                    auto prevData = static_cast<TextBlockUserData *>(prev.userData());
+                    if (prevData && prevData->folding.level < childLevel) {
+                        setBlockFolded(block, true);
+                    }
+                }
             }
         }
-        block = block.next();
     }
 }
 
@@ -1992,6 +2010,15 @@ void Qutepart::moveSelectedLines(int offsetLines) {
         auto block = document()->findBlockByNumber(line);
         if (block.isValid()) {
             QTextBlock foldStart = block;
+
+            // If the block is the end of a folded region, it might be visible (like '}')
+            // but we still want to unfold the region if we move into it.
+            // We can detect this by checking if the previous block is invisible.
+            if (foldStart.isValid() && foldStart.previous().isValid() &&
+                !foldStart.previous().isVisible()) {
+                foldStart = foldStart.previous();
+            }
+
             while (foldStart.isValid() && !foldStart.isVisible()) {
                 foldStart = foldStart.previous();
             }

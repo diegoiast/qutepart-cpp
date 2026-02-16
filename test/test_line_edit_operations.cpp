@@ -175,15 +175,23 @@ class Test : public QObject {
 
         auto doc = qpart.document();
 
-        // Fold line 0
+        // Fold line 0. It hides line 1. Line 2 (}) is visible.
         qpart.foldBlock(0);
 
-        // Move line 4 up. Target is line 2.
+        QVERIFY(doc->findBlockByNumber(0).isVisible());
+        QVERIFY(!doc->findBlockByNumber(1).isVisible());
+        QVERIFY(doc->findBlockByNumber(2).isVisible());
+        QVERIFY(doc->findBlockByNumber(3).isVisible());
+
+        // Move line 4 (index 3) up. Target is line 2 (visible, but end of fold).
         qpart.goTo(3, 0);
         qpart.moveLineUpAction()->trigger();
 
-        // Should unfold
+        // Should unfold block 0 because we moved into its hidden region
+        QVERIFY(doc->findBlockByNumber(0).isVisible());
         QVERIFY(doc->findBlockByNumber(1).isVisible());
+        QVERIFY(doc->findBlockByNumber(2).isVisible());
+        QVERIFY(doc->findBlockByNumber(3).isVisible());
         QCOMPARE(qpart.toPlainText(), QString("{\n    line2\nline4\n}"));
     }
 
