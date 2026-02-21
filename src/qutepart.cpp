@@ -69,14 +69,8 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
         }
     });
 
+    setTheme(nullptr);
     QTimer::singleShot(0, this, [this]() { updateViewport(); });
-
-    auto palette = style()->standardPalette();
-    auto c = palette.brush(QPalette::Highlight).color();
-    c.setAlpha(180);
-    palette.setBrush(QPalette::Highlight, c);
-    palette.setBrush(QPalette::HighlightedText, QBrush(Qt::NoBrush));
-    setPalette(palette);
 
     // Setup extra cursor blinking timer
     extraCursorBlinkTimer_->setInterval(QApplication::cursorFlashTime() / 2);
@@ -922,6 +916,41 @@ void Qutepart::unfoldAll() {
             setBlockFolded(block, false);
         }
     }
+}
+
+bool Qutepart::event(QEvent *event) {
+    switch (event->type()) {
+    case QEvent::ParentAboutToChange: {
+        auto p = parentWidget();
+        if (p) {
+            p->removeEventFilter(this);
+        }
+        break;
+    }
+    case QEvent::ParentChange: {
+        // We modify the palette to make selection highlited. This means that
+        // Qt will no longer propagate events of theme/style modification to us
+        // Instead intercept it on the parent and then set the theme (which in turn
+        // will reset the style).
+        auto p = parentWidget();
+        if (p){
+            p->installEventFilter(this);
+        }
+        break;
+    }
+    default:
+        break;
+     }
+    return QPlainTextEdit::event(event);
+}
+
+bool Qutepart::eventFilter(QObject *obj, QEvent *event) {
+    if (obj == parentWidget()) {
+        if (event->type() == QEvent::PaletteChange || event->type() == QEvent::StyleChange) {
+            setTheme(theme);
+        }
+    }
+    return QPlainTextEdit::eventFilter(obj, event);
 }
 
 void Qutepart::keyPressEvent(QKeyEvent *event) {

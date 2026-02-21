@@ -6,6 +6,7 @@
 
 #include <QDebug>
 #include <QObject>
+#include <QStyle>
 #include <QTest>
 
 #include "qutepart.h"
@@ -51,12 +52,59 @@ class Test : public QObject {
 
             // Viewport background should NOT be dark anymore.
             // It should be the system default.
-            // We compare it with the widget's palette which is reset to system default.
-            QCOMPARE(qutepart.viewport()->palette().color(QPalette::Base),
-                     qutepart.palette().color(QPalette::Base));
+            QCOMPARE(qutepart.viewport()->palette().color(QPalette::Base).name(),
+                     qutepart.style()->standardPalette().color(QPalette::Base).name());
         } else {
             QSKIP("Could not load atom-one-dark.theme from resources");
         }
+    }
+
+    void testThemeToNullptr() {
+        Qutepart::Qutepart qutepart;
+
+        // 1. Set a theme
+        Q_INIT_RESOURCE(qutepart_theme_data);
+        Qutepart::Theme darkTheme;
+        if (darkTheme.loadTheme(":/qutepart/themes/atom-one-dark.theme")) {
+            qutepart.setTheme(&darkTheme);
+            QCOMPARE(qutepart.viewport()->palette().color(QPalette::Base).name(),
+                     QColor("#282c34").name());
+        } else {
+            QSKIP("Could not load theme");
+        }
+
+        // 2. Set theme to nullptr. It should go back to system palette.
+        qutepart.setTheme(nullptr);
+
+        // If the bug is fixed, it will go back to system palette.
+        QCOMPARE(qutepart.viewport()->palette().color(QPalette::Base).name(),
+                 qutepart.style()->standardPalette().color(QPalette::Base).name());
+    }
+
+    void PaletteChange() {
+        Qutepart::Qutepart qutepart;
+
+        // 1. Initial palette (Blue)
+        QPalette p = QApplication::palette();
+        p.setColor(QPalette::Highlight, Qt::blue);
+        QApplication::setPalette(p);
+        
+        QEvent paletteEvent1(QEvent::PaletteChange);
+        QApplication::sendEvent(&qutepart, &paletteEvent1);
+
+        // Viewport should have customized 180 alpha highlight
+        QCOMPARE(qutepart.viewport()->palette().color(QPalette::Highlight).alpha(), 180);
+        QCOMPARE(qutepart.viewport()->palette().brush(QPalette::HighlightedText).style(), Qt::NoBrush);
+        
+        // 2. Change to Red
+        p.setColor(QPalette::Highlight, Qt::red);
+        QApplication::setPalette(p);
+        
+        QEvent paletteEvent2(QEvent::PaletteChange);
+        QApplication::sendEvent(&qutepart, &paletteEvent2);
+
+        QCOMPARE(qutepart.viewport()->palette().color(QPalette::Highlight).alpha(), 180);
+        QCOMPARE(qutepart.viewport()->palette().brush(QPalette::HighlightedText).style(), Qt::NoBrush);
     }
 
     void Folding() {

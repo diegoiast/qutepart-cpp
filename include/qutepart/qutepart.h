@@ -503,6 +503,8 @@ class Qutepart : public QPlainTextEdit {
     void multipleCursorCut();
 
   protected:
+    bool event(QEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
@@ -583,6 +585,7 @@ class Qutepart : public QPlainTextEdit {
   private:
     CompletionCallback completionCallback_;
     const Theme *theme = nullptr;
+    bool inSetTheme_ = false;
 
     QTimer *currentWordTimer;
     QString lastWordUnderCursor;
