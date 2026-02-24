@@ -51,8 +51,8 @@ class CompletionModel : public QAbstractItemModel {
         beginResetModel();
         typedText_ = wordBeforeCursor;
         words_ = makeListOfCompletions(wordBeforeCursor, wholeWord);
-        QString commonStart = commonWordStart(words_);
-        canCompleteText_ = commonStart.mid(wordBeforeCursor.length());
+        commonStart_ = commonWordStart(words_);
+        canCompleteText_ = commonStart_.mid(wordBeforeCursor.length());
         endResetModel();
     }
 
@@ -97,7 +97,7 @@ class CompletionModel : public QAbstractItemModel {
     i.e. for ['blablaxxx', 'blablayyy', 'blazzz'] common start is 'bla'
     TODO optimize performance?
     */
-    QString commonWordStart(QVector<QString> &words) const {
+    QString commonWordStart(const QVector<QString> &words) const {
         if (words.isEmpty()) {
             return "";
         }
@@ -106,7 +106,7 @@ class CompletionModel : public QAbstractItemModel {
         for (int chIndex = 0; chIndex < firstWord.length(); chIndex++) {
             QChar ch = firstWord[chIndex];
             for (int wordIndex = 1; wordIndex < words.length(); wordIndex++) {
-                if (words[wordIndex][chIndex] != ch) {
+                if (words[wordIndex].length() <= chIndex || words[wordIndex][chIndex] != ch) {
                     return firstWord.left(chIndex);
                 }
             }
@@ -149,11 +149,14 @@ class CompletionModel : public QAbstractItemModel {
 
     QString canCompleteText() const { return canCompleteText_; }
 
+    QString commonStart() const { return commonStart_; }
+
   private:
     const QSet<QString> &wordSet_;
     QString typedText_;
     QVector<QString> words_;
     QString canCompleteText_;
+    QString commonStart_;
 };
 
 // Completion list widget
@@ -512,9 +515,15 @@ void Completer::onCompletionListItemSelected(int index) {
 Insert completable text, if available
 */
 void Completer::onCompletionListTabPressed() {
-    QString canCompleteText = widget_->completionModel()->canCompleteText();
-    if (!canCompleteText.isEmpty()) {
-        qpart_->textCursor().insertText(canCompleteText);
+    auto model = widget_->completionModel();
+    auto commonStart = model->commonStart();
+    if (commonStart != model->typedText() && (!commonStart.isEmpty())) {
+        auto cursor = qpart_->textCursor();
+        cursor.beginEditBlock();
+        cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, model->typedText().length());
+        cursor.insertText(commonStart);
+        cursor.endEditBlock();
+        qpart_->setTextCursor(cursor);
         invokeCompletionIfAvailable(false);
     }
 }
