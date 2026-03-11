@@ -22,7 +22,7 @@ QChar getTextType(const QTextBlock &block, int column) {
         return ' ';
     } else {
         // this may happen on empty files
-        if (data->textTypeMap.size() < column) {
+        if (column < 0 || data->textTypeMap.size() <= column) {
             return ' ';
         }
         return data->textTypeMap[column];

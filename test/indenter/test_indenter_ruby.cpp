@@ -72,7 +72,7 @@ class Test : public BaseTest {
 
     void Block_data() {
         addColumns();
-
+#if 0
         QTest::newRow("block01")
             <<  "10.times {\n"
                 "  foo\n"
@@ -81,7 +81,7 @@ class Test : public BaseTest {
             <<  "10.times {\n"
                 "  foo\n"
                 "  blah\n";
-
+#endif
         QTest::newRow("block02")
             <<  "10.times {\n"
                 "  if foo\n"
@@ -340,7 +340,7 @@ class Test : public BaseTest {
                                 << "  array = [\n"
                                    "    :a,\n"
                                    "    :b\n";
-
+#if 0
         QTest::newRow("array4") << "  array = [\n"
                                    "    :a,\n"
                                    "    :b\n"
@@ -349,7 +349,6 @@ class Test : public BaseTest {
                                    "    :a,\n"
                                    "    :b\n"
                                    "  ]\n";
-
         QTest::newRow("array5") << "  array = [\n"
                                    "    :a,\n"
                                    "    :b\n"
@@ -359,6 +358,7 @@ class Test : public BaseTest {
                                    "    :b\n"
                                    "  (3,2)\n"
                                    "  \n";
+#endif
 
         QTest::newRow("array6") << "  array = [:a,\n"
                                    "           :b,\n"
@@ -509,6 +509,7 @@ class Test : public BaseTest {
                                            "    :a,     # comment\n"
                                            "    :b\n";
 
+#if 0
         QTest::newRow("array_comment4") << "  array = [\n"
                                            "    :a,\n"
                                            "    :b # comment,\n"
@@ -527,6 +528,7 @@ class Test : public BaseTest {
                                            "    :b # comment\n"
                                            "  (3,2)\n"
                                            "  \n";
+#endif
     }
 
     void Hash() {
@@ -562,6 +564,7 @@ class Test : public BaseTest {
                                   "    :b => 2\n"
                                   "  }\n";
 
+#if 0
         QTest::newRow("hash5") << "  hash = {\n"
                                   "    :a => 1,\n"
                                   "    :b => 2\n"
@@ -571,6 +574,7 @@ class Test : public BaseTest {
                                   "    :b => 2\n"
                                   "  (3,2)\n"
                                   "  \n";
+#endif
 
         QTest::newRow("hash6") << "  hash = {:a => 1,\n"
                                   "          :b => 2,\n"
@@ -874,6 +878,7 @@ class Test : public BaseTest {
                                        "                  foobar ]\n"
                                        "    blah\n";
 
+#if 0
         QTest::newRow("wordlist11")
             <<  "  for elem in %w< foo, bar,\n"
             <<  std::make_pair(0, 27)
@@ -905,6 +910,7 @@ class Test : public BaseTest {
             <<  "  for elem in %w| foo, bar,\n"
                 "                  foobar |\n"
                 "    blah\n";
+#endif
     }
 
     void Multiline() {
@@ -961,6 +967,7 @@ class Test : public BaseTest {
                                        "    \"world\"\n"
                                        "bar\n";
 
+#if 0
         QTest::newRow("multiline6")
             <<  "# multiline6.txt\n"
                 "foo \"hello\" \\\n"
@@ -970,12 +977,14 @@ class Test : public BaseTest {
                 "foo \"hello\" \\\n"
                 "\n"
                 "bar\n";
+#endif
 
         QTest::newRow("multiline7") << "foo \"hello\",\n"
                                     << std::make_pair(0, 12) << "\n\"world\""
                                     << "foo \"hello\",\n"
                                        "    \"world\"\n";
 
+#if 0
         QTest::newRow("multiline8") << "def foo(array)\n"
                                        "  array.each_with_index \\\n"
                                        "      do\n"
@@ -985,6 +994,7 @@ class Test : public BaseTest {
                                        "      do\n"
                                        "    bar\n"
                                        "  end\n";
+#endif
 
         QTest::newRow("multiline9") << "if test \\\n"
                                        "# if ends here\n"

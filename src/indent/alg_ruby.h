@@ -44,8 +44,10 @@ class RubyStatement {
 
 class IndentAlgRuby : public IndentAlgImpl {
   public:
-    const QString &triggerCharacters() const override;
-    QString computeSmartIndent(QTextBlock block, int cursorPos) const override;
+    virtual const QString &triggerCharacters() const override;
+    virtual bool shouldTrimPrevEmptyLine() const override { return true; }
+    virtual QString computeSmartIndent(QTextBlock block, int cursorPos) const override;
+
 
   private:
     bool isCommentBlock(QTextBlock block) const;

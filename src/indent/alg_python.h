@@ -17,6 +17,7 @@ namespace Qutepart {
 
 class IndentAlgPython : public IndentAlgImpl {
   public:
+    virtual bool shouldTrimPrevEmptyLine() const override { return true; }
     QString computeSmartIndent(QTextBlock block, int cursorPos) const override;
 
   private:

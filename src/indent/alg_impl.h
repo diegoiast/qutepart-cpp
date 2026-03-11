@@ -20,6 +20,8 @@ class IndentAlgImpl {
 
     virtual const QString &triggerCharacters() const;
 
+    virtual bool shouldTrimPrevEmptyLine() const { return false; }
+
     /* Compute line with proper indentation
      * and other formatting.
      * i.e. split line onto multiple lines.

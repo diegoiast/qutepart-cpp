@@ -126,11 +126,19 @@ void Indenter::indentBlock(QTextBlock block, int cursorPos, int typedKey) const 
         // continue indentation, if no text
         indent = prevBlockIndent(block);
 
+        if (alg_->shouldTrimPrevEmptyLine() && (!prevBlockText.isEmpty())) {
+            QTextBlock prevBlock = block.previous();
+            QTextCursor prevCursor(prevBlock);
+            prevCursor.select(QTextCursor::LineUnderCursor);
+            prevCursor.removeSelectedText();
+        }
+
         if (!indent.isNull()) {
             QTextCursor cursor(block);
             cursor.insertText(indent);
         }
-    } else {
+    }
+ else {
         QString indentedLine;
         if (typedKey == 0) { // format line on shortcut
             indentedLine = alg_ ? alg_->autoFormatLine(block) : QString();
