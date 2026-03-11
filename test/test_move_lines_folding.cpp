@@ -10,8 +10,6 @@
 #include "qutepart.h"
 #include "hl/syntax_highlighter.h"
 
-using namespace Qutepart;
-
 class Test : public QObject {
     Q_OBJECT
 
@@ -30,7 +28,7 @@ class Test : public QObject {
         Qutepart::Qutepart qpart(nullptr, text);
         qpart.setHighlighter("cpp.xml");
 
-        auto hl = qpart.findChild<SyntaxHighlighter *>();
+        auto hl = qpart.findChild<Qutepart::SyntaxHighlighter *>();
         if (hl) {
             hl->rehighlight();
         }
@@ -72,7 +70,7 @@ class Test : public QObject {
         Qutepart::Qutepart qpart(nullptr, text);
         qpart.setHighlighter("cpp.xml");
 
-        auto hl = qpart.findChild<SyntaxHighlighter *>();
+        auto hl = qpart.findChild<Qutepart::SyntaxHighlighter *>();
         if (hl) {
             hl->rehighlight();
         }

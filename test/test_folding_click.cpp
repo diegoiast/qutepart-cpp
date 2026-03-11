@@ -12,8 +12,6 @@
 #include "hl/syntax_highlighter.h"
 #include "text_block_user_data.h"
 
-using namespace Qutepart;
-
 class Test : public QObject {
     Q_OBJECT
 
@@ -31,7 +29,7 @@ class Test : public QObject {
         qpart.setHighlighter("cpp.xml");
 
         // Force highlight
-        auto hl = qpart.findChild<SyntaxHighlighter*>();
+        auto hl = qpart.findChild<Qutepart::SyntaxHighlighter*>();
         if (hl) {
             hl->rehighlight();
         }
@@ -39,7 +37,7 @@ class Test : public QObject {
         auto doc = qpart.document();
         
         // Find FoldingArea. It's private, but we can find it via children
-        auto foldingArea = qpart.findChild<FoldingArea*>();
+        auto foldingArea = qpart.findChild<Qutepart::FoldingArea*>();
         QVERIFY(foldingArea != nullptr);
 
         // We can use cursorRect to find the position of a block
@@ -49,7 +47,7 @@ class Test : public QObject {
         // Click on line 0 (should have - indicator)
         QTest::mousePress(foldingArea, Qt::LeftButton, Qt::NoModifier, QPoint(5, y0));
         QVERIFY(doc->findBlockByNumber(0).userData() != nullptr);
-        auto data0 = static_cast<TextBlockUserData *>(doc->findBlockByNumber(0).userData());
+        auto data0 = static_cast<Qutepart::TextBlockUserData *>(doc->findBlockByNumber(0).userData());
         QVERIFY(data0->folding.folded); // Should be folded
 
         // Unfold
@@ -58,13 +56,13 @@ class Test : public QObject {
 
         // Click on line 1 (should NOT have indicator, but level is > 0)
         QTest::mousePress(foldingArea, Qt::LeftButton, Qt::NoModifier, QPoint(5, y1));
-        auto data1 = static_cast<TextBlockUserData *>(doc->findBlockByNumber(1).userData());
+        auto data1 = static_cast<Qutepart::TextBlockUserData *>(doc->findBlockByNumber(1).userData());
         QVERIFY(!data1->folding.folded); // Should NOT be folded
 
         // Click on line 3 (index 3) (closing brace, should NOT have indicator)
         auto y3 = qpart.QPlainTextEdit::cursorRect(QTextCursor(doc->findBlockByNumber(3))).center().y();
         QTest::mousePress(foldingArea, Qt::LeftButton, Qt::NoModifier, QPoint(5, y3));
-        auto data3 = static_cast<TextBlockUserData *>(doc->findBlockByNumber(3).userData());
+        auto data3 = static_cast<Qutepart::TextBlockUserData *>(doc->findBlockByNumber(3).userData());
         QVERIFY(!data3->folding.folded); // Should NOT be folded
     }
 };
