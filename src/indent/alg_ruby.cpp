@@ -20,7 +20,7 @@ namespace {
 const QRegularExpression rxUnindent("^\\s*((end|when|else|elsif|rescue|ensure)\\b|[\\]\\}])(.*)$");
 
 // Indent after lines that match this regexp
-const QRegularExpression rxIndent("^\\s*(def|if|unless|for|while|until|class|module|else|elsif|"
+const QRegularExpression rxIndent("^\\s*([^=]*=[^=]\\s*)?(def|if|unless|for|while|until|class|module|else|elsif|"
                                   "case|when|begin|rescue|ensure|catch)\\b");
 
 const QRegularExpression rxBlockEnd("\\s*end$");
@@ -242,6 +242,15 @@ QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
     QString prevStmtContent = prevStmt.content();
     QString prevStmtIndent = prevStmt.indent();
 
+    if (rxUnindent.match(block.text()).hasMatch()) {
+        RubyStatement startStmt = findBlockStart(block);
+        if (startStmt.startBlock.isValid()) {
+            return startStmt.indent();
+        } else {
+            return QString();
+        }
+    }
+
     // Are we inside a parameter list, array or hash?
 
     TextPosition openingBracketPos = findAnyOpeningBracketBackward(TextPosition(block, 0));
@@ -264,18 +273,18 @@ QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
 
             // Keep indent of previous statement, while aligning to the anchor
             // column
-            if (prevStmtIndent.length() > openingBracketPos.column) {
-                return prevStmtIndent;
+            if (blockIndent(prevStmt.endBlock).length() > openingBracketPos.column) {
+                return blockIndent(prevStmt.endBlock);
             } else {
                 return makeIndentAsColumn(openingBracketPos.block, openingBracketPos.column, width_,
                                           useTabs_);
             }
         } else {
-            QString indent = blockIndent(openingBracketPos.block);
             if (shouldIndent) {
-                indent = increaseIndent(indent, indentText());
+                return increaseIndent(blockIndent(openingBracketPos.block), indentText());
+            } else {
+                return blockIndent(prevStmt.endBlock);
             }
-            return indent;
         }
     }
 
@@ -290,15 +299,6 @@ QString IndentAlgRuby::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
             return increaseIndent(increaseIndent(prevStmtIndent, indentText()), indentText());
         } else {
             return blockIndent(prevStmt.endBlock);
-        }
-    }
-
-    if (rxUnindent.match(block.text()).hasMatch()) {
-        RubyStatement startStmt = findBlockStart(block);
-        if (startStmt.startBlock.isValid()) {
-            return startStmt.indent();
-        } else {
-            return QString();
         }
     }
 

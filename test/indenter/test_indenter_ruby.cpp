@@ -20,9 +20,7 @@ class Test : public BaseTest {
         qpart.setIndentWidth(2);
     }
 
-#if 0
     void If() { runDataDrivenTest(); }
-#endif
 
     void If_data() {
         addColumns();
@@ -37,7 +35,6 @@ class Test : public BaseTest {
                                  "    blah\n"
                                  "  end\n";
 
-#if 0 // fails
         QTest::newRow("if20")
             <<  "  var = if foo\n"
             <<  std::make_pair(0, 14)
@@ -53,9 +50,7 @@ class Test : public BaseTest {
             <<  "  var = if foo\n"
                 "    blah\n"
                 "  end\n";
-#endif
 
-#if 0                
         QTest::newRow("if22") << "  var = bar if foo\n"
                               << std::make_pair(0, 18) << "\nblah"
                               << "  var = bar if foo\n"
@@ -64,7 +59,6 @@ class Test : public BaseTest {
                               << std::make_pair(0, 24) << "\nblah"
                               << "  if foo; 42 else 37 end\n"
                                  "  blah\n";
-#endif
 
         QTest::newRow("if31") << "  if foo then 42 else 37 end\n"
                               << std::make_pair(0, 28) << "\nblah"
@@ -72,7 +66,6 @@ class Test : public BaseTest {
                                  "  blah\n";
     }
 
-#if 0 // fails
     void Block() {
         runDataDrivenTest();
     }
@@ -98,18 +91,14 @@ class Test : public BaseTest {
                 "  if foo\n"
                 "    blah\n";
     }
-#endif
 
     void Basic() {
-#if 0
         runDataDrivenTest();
-#endif
     }
 
     void Basic_data() {
         addColumns();
 
-#if 0
         QTest::newRow("basic1") << "# basic1.txt\n"
                                 << std::make_pair(0, 12)
                                 << "\ndef foo\nif gets\nputs\nelse\nexit\nend\nend"
@@ -121,8 +110,6 @@ class Test : public BaseTest {
                                    "    exit\n"
                                    "  end\n"
                                    "end\n";
-#endif
-#if 0 // fails
         QTest::newRow("basic2")
             <<  "# basic2.txt\n"
                 "\n"
@@ -161,13 +148,10 @@ class Test : public BaseTest {
                                    "       bar\n"
                                    "    end\n"
                                    "end\n";
-#endif
     }
 
     void EmptyFile() {
-#if 0
         runDataDrivenTest();
-#endif
     }
 
     void EmptyFile_data() {
@@ -184,9 +168,7 @@ class Test : public BaseTest {
     }
 
     void RegExp() {
-#if 0
         runDataDrivenTest();
-#endif
     }
 
     void RegExp_data() {
@@ -199,14 +181,11 @@ class Test : public BaseTest {
     }
 
     void Do() {
-#if 0
         runDataDrivenTest();
-#endif
     }
 
     void Do_data() {
         addColumns();
-#if 0
         QTest::newRow("do1") << "# do1.txt\n"
                                 "5.times do\n"
                              << std::make_pair(1, 10) << "\nend"
@@ -260,13 +239,10 @@ class Test : public BaseTest {
                                 "  f.each do # loop with do\n"
                                 "    bar\n"
                                 "  end\n";
-#endif
     }
 
     void NoDo() {
-#if 0
         runDataDrivenTest();
-#endif
     }
 
     void NoDo_data() {
@@ -312,9 +288,7 @@ class Test : public BaseTest {
     }
 
     void SingleLine() {
-#if 0
         runDataDrivenTest();
-#endif
     }
 
     void SingleLine_data() {
@@ -344,9 +318,7 @@ class Test : public BaseTest {
     }
 
     void Array() {
-#if 0
         runDataDrivenTest();
-#endif
     }
 
     void Array_data() {
@@ -512,9 +484,7 @@ class Test : public BaseTest {
     }
 
     void ArrayComment() {
-#if 0
         runDataDrivenTest();
-#endif
     }
 
     void ArrayComment_data() {
@@ -560,9 +530,7 @@ class Test : public BaseTest {
     }
 
     void Hash() {
-#if 0
         runDataDrivenTest();
-#endif
     }
 
     void Hash_data() {
@@ -728,9 +696,7 @@ class Test : public BaseTest {
     }
 
     void Ops() {
-#if 0        
         runDataDrivenTest();
-#endif
     }
 
     void Ops_data() {
@@ -890,9 +856,7 @@ class Test : public BaseTest {
     }
 
     void WordList() {
-#if 0        
         runDataDrivenTest();
-#endif
     }
 
     void WordList_data() {
@@ -910,7 +874,6 @@ class Test : public BaseTest {
                                        "                  foobar ]\n"
                                        "    blah\n";
 
-#if 0 // fails
         QTest::newRow("wordlist11")
             <<  "  for elem in %w< foo, bar,\n"
             <<  std::make_pair(0, 27)
@@ -942,13 +905,10 @@ class Test : public BaseTest {
             <<  "  for elem in %w| foo, bar,\n"
                 "                  foobar |\n"
                 "    blah\n";
-#endif
     }
 
     void Multiline() {
-#if 0        
         runDataDrivenTest();
-#endif
     }
 
     void Multiline_data() {
@@ -1001,7 +961,6 @@ class Test : public BaseTest {
                                        "    \"world\"\n"
                                        "bar\n";
 
-#if 0 // fails
         QTest::newRow("multiline6")
             <<  "# multiline6.txt\n"
                 "foo \"hello\" \\\n"
@@ -1011,7 +970,6 @@ class Test : public BaseTest {
                 "foo \"hello\" \\\n"
                 "\n"
                 "bar\n";
-#endif
 
         QTest::newRow("multiline7") << "foo \"hello\",\n"
                                     << std::make_pair(0, 12) << "\n\"world\""
@@ -1048,9 +1006,7 @@ class Test : public BaseTest {
     }
 
     void Plist() {
-#if 0
         runDataDrivenTest();
-#endif
     }
 
     void Plist_data() {
@@ -1197,7 +1153,7 @@ class Test : public BaseTest {
                                     "  foobaz\n";
     }
 
-    // void PlistComment() { runDataDrivenTest(); }
+    void PlistComment() { runDataDrivenTest(); }
 
     void PlistComment_data() {
         addColumns();
@@ -1289,7 +1245,7 @@ class Test : public BaseTest {
                                             "  foobaz\n";
     }
 
-    // void Comment() { runDataDrivenTest(); }
+    void Comment() { runDataDrivenTest(); }
 
     void Comment_data() {
         addColumns();
@@ -1355,7 +1311,7 @@ class Test : public BaseTest {
                                      "end\n";
     }
 
-    // void Heredoc() { runDataDrivenTest(); }
+    void Heredoc() { runDataDrivenTest(); }
 
     void Heredoc_data() {
         addColumns();
@@ -1402,7 +1358,7 @@ class Test : public BaseTest {
                                      "koko\n";
     }
 
-    // void BlockComment() { runDataDrivenTest(); }
+    void BlockComment() { runDataDrivenTest(); }
 
     void BlockComment_data() {
         addColumns();
@@ -1457,7 +1413,6 @@ class Test : public BaseTest {
                                            "=end\n"
                                            "  koko\n";
 
-#if 0 // TODO fails
         QTest::newRow("block_comment8")
             <<  "if foo\n"
                 "=begin\n"
@@ -1469,7 +1424,6 @@ class Test : public BaseTest {
                 "=end\n"
                 "\n"
                 "  koko\n";
-#endif
     }
 };
 
