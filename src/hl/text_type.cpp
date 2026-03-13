@@ -13,7 +13,7 @@ namespace Qutepart {
 namespace {
 
 static inline TextBlockUserData *getData(const QTextBlock &block) {
-    return static_cast<TextBlockUserData *>(block.userData());
+    return dynamic_cast<TextBlockUserData *>(block.userData());
 }
 
 QChar getTextType(const QTextBlock &block, int column) {

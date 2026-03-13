@@ -66,6 +66,7 @@ set(qutepart_SRCS
     src/hl/loader.cpp
     src/hl/rules.cpp
     src/hl/syntax_highlighter.cpp
+    src/hl/sonnet_spellchecker.cpp
     src/hl/style.cpp
     src/hl/context_stack.cpp
     src/hl/context_switcher.cpp
@@ -94,7 +95,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 add_library(qutepart ${qutepart_SRCS} include/qutepart/qutepart.h)
 
 # Use the Widgets module from Qt
-target_link_libraries(qutepart Qt::Core Qt::Widgets)
+target_link_libraries(qutepart Qt::Core Qt::Widgets sonnet-minimal)
 
 if(MSVC)
   target_compile_options(qutepart PRIVATE /W4)
@@ -107,11 +108,15 @@ include(sonnetminimal.cmake)
 
 # Build example executable
 add_executable(editor example/editor.cpp)
+target_include_directories(editor PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR}/sonnet_gen
+)
 target_link_libraries(editor Qt::Core Qt::Widgets qutepart hunspell sonnet-minimal)
 
 # Install only library, not binaries
 install(TARGETS qutepart DESTINATION lib)
-install(FILES include/qutepart/theme.h include/qutepart/qutepart.h
+install(FILES include/qutepart/theme.h include/qutepart/qutepart.h include/qutepart/spellchecker.h
         DESTINATION include/qutepart)
 
 # Tests

@@ -54,6 +54,7 @@ class Language {
     QSet<QString> allLanguageKeywords_;
 
     QList<ContextPtr> contexts;
+  public:
     ContextStack defaultContextStack;
 
     ContextStack getContextStack(QTextBlock block);

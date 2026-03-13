@@ -17,16 +17,16 @@
 
 #include "bracket_highlighter.h"
 #include "completer.h"
-#include "qutepart.h"
-#include "side_areas.h"
-#include "text_block_flags.h"
-#include "text_block_utils.h"
-
 #include "hl/syntax_highlighter.h"
 #include "hl/text_type.h"
 #include "hl_factory.h"
 #include "indent/indent_funcs.h"
 #include "indent/indenter.h"
+#include "qutepart.h"
+#include "side_areas.h"
+#include "spellchecker.h"
+#include "text_block_flags.h"
+#include "text_block_utils.h"
 #include "theme.h"
 
 namespace Qutepart {
@@ -2911,6 +2911,23 @@ void Qutepart::onCompletionFutureFinished() {
         }
     }
     completionWatcher->setFuture(QFuture<QSet<CompletionItem>>());
+}
+
+void Qutepart::setSpellChecker(SpellChecker *checker) {
+    if (spellChecker_) {
+        delete spellChecker_;
+    }
+    spellChecker_ = checker;
+    if (checker && highlighter_) {
+        auto sh = dynamic_cast<SyntaxHighlighter *>(highlighter_);
+        if (sh) {
+            sh->setSpellChecker(checker);
+        }
+    }
+}
+
+SpellChecker *Qutepart::spellChecker() const {
+    return spellChecker_;
 }
 
 } // namespace Qutepart

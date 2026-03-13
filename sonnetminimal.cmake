@@ -1,9 +1,15 @@
-CPMAddPackage(
-    NAME sonnet_src
-    GITHUB_REPOSITORY KDE/sonnet
+include(FetchContent)
+
+FetchContent_Declare(
+    sonnet_src
+    GIT_REPOSITORY https://github.com/KDE/sonnet.git
     GIT_TAG v6.8.0
-    DOWNLOAD_ONLY YES
 )
+
+FetchContent_GetProperties(sonnet_src)
+if(NOT sonnet_src_POPULATED)
+    FetchContent_Populate(sonnet_src)
+endif()
 
 set(GEN ${CMAKE_CURRENT_BINARY_DIR}/sonnet_gen)
 file(MAKE_DIRECTORY ${GEN})
@@ -74,10 +80,28 @@ file(WRITE ${FAKE_SONNET_DIR}/Speller
 "#include \"${sonnet_src_SOURCE_DIR}/src/core/speller.h\"\n"
 )
 
+file(WRITE ${FAKE_SONNET_DIR}/Tokenizer
+"#pragma once\n"
+"// auto generated file - do not modify!!! \n"
+"#include \"${sonnet_src_SOURCE_DIR}/src/core/tokenizer_p.h\"\n"
+)
+
+file(WRITE ${FAKE_SONNET_DIR}/LanguageFilter
+"#pragma once\n"
+"// auto generated file - do not modify!!! \n"
+"#include \"${sonnet_src_SOURCE_DIR}/src/core/languagefilter_p.h\"\n"
+)
+
 file(WRITE ${FAKE_SONNET_DIR}/Highlighter
 "#pragma once\n"
 "// auto generated file - do not modify!!! \n"
 "#include \"${sonnet_src_SOURCE_DIR}/src/ui/highlighter.h\"\n"
+)
+
+file(WRITE ${FAKE_SONNET_DIR}/SpellCheckDecorator
+"#pragma once\n"
+"// auto generated file - do not modify!!! \n"
+"#include \"${sonnet_src_SOURCE_DIR}/src/ui/spellcheckdecorator.h\"\n"
 )
 
 add_library(sonnet-minimal STATIC
@@ -95,6 +119,7 @@ add_library(sonnet-minimal STATIC
     ${sonnet_src_SOURCE_DIR}/src/plugins/hunspell/hunspellclient.cpp
     ${sonnet_src_SOURCE_DIR}/src/plugins/hunspell/hunspelldict.cpp
     ${sonnet_src_SOURCE_DIR}/src/ui/highlighter.cpp
+    ${sonnet_src_SOURCE_DIR}/src/ui/spellcheckdecorator.cpp
     ${GEN}/logging_categories.cpp
 )
 
@@ -102,10 +127,12 @@ target_include_directories(sonnet-minimal
     PUBLIC
         ${GEN}
         ${FAKE_SONNET_DIR}
-    PRIVATE
         ${sonnet_src_SOURCE_DIR}/src/core
         ${sonnet_src_SOURCE_DIR}/src/ui
         ${sonnet_src_SOURCE_DIR}/src/plugins/hunspell
+    PRIVATE
+        ${GEN}
+        ${FAKE_SONNET_DIR}
 )
 
 target_compile_definitions(sonnet-minimal PRIVATE
