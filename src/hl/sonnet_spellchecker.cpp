@@ -1,6 +1,5 @@
 #include "sonnet_spellchecker.h"
 #include "text_block_user_data.h"
-#include "syntax_highlighter.h"
 
 #include <QTextCharFormat>
 
@@ -30,7 +29,8 @@ QString SonnetLanguageCache::languageAtPos(int pos) const {
     return QString();
 }
 
-SonnetSpellChecker::SonnetSpellChecker() {
+SonnetSpellChecker::SonnetSpellChecker()
+    : QSyntaxHighlighter(static_cast<QObject*>(nullptr)) {
     speller_ = new Sonnet::Speller();
     wordTokenizer_ = new Sonnet::WordTokenizer();
     languageFilter_ = new Sonnet::LanguageFilter(new Sonnet::SentenceTokenizer());
@@ -44,21 +44,15 @@ SonnetSpellChecker::~SonnetSpellChecker() {
 
 void SonnetSpellChecker::highlightBlock(const QString &text) {
     Q_UNUSED(text);
+    spellCheck(currentBlock());
 }
 
-void SonnetSpellChecker::spellCheck(const QTextBlock &block, SyntaxHighlighter *highlighter) {
+void SonnetSpellChecker::spellCheck(const QTextBlock &block) {
     QString text = block.text();
-
-    if (text.isEmpty() || !speller_->isValid()) {
-        // qDebug() << "Text is empty, or speller not valid =" << speller_->isValid();
-        return;
-    }
+    if (text.isEmpty() || !speller_->isValid()) return;
 
     auto data = dynamic_cast<TextBlockUserData *>(block.userData());
-    if (!data) {
-        qDebug() << "ERROR: no use block data";
-        return;
-    }
+    if (!data) return;
 
     SonnetLanguageCache *cache = nullptr;
     if (data->additionalData.contains("sonnet")) {
@@ -82,14 +76,10 @@ void SonnetSpellChecker::spellCheck(const QTextBlock &block, SyntaxHighlighter *
                 lang = cache->languages.value(spos);
             } else {
                 lang = languageFilter_->language();
-                if (!languageFilter_->isSpellcheckable()) {
-                    lang.clear();
-                }
+                if (!languageFilter_->isSpellcheckable()) lang.clear();
                 cache->languages[spos] = lang;
             }
-            if (lang.isEmpty()) {
-                continue;
-            }
+            if (lang.isEmpty()) continue;
             speller_->setLanguage(lang);
         }
 
@@ -104,7 +94,7 @@ void SonnetSpellChecker::spellCheck(const QTextBlock &block, SyntaxHighlighter *
                 format.setFontUnderline(true);
                 format.setUnderlineStyle(QTextCharFormat::SpellCheckUnderline);
                 format.setUnderlineColor(Qt::red);
-                highlighter->setBlockFormat(word.position() + offset, word.length(), format);
+                setFormat(word.position() + offset, word.length(), format);
             }
         }
     }

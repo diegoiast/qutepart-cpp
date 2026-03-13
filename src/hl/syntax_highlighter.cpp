@@ -42,6 +42,10 @@ void SyntaxHighlighter::highlightBlock(const QString &) {
         }
     }
     setCurrentBlockState(state);
+
+    if (spellChecker_) {
+        spellChecker_->spellCheck(currentBlock());
+    }
 }
 
 } // namespace Qutepart
