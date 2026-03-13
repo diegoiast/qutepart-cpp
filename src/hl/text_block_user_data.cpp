@@ -12,3 +12,9 @@ TextBlockUserData::TextBlockUserData(const QString &textTypeMap, const ContextSt
     : textTypeMap(textTypeMap), contexts(contexts) {}
 
 } // namespace Qutepart
+
+namespace Qutepart {
+TextBlockUserData::~TextBlockUserData() {
+    qDeleteAll(additionalData);
+}
+} // namespace Qutepart

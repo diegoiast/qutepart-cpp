@@ -72,7 +72,7 @@ void SideArea::mouseMoveEvent(QMouseEvent *event) {
 
     if (line != this->lastHoeveredLine) {
         lastHoeveredLine = line;
-        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        auto blockData = dynamic_cast<TextBlockUserData *>(block.userData());
         if (blockData && !blockData->metaData.message.isEmpty()) {
             auto lines = QStringList();
             auto lineLength = 100;

@@ -10,6 +10,7 @@
 #include "language.h"
 #include "syntax_highlighter.h"
 #include "theme.h"
+#include "../../include/qutepart/spellchecker.h"
 
 namespace Qutepart {
 
@@ -27,6 +28,10 @@ void SyntaxHighlighter::highlightBlock(const QString &) {
         setFormat(range.start, range.length, range.format);
     }
     setCurrentBlockState(state);
+
+    if (spellChecker_) {
+        spellChecker_->spellCheck(currentBlock());
+    }
 }
 
 } // namespace Qutepart

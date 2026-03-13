@@ -4,12 +4,18 @@
 #   include(hunspellminimal.cmake)
 #   target_link_libraries(myapp PRIVATE hunspell)
 
-CPMAddPackage(
-    NAME hunspell_src
-    GITHUB_REPOSITORY hunspell/hunspell
+include(FetchContent)
+
+FetchContent_Declare(
+    hunspell_src
+    GIT_REPOSITORY https://github.com/hunspell/hunspell.git
     GIT_TAG v1.7.2
-    DOWNLOAD_ONLY YES
 )
+
+FetchContent_GetProperties(hunspell_src)
+if(NOT hunspell_src_POPULATED)
+    FetchContent_Populate(hunspell_src)
+endif()
 
 # ---------------------------------------------------
 # Collect Hunspell sources
@@ -81,9 +87,6 @@ file(WRITE ${GEN}/config-hunspell.h "
 add_library(hunspell_minimal STATIC ${HUNSPELL_SOURCES} ${HUNSPELL_HEADERS})
 
 target_include_directories(hunspell_minimal PUBLIC
-    ${HUNSPELL_SRC_DIR}
-)
-target_include_directories(hunspell_minimal PRIVATE
     ${HUNSPELL_SRC_DIR}
     ${GEN}                    # generated headers (export, debug)
 )

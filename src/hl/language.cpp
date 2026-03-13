@@ -51,15 +51,17 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
     QString textTypeMap(textToMatch.text.length(), ' ');
     QVector<QSharedPointer<Language>> languageMap(textToMatch.text.length());
     auto lineContinue = false;
-    auto data = static_cast<TextBlockUserData *>(block.userData());
-    if (!data) {
-        data = new TextBlockUserData(textTypeMap, contextStack);
-        block.setUserData(data);
+    TextBlockUserData *data = dynamic_cast<TextBlockUserData *>(block.userData());
+    if (data && data->magic != 0x51555445) {
+        data = nullptr;
     }
 
     QTextBlock prevBlock = block.previous();
     if (prevBlock.isValid()) {
-        TextBlockUserData *prevData = static_cast<TextBlockUserData *>(prevBlock.userData());
+        const TextBlockUserData *prevData = dynamic_cast<TextBlockUserData *>(prevBlock.userData());
+        if (prevData && prevData->magic != 0x51555445) {
+            prevData = nullptr;
+        }
         if (prevData) {
             data->regions = prevData->regions;
         }
@@ -78,15 +80,17 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
         contextStack = switchAtEndOfLine(contextStack);
     }
 
+    if (!data) {
+        return qHash(contextStack);
+    }
+
+    uint regionsHash = 0;
     data->textTypeMap = textTypeMap;
     data->languageMap = languageMap;
     data->contexts = contextStack;
-
-    uint regionsHash = 0;
     for (const auto &region : data->regions) {
         regionsHash = qHash(region, regionsHash);
     }
-
     return qHash(contextStack) ^ regionsHash;
 }
 
@@ -112,13 +116,13 @@ ContextStack Language::getContextStack(QTextBlock block) {
 
     QTextBlock prevBlock = block.previous();
     if (prevBlock.isValid()) {
-        data = static_cast<TextBlockUserData *>(prevBlock.userData());
+        data = dynamic_cast<TextBlockUserData *>(prevBlock.userData());
     }
 
-    if (data != nullptr) {
-        return data->contexts;
-    } else {
+    if (!data) {
         return defaultContextStack;
+    } else {
+        return data->contexts;
     }
 }
 

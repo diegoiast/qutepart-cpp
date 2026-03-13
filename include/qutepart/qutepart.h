@@ -22,6 +22,7 @@
 class QSyntaxHighlighter;
 
 namespace Qutepart {
+class SpellChecker;
 
 // clang-format off
 const int BOOMARK_BIT       = 1 << 0;
@@ -274,6 +275,8 @@ class Qutepart : public QPlainTextEdit {
      * \param indentAlg Algorithm name. See Qutepart::LangInfo::indentAlg.
      */
     void setIndentAlgorithm(IndentAlg indentAlg);
+    void setSpellChecker(SpellChecker *checker);
+    SpellChecker *spellChecker() const;
 
     void setDefaultColors();
     void setTheme(const Theme *newTheme);
@@ -620,6 +623,8 @@ class Qutepart : public QPlainTextEdit {
     int completionThreshold_;
     int viewportMarginStart_;
     int viewportMarginEnd_;
+
+    SpellChecker *spellChecker_ = nullptr;
 
     // private, not API
     QAction *homeAction_;

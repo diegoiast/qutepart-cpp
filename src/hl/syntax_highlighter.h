@@ -15,6 +15,7 @@
 namespace Qutepart {
 
 class Theme;
+class SpellChecker;
 
 class SyntaxHighlighter : public QSyntaxHighlighter {
     Q_OBJECT
@@ -28,10 +29,12 @@ class SyntaxHighlighter : public QSyntaxHighlighter {
         language->setTheme(t);
         rehighlight();
     }
+    void setSpellChecker(SpellChecker *checker) { spellChecker_ = checker; }
 
   protected:
     void highlightBlock(const QString &text) override;
     QSharedPointer<Language> language;
+    SpellChecker *spellChecker_ = nullptr;
 };
 
 } // namespace Qutepart
