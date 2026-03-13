@@ -14,7 +14,7 @@ class Test : public BaseTest {
   private slots:
     void lisp_data() {
         addColumns();
-#if 0
+
         QTest::newRow("three semicolons") << "      \n"
                                              "   asdf"
                                           << std::make_pair(0, 6) << ";;;"
@@ -33,13 +33,12 @@ class Test : public BaseTest {
         QTest::newRow("not found brace")
             << "  (bla                   (x (y (z))))" << std::make_pair(0, 37) << "\n"
             << "  (bla                   (x (y (z))))\n";
-#endif
     }
 
     void lisp() {
         qpart.setIndentAlgorithm(Qutepart::INDENT_ALG_LISP);
         qpart.setIndentWidth(2);
-        // runDataDrivenTest();
+        runDataDrivenTest();
     }
 };
 
