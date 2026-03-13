@@ -20,6 +20,8 @@
 #include "qutepart/theme.h"
 #include <Sonnet/Speller>
 #include <Sonnet/Highlighter>
+#include <Sonnet/SpellCheckDecorator>
+#include <qutepart/sonnet_spellchecker.h>
 
 
 // a C comment
@@ -257,8 +259,7 @@ int main(int argc, char **argv) {
     font.setFamily("Monospace");
     qutepart.setFont(font);
 
-    auto s = new Sonnet::Highlighter(&qutepart);
-    qDebug() << "Sonnet active: " << s->isActive();
+    auto decorator = new Sonnet::SpellCheckDecorator(&qutepart);
 
     // toggle comment a line, block
     auto filePath = QString(":/qutepart/syntax/c.xml");

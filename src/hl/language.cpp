@@ -51,10 +51,13 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
 
 int Language::highlightBlock(QTextBlock block, const QString &text,
                              QVector<QTextLayout::FormatRange> &formats) {
-    auto contextStack = getContextStack(block);
+    ContextStack contextStack = getContextStack(block);
     TextToMatch textToMatch(text, contextStack.currentData());
-
-    auto *data = static_cast<TextBlockUserData *>(block.userData());
+    auto lineContinue = false;
+    TextBlockUserData *data = dynamic_cast<TextBlockUserData *>(block.userData());
+    if (data && data->magic != 0x51555445) {
+        data = nullptr;
+    }
     if (!data) {
         data = new TextBlockUserData(QString(), contextStack);
         block.setUserData(data);
@@ -67,14 +70,16 @@ int Language::highlightBlock(QTextBlock block, const QString &text,
 
     QTextBlock prevBlock = block.previous();
     if (prevBlock.isValid()) {
-        TextBlockUserData *prevData = static_cast<TextBlockUserData *>(prevBlock.userData());
+        const TextBlockUserData *prevData = dynamic_cast<TextBlockUserData *>(prevBlock.userData());
+        if (prevData && prevData->magic != 0x51555445) {
+            prevData = nullptr;
+        }
         if (prevData) {
             data->regions = prevData->regions;
         }
     }
     data->folding.level = data->regions.size();
 
-    auto lineContinue = false;
     do {
         auto const *context = contextStack.currentContext();
         context->parseBlock(contextStack, textToMatch, formats, data->textTypeMap,
@@ -92,7 +97,7 @@ int Language::highlightBlock(QTextBlock block, const QString &text,
         regionsHash = qHash(region, regionsHash);
     }
 
-    return static_cast<int>((qHash(contextStack) ^ regionsHash));
+    return static_cast<int>(qHash(contextStack) ^ regionsHash);
 }
 
 ContextPtr Language::getContext(const QString &contextName) const {
@@ -117,13 +122,13 @@ ContextStack Language::getContextStack(QTextBlock block) {
 
     QTextBlock prevBlock = block.previous();
     if (prevBlock.isValid()) {
-        data = static_cast<TextBlockUserData *>(prevBlock.userData());
+        data = dynamic_cast<TextBlockUserData *>(prevBlock.userData());
     }
 
-    if (data != nullptr) {
-        return data->contexts;
-    } else {
+    if (!data) {
         return defaultContextStack;
+    } else {
+        return data->contexts;
     }
 }
 
