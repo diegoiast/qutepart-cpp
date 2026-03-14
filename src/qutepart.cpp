@@ -140,6 +140,7 @@ void Qutepart::setHighlighter(const QString &languageId) {
         auto lang = hl->getLanguage();
         completer_->setKeywords(lang->allLanguageKeywords());
         hl->setTheme(theme);
+        hl->setSpellChecker(spellChecker());
     } else {
         completer_->setKeywords({});
     }

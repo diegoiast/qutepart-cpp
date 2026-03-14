@@ -2,7 +2,6 @@
 
 #include "../../include/qutepart/spellchecker.h"
 #include <QMap>
-#include <QSyntaxHighlighter>
 #include <QTextBlockUserData>
 
 namespace Sonnet {
@@ -13,6 +12,8 @@ class LanguageFilter;
 
 namespace Qutepart {
 
+class SyntaxHighlighter;
+
 class SonnetLanguageCache : public QTextBlockUserData {
   public:
     QMap<QPair<int, int>, QString> languages;
@@ -20,12 +21,12 @@ class SonnetLanguageCache : public QTextBlockUserData {
     QString languageAtPos(int pos) const;
 };
 
-class SonnetSpellChecker : public QSyntaxHighlighter, public SpellChecker {
+class SonnetSpellChecker : public SpellChecker {
   public:
     SonnetSpellChecker();
     ~SonnetSpellChecker() override;
-    void highlightBlock(const QString &text) override;
-    void spellCheck(const QTextBlock &block) override;
+    void highlightBlock(const QString &text);
+    void spellCheck(const QTextBlock &block, SyntaxHighlighter *highlighter) override;
 
   private:
     Sonnet::Speller *speller_;
