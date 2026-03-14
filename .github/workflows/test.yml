@@ -123,4 +123,6 @@ jobs:
       - name: Run Qt Unit Tests (Windows/macOS)
         if: ${{ !startsWith(matrix.config.os, 'ubuntu') }}
         working-directory: ${{ github.workspace }}/build/${{ matrix.config.build_dir }}
-        run: ctest --output-on-failure
+        run: |
+          export QT_QPA_PLATFORM=offscreen
+          ctest --output-on-failure
