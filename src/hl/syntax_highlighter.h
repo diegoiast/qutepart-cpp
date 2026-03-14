@@ -30,6 +30,9 @@ class SyntaxHighlighter : public QSyntaxHighlighter {
         rehighlight();
     }
     void setSpellChecker(SpellChecker *checker) { spellChecker_ = checker; }
+    void setBlockFormat(int start, int length, const QTextCharFormat &format) {
+        setFormat(start, length, format);
+    }
 
   protected:
     void highlightBlock(const QString &text) override;
