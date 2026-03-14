@@ -23,15 +23,25 @@ SyntaxHighlighter::SyntaxHighlighter(QObject *parent, QSharedPointer<Language> l
 void SyntaxHighlighter::highlightBlock(const QString &) {
     QVector<QTextLayout::FormatRange> formats;
 
-    auto state = language->highlightBlock(currentBlock(), formats);
-    for (auto &range : std::as_const(formats)) {
-        setFormat(range.start, range.length, range.format);
+    auto b = currentBlock();
+    auto data = b.userData();
+    if (!data) {
+        data = new TextBlockUserData({}, {nullptr});
+        b.setUserData(data);
     }
-    setCurrentBlockState(state);
 
     if (spellChecker_) {
-        spellChecker_->spellCheck(currentBlock());
+        spellChecker_->spellCheck(b, this);
     }
+    auto state = language->highlightBlock(b, formats);
+    for (auto &range : std::as_const(formats)) {
+        for (auto i = range.start; i < range.start + range.length; ++i) {
+            auto merged = format(i);
+            merged.merge(range.format);
+            setFormat(i, 1, merged);
+        }
+    }
+    setCurrentBlockState(state);
 }
 
 } // namespace Qutepart
