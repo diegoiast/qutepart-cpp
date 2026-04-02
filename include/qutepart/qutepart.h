@@ -15,6 +15,8 @@
 
 #include <QColor>
 #include <QDebug>
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QPlainTextEdit>
 #include <QSharedPointer>
 #include <QTextBlock>
@@ -234,7 +236,9 @@ struct TextCursorPosition {
     int column;
 };
 
-using CompletionCallback = std::function<QSet<QString>(const QString &)>;
+using CompletionCallback =
+    std::function<QFuture<QSet<QString>>(const QString &prefix, const QString &previousWord,
+                                         const QString &separator)>;
 
 /**
   Code editor widget
@@ -582,8 +586,13 @@ class Qutepart : public QPlainTextEdit {
 
     void toggleExtraCursorsVisibility();
 
+  private slots:
+    void onCompletionFutureFinished();
+
   private:
     CompletionCallback completionCallback_;
+    QFutureWatcher<QSet<QString>> *completionWatcher = nullptr;
+    QFuture<QSet<QString>> completionFuture;
     const Theme *theme = nullptr;
     bool inSetTheme_ = false;
 

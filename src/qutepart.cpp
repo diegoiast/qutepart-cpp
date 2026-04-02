@@ -8,6 +8,8 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QDebug>
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QScrollBar>
@@ -48,6 +50,9 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     setDefaultColors();
     initActions();
     setAttribute(Qt::WA_KeyCompression, false); // vim can't process compressed keys
+    completionWatcher = new QFutureWatcher<QSet<QString>>(this);
+    completionFuture = QFuture<QSet<QString>>(); // Initialize the future
+    connect(completionWatcher, &QFutureWatcher<QSet<QString>>::finished, this, &Qutepart::onCompletionFutureFinished);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
     updateTabStopWidth();
@@ -549,7 +554,7 @@ auto Qutepart::getColorForLineFlag(int flag) -> QColor {
         }
         break;
 
-    // not tested yet
+        // not tested yet
     case EXECUTING_BIT:
         if (theme && theme->getEditorColors().contains(Theme::Colors::MarkExecution)) {
             color = theme->getEditorColors().value(Theme::Colors::MarkExecution);
@@ -951,14 +956,14 @@ bool Qutepart::event(QEvent *event) {
         // Instead intercept it on the parent and then set the theme (which in turn
         // will reset the style).
         auto p = parentWidget();
-        if (p){
+        if (p) {
             p->installEventFilter(this);
         }
         break;
     }
     default:
         break;
-     }
+    }
     return QPlainTextEdit::event(event);
 }
 
@@ -1319,15 +1324,28 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
         if (textTyped || (event->key() == Qt::Key_Backspace && completer_->isVisible())) {
             auto cursor = textCursor();
             cursor.select(QTextCursor::WordUnderCursor);
-            auto currentWord = cursor.selectedText();
+            auto prefix = cursor.selectedText();
 
-            if (completionCallback_) {
-                auto completions = completionCallback_(currentWord);
-                if (!completions.isEmpty()) {
-                    completer_->setCustomCompletions(completions);
-                }
+            if (!prefix.isEmpty() && completionCallback_) {
+                // Get previous word and separator to pass to the callback
+                // Move to the start of the current word to reliably get the previous word and separator.
+                auto prevWordCursor = textCursor();
+                prevWordCursor.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
+
+                auto tempCursorForPrevWord = textCursor();
+                tempCursorForPrevWord.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
+                tempCursorForPrevWord.movePosition(QTextCursor::PreviousWord, QTextCursor::KeepAnchor);
+                auto previousWord = tempCursorForPrevWord.selectedText();
+
+                auto sepCursor = textCursor();
+                sepCursor.setPosition(sepCursor.position() - prefix.length());
+                sepCursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
+                auto separator = sepCursor.selectedText();
+
+                auto future = completionCallback_(prefix, previousWord, separator);
+                completionWatcher->setFuture(future);
             }
-            completer_->invokeCompletionIfAvailable(false);
+            completer_->invokeCompletionIfAvailable(false); 
         }
     }
 
@@ -2629,6 +2647,7 @@ void Qutepart::onShortcutJoinLines() {
     if (miniMap_) {
         miniMap_->update();
     }
+    ensureCursorVisible();
 }
 
 AtomicEditOperation::AtomicEditOperation(Qutepart *qutepart) : qutepart_(qutepart) {
@@ -2863,6 +2882,17 @@ void Qutepart::multipleCursorCut() {
             setTextCursor(caret);
         }
     }
+}
+
+void Qutepart::onCompletionFutureFinished() {
+    if (completionWatcher->isFinished() && !completionWatcher->isCanceled()) {
+        QSet<QString> completions = completionWatcher->result();
+        if (!completions.isEmpty()) {
+            completer_->setCustomCompletions(completions);
+            completer_->invokeCompletion();
+        }
+    }
+    completionWatcher->setFuture(QFuture<QSet<QString>>());
 }
 
 } // namespace Qutepart
