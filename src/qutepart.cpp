@@ -1318,34 +1318,52 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
             QChar ch = event->text()[0];
             textTyped = ((event->modifiers() == Qt::NoModifier ||
                           event->modifiers() == Qt::ShiftModifier)) &&
-                        (ch.isLetter() || ch.isDigit() || ch == '_');
+                        (ch.isLetter() || ch.isDigit() || ch == '_' || ch == '.' || ch == '>' || ch == ':');
         }
 
         if (textTyped || (event->key() == Qt::Key_Backspace && completer_->isVisible())) {
             auto cursor = textCursor();
-            cursor.select(QTextCursor::WordUnderCursor);
-            auto prefix = cursor.selectedText();
+            auto line = cursor.block().text().left(cursor.positionInBlock());
+            auto prefix = QString{};
+            auto i = line.length() - 1;
+            auto separator = QString{};
+            auto previousWord = QString{};
 
-            if (!prefix.isEmpty() && completionCallback_) {
-                // Get previous word and separator to pass to the callback
-                // Move to the start of the current word to reliably get the previous word and separator.
-                auto prevWordCursor = textCursor();
-                prevWordCursor.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
+            while (i >= 0 && (line[i].isLetterOrNumber() || line[i] == '_')) {
+                prefix.prepend(line[i]);
+                i--;
+            }
 
-                auto tempCursorForPrevWord = textCursor();
-                tempCursorForPrevWord.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
-                tempCursorForPrevWord.movePosition(QTextCursor::PreviousWord, QTextCursor::KeepAnchor);
-                auto previousWord = tempCursorForPrevWord.selectedText();
-
-                auto sepCursor = textCursor();
-                sepCursor.setPosition(sepCursor.position() - prefix.length());
-                sepCursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
-                auto separator = sepCursor.selectedText();
-
+            if (i >= 0) {
+                if (line[i] == '.') {
+                    separator = ".";
+                    i--;
+                } else if (i >= 1 && line.mid(i - 1, 2) == "->") {
+                    separator = "->";
+                    i -= 2;
+                } else if (i >= 1 && line.mid(i - 1, 2) == "::") {
+                    separator = "::";
+                    i -= 2;
+                }
+                if (!separator.isEmpty()) {
+                    // Find the word before the separator
+                    while (i >= 0 && line[i].isSpace()) {
+                        // skip spaces
+                        i--;
+                    }
+                    while (i >= 0 && (line[i].isLetterOrNumber() || line[i] == '_' || line[i] == ':')) {
+                        previousWord.prepend(line[i]);
+                        i--;
+                    }
+                }
+            }
+            lastSeparator_ = separator;
+            auto forceShow = !separator.isEmpty();
+            if ((!prefix.isEmpty() || !separator.isEmpty()) && completionCallback_) {
                 auto future = completionCallback_(prefix, previousWord, separator);
                 completionWatcher->setFuture(future);
             }
-            completer_->invokeCompletionIfAvailable(false); 
+            completer_->invokeCompletionIfAvailable(forceShow);
         }
     }
 
@@ -2887,8 +2905,8 @@ void Qutepart::multipleCursorCut() {
 void Qutepart::onCompletionFutureFinished() {
     if (completionWatcher->isFinished() && !completionWatcher->isCanceled()) {
         QSet<QString> completions = completionWatcher->result();
-        if (!completions.isEmpty()) {
-            completer_->setCustomCompletions(completions);
+        completer_->setCustomCompletions(completions);
+        if (!completions.isEmpty() || !lastSeparator_.isEmpty()) {
             completer_->invokeCompletion();
         }
     }

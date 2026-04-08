@@ -383,6 +383,7 @@ class Qutepart : public QPlainTextEdit {
         completionCallback_ = callback;
     }
 
+    inline QString lastCompletionSeparator() const { return lastSeparator_; }
     void removeMetaData();
 
     /// Returns the status of a line. A line is marked as modified when its changed via the user
@@ -593,6 +594,7 @@ class Qutepart : public QPlainTextEdit {
     CompletionCallback completionCallback_;
     QFutureWatcher<QSet<QString>> *completionWatcher = nullptr;
     QFuture<QSet<QString>> completionFuture;
+    QString lastSeparator_;
     const Theme *theme = nullptr;
     bool inSetTheme_ = false;
 

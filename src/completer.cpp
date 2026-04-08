@@ -375,7 +375,10 @@ void Completer::setKeywords(const QSet<QString> &keywords) {
     updateWordSet();
 }
 
-void Completer::setCustomCompletions(const QSet<QString> &wordSet) { customCompletions_ = wordSet; }
+void Completer::setCustomCompletions(const QSet<QString> &wordSet) {
+    customCompletions_ = wordSet;
+    updateWordSet();
+}
 
 bool Completer::isVisible() const { return widget_ != nullptr; }
 
@@ -390,6 +393,10 @@ void Completer::onModificationChanged(bool modified) {
 
 // Make a set of words, which shall be completed, from text
 void Completer::updateWordSet() {
+    if (!qpart_->lastCompletionSeparator().isEmpty()) {
+        wordSet_ = customCompletions_;
+        return;
+    }
     wordSet_ = keywords_.unite(customCompletions_);
 
     // TODO check for timeout
@@ -435,7 +442,7 @@ bool Completer::invokeCompletionIfAvailable(bool requestedByUser) {
         QString wholeWord = wordBeforeCursor + getWordAfterCursor();
 
         bool forceShow = requestedByUser || completionOpenedManually_;
-        if (!wordBeforeCursor.isEmpty()) {
+        if (!wordBeforeCursor.isEmpty() || forceShow) {
             if (wordBeforeCursor.length() >= qpart_->completionThreshold() || forceShow) {
                 if (widget_ == nullptr) {
                     CompletionModel *model = new CompletionModel(wordSet_);
