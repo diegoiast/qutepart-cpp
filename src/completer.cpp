@@ -393,7 +393,7 @@ void Completer::onModificationChanged(bool modified) {
 
 // Make a set of words, which shall be completed, from text
 void Completer::updateWordSet() {
-    if (!qpart_->lastCompletionSeparator().isEmpty()) {
+    if (!qpart_->lastCompletionSeparator().isEmpty() && !customCompletions_.isEmpty()) {
         wordSet_ = customCompletions_;
         return;
     }
