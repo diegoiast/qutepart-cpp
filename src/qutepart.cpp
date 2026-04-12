@@ -50,9 +50,9 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     setDefaultColors();
     initActions();
     setAttribute(Qt::WA_KeyCompression, false); // vim can't process compressed keys
-    completionWatcher = new QFutureWatcher<QSet<QString>>(this);
-    completionFuture = QFuture<QSet<QString>>(); // Initialize the future
-    connect(completionWatcher, &QFutureWatcher<QSet<QString>>::finished, this, &Qutepart::onCompletionFutureFinished);
+    completionWatcher = new QFutureWatcher<QSet<CompletionItem>>(this);
+    completionFuture = QFuture<QSet<CompletionItem>>(); // Initialize the future
+    connect(completionWatcher, &QFutureWatcher<QSet<CompletionItem>>::finished, this, &Qutepart::onCompletionFutureFinished);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
     updateTabStopWidth();
@@ -2904,13 +2904,13 @@ void Qutepart::multipleCursorCut() {
 
 void Qutepart::onCompletionFutureFinished() {
     if (completionWatcher->isFinished() && !completionWatcher->isCanceled()) {
-        QSet<QString> completions = completionWatcher->result();
+        QSet<CompletionItem> completions = completionWatcher->result();
         completer_->setCustomCompletions(completions);
         if (!completions.isEmpty() || !lastSeparator_.isEmpty()) {
             completer_->invokeCompletion();
         }
     }
-    completionWatcher->setFuture(QFuture<QSet<QString>>());
+    completionWatcher->setFuture(QFuture<QSet<CompletionItem>>());
 }
 
 } // namespace Qutepart

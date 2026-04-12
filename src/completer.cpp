@@ -44,7 +44,7 @@ canCompleteText attribute contains text, which may be inserted with tab
 class CompletionModel : public QAbstractItemModel {
     Q_OBJECT
   public:
-    CompletionModel(const QSet<QString> &wordSet) : wordSet_(wordSet) {}
+    CompletionModel(const QSet<CompletionItem> &wordSet) : wordSet_(wordSet) {}
 
     // Set model information
     void setCompletionData(const QString &wordBeforeCursor, const QString wholeWord) {
@@ -58,29 +58,32 @@ class CompletionModel : public QAbstractItemModel {
 
     bool hasWords() const { return !words_.isEmpty(); }
 
-    const QVector<QString> &words() const { return words_; }
+    const QVector<CompletionItem> &words() const { return words_; }
 
     bool tooManyWords() const { return words_.length() > MAX_VISIBLE_WORD_COUNT; }
 
     // QAbstractItemModel method implementation
     QVariant data(const QModelIndex &index, int role) const override {
         if (role == Qt::DisplayRole && index.row() < words_.length()) {
-            QString text = words_[index.row()];
+            const CompletionItem& item = words_[index.row()];
+            QString text = item.text;
             QString typed = text.left(typedText_.length());
             QString canComplete = text.mid(typedText_.length(), canCompleteText_.length());
             QString rest = text.mid(typedText_.length() + canCompleteText_.length());
+            
+            QString display;
             if (!canComplete.isEmpty()) {
-                // NOTE foreground colors are hardcoded, but I can't set
-                // background color of selected item (Qt bug?) might look bad on
-                // some color themes
-                return QString("<html>"
-                               "%1"
-                               "<font color=\"#e80000\">%2</font>"
-                               "%3"
-                               "</html>")
+                display = QString("%1<font color=\"#e80000\">%2</font>%3")
                     .arg(typed, canComplete, rest);
             } else {
-                return typed + rest;
+                display = typed + rest;
+            }
+
+            if (!item.source.isEmpty()) {
+                return QString("<html><table width=\"100%\"><tr><td>%1</td><td align=\"right\"><font color=\"gray\"><i>[%2]</i></font></td></tr></table></html>")
+                    .arg(display, item.source);
+            } else {
+                return QString("<html>%1</html>").arg(display);
             }
         } else {
             return QVariant();
@@ -97,16 +100,16 @@ class CompletionModel : public QAbstractItemModel {
     i.e. for ['blablaxxx', 'blablayyy', 'blazzz'] common start is 'bla'
     TODO optimize performance?
     */
-    QString commonWordStart(const QVector<QString> &words) const {
+    QString commonWordStart(const QVector<CompletionItem> &words) const {
         if (words.isEmpty()) {
             return "";
         }
 
-        QString firstWord = words[0];
+        QString firstWord = words[0].text;
         for (int chIndex = 0; chIndex < firstWord.length(); chIndex++) {
             QChar ch = firstWord[chIndex];
             for (int wordIndex = 1; wordIndex < words.length(); wordIndex++) {
-                if (words[wordIndex].length() <= chIndex || words[wordIndex][chIndex] != ch) {
+                if (words[wordIndex].text.length() <= chIndex || words[wordIndex].text[chIndex] != ch) {
                     return firstWord.left(chIndex);
                 }
             }
@@ -116,16 +119,18 @@ class CompletionModel : public QAbstractItemModel {
     }
 
     // Make list of completions, which shall be shown
-    QVector<QString> makeListOfCompletions(const QString &wordBeforeCursor,
+    QVector<CompletionItem> makeListOfCompletions(const QString &wordBeforeCursor,
                                            const QString &wholeWord) const {
-        QVector<QString> result;
-        for (auto const &word : std::as_const(wordSet_)) {
-            if (word.startsWith(wordBeforeCursor, Qt::CaseInsensitive) && word != wholeWord) {
-                result << word;
+        QVector<CompletionItem> result;
+        for (auto const &item : std::as_const(wordSet_)) {
+            if (item.text.startsWith(wordBeforeCursor, Qt::CaseInsensitive) && item.text != wholeWord) {
+                result << item;
             }
         }
 
-        std::sort(result.begin(), result.end());
+        std::sort(result.begin(), result.end(), [](const CompletionItem& a, const CompletionItem& b) {
+            return a.text < b.text;
+        });
 
         return result;
     }
@@ -152,9 +157,9 @@ class CompletionModel : public QAbstractItemModel {
     QString commonStart() const { return commonStart_; }
 
   private:
-    const QSet<QString> &wordSet_;
+    const QSet<CompletionItem> &wordSet_;
     QString typedText_;
-    QVector<QString> words_;
+    QVector<CompletionItem> words_;
     QString canCompleteText_;
     QString commonStart_;
 };
@@ -225,8 +230,12 @@ class CompletionList : public QListView {
 
         int maxWidth = 0;
         const QFontMetrics fm = fontMetrics();
-        for (const auto &word : std::as_const(completionModel_->words())) {
-            maxWidth = std::max(maxWidth, fm.horizontalAdvance(word));
+        for (const auto &item : std::as_const(completionModel_->words())) {
+            int width = fm.horizontalAdvance(item.text);
+            if (!item.source.isEmpty()) {
+                width += fm.horizontalAdvance(item.source) + 50; // extra space for source and alignment
+            }
+            maxWidth = std::max(maxWidth, width);
         }
         // Add some margin for HTML delegate and frame
         int width = maxWidth + frameWidth() * 2 + 30;
@@ -375,7 +384,7 @@ void Completer::setKeywords(const QSet<QString> &keywords) {
     updateWordSet();
 }
 
-void Completer::setCustomCompletions(const QSet<QString> &wordSet) {
+void Completer::setCustomCompletions(const QSet<CompletionItem> &wordSet) {
     customCompletions_ = wordSet;
     updateWordSet();
 }
@@ -397,7 +406,10 @@ void Completer::updateWordSet() {
         wordSet_ = customCompletions_;
         return;
     }
-    wordSet_ = keywords_.unite(customCompletions_);
+    
+    wordSet_.clear();
+    for (const auto& kw : keywords_) wordSet_.insert(CompletionItem(kw, "Keyword"));
+    wordSet_.unite(customCompletions_);
 
     // TODO check for timeout
     for (const Line &line : qpart_->lines()) {
@@ -405,7 +417,7 @@ void Completer::updateWordSet() {
 
         while (it.hasNext()) {
             QRegularExpressionMatch match = it.next();
-            wordSet_ += match.captured();
+            wordSet_.insert(CompletionItem(match.captured(), "File"));
         }
     }
 }
@@ -505,8 +517,10 @@ QString Completer::getWordAfterCursor() const {
 // Item selected. Insert completion to editor
 void Completer::onCompletionListItemSelected(int index) {
     auto model = widget_->completionModel();
-    auto selectedWord = model->words()[index];
+    CompletionItem selectedItem = model->words()[index];
+    QString selectedWord = selectedItem.text;
     auto cursor = qpart_->textCursor();
+
 
     cursor.beginEditBlock();
     cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, model->typedText().length());

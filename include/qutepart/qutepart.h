@@ -236,9 +236,30 @@ struct TextCursorPosition {
     int column;
 };
 
+struct CompletionItem {
+    QString text;
+    QString source;
+
+    CompletionItem() = default;
+    CompletionItem(const QString &t, const QString &s = QString()) : text(t), source(s) {}
+
+    bool operator==(const CompletionItem &other) const {
+        return text == other.text && source == other.source;
+    }
+
+    bool operator<(const CompletionItem &other) const {
+        if (text != other.text) return text < other.text;
+        return source < other.source;
+    }
+};
+
+inline size_t qHash(const CompletionItem &key, size_t seed = 0) {
+    return qHash(key.text, seed) ^ qHash(key.source, seed);
+}
+
 using CompletionCallback =
-    std::function<QFuture<QSet<QString>>(const QString &prefix, const QString &previousWord,
-                                         const QString &separator)>;
+    std::function<QFuture<QSet<CompletionItem>>(const QString &prefix, const QString &previousWord,
+                                                const QString &separator)>;
 
 /**
   Code editor widget
@@ -592,8 +613,8 @@ class Qutepart : public QPlainTextEdit {
 
   private:
     CompletionCallback completionCallback_;
-    QFutureWatcher<QSet<QString>> *completionWatcher = nullptr;
-    QFuture<QSet<QString>> completionFuture;
+    QFutureWatcher<QSet<CompletionItem>> *completionWatcher = nullptr;
+    QFuture<QSet<CompletionItem>> completionFuture;
     QString lastSeparator_;
     const Theme *theme = nullptr;
     bool inSetTheme_ = false;

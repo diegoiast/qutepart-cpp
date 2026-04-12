@@ -9,6 +9,7 @@
 #include <QObject>
 #include <QSet>
 #include <QTimer>
+#include "qutepart.h"
 
 namespace Qutepart {
 
@@ -25,7 +26,7 @@ class Completer : public QObject {
     ~Completer();
 
     void setKeywords(const QSet<QString> &keywords);
-    void setCustomCompletions(const QSet<QString> &wordSet);
+    void setCustomCompletions(const QSet<CompletionItem> &wordSet);
 
     bool isVisible() const;
     bool invokeCompletionIfAvailable(bool requestedByUser);
@@ -51,9 +52,10 @@ class Completer : public QObject {
     CompletionList *widget_ = nullptr;
     bool completionOpenedManually_;
     QSet<QString> keywords_;
-    QSet<QString> customCompletions_;
-    QSet<QString> wordSet_;
+    QSet<CompletionItem> customCompletions_;
+    QSet<CompletionItem> wordSet_;
     QTimer updateWordSetTimer_;
 };
+
 
 } // namespace Qutepart
