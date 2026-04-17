@@ -15,7 +15,6 @@
 #include <QString>
 #include <QXmlStreamReader>
 
-#include <Sonnet/SpellCheckDecorator>
 #include <qutepart/sonnet_spellchecker.h>
 
 #include "qutepart.h"
@@ -250,7 +249,7 @@ int main(int argc, char **argv) {
     font.setFamily("Monospace");
     qutepart.setFont(font);
 
-    auto decorator = new Sonnet::SpellCheckDecorator(&qutepart);
+    qutepart.setSpellChecker(new Qutepart::SonnetSpellChecker());
 
     // toggle comment a line, block
     auto filePath = QString(":/qutepart/syntax/c.xml");
