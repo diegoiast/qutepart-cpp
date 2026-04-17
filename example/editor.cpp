@@ -16,13 +16,13 @@
 #include <QString>
 #include <QXmlStreamReader>
 
-#include "qutepart/qutepart.h"
-#include "qutepart/theme.h"
-#include <Sonnet/Speller>
 #include <Sonnet/Highlighter>
 #include <Sonnet/SpellCheckDecorator>
-#include <qutepart/sonnet_spellchecker.h>
+#include <Sonnet/Speller>
 
+#include <qutepart/qutepart.h>
+#include <qutepart/sonnet_spellchecker.h>
+#include <qutepart/theme.h>
 
 // a C comment
 /*
@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
     font.setFamily("Monospace");
     qutepart.setFont(font);
 
-    auto decorator = new Sonnet::SpellCheckDecorator(&qutepart);
+    qutepart.setSpellChecker(new Qutepart::SonnetSpellChecker());
 
     // toggle comment a line, block
     auto filePath = QString(":/qutepart/syntax/c.xml");

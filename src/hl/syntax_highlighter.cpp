@@ -31,7 +31,7 @@ void SyntaxHighlighter::highlightBlock(const QString &) {
     }
 
     if (spellChecker_) {
-        spellChecker_->spellCheck(b, this);
+        spellChecker_->spellCheck(b);
     }
     auto state = language->highlightBlock(b, formats);
     for (auto &range : std::as_const(formats)) {
