@@ -62,8 +62,6 @@ class Context {
     inline ContextSwitcher lineBeginContext() const { return _lineBeginContext; }
     inline ContextSwitcher lineEndContext() const { return _lineEndContext; }
 
-    /* Parses from the current position until the end of the text or until the
-     * context switches; `contextStack` is updated in place. */
     void parseBlock(ContextStack &contextStack, TextToMatch &textToMatch,
                     QVector<QTextLayout::FormatRange> &formats, QString &textTypeMap,
                     QVector<Language *> &languageMap, bool &lineContinue,

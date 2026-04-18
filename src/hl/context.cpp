@@ -12,6 +12,7 @@
 #include "rules.h"
 #include "text_block_user_data.h"
 #include "text_to_match.h"
+#include "text_type.h"
 #include "theme.h"
 
 namespace Qutepart {
@@ -267,8 +268,8 @@ void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult
         appendFormat(formats, textToMatch.currentColumnIndex, matchRes.length, *displayFormat);
     }
 
-    QChar textType = matchRes.style->textType();
-    if (textType == 0) {
+    auto textType = matchRes.style->textType();
+    if (textType == TextType::Code) {
         textType = context->style.textType();
     }
     fillTextTypeMap(textTypeMap, textToMatch.currentColumnIndex, matchRes.length, textType);
@@ -281,6 +282,7 @@ void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult
 }
 
 // Parse block. Exits, when reached end of the text, or when context is switched
+
 void Context::parseBlock(ContextStack &contextStack, TextToMatch &textToMatch,
                          QVector<QTextLayout::FormatRange> &formats, QString &textTypeMap,
                          QVector<Language *> &languageMap, bool &lineContinue,
