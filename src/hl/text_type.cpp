@@ -40,18 +40,29 @@ QString textTypeMap(const QTextBlock &block) {
     return data->textTypeMap;
 }
 
-bool isCode(const QTextBlock &block, int column) { return getTextType(block, column) == ' '; }
+bool isCode(const QTextBlock &block, int column) {
+    return getTextType(block, column) == TextType::Code;
+}
 
 bool isComment(const QTextBlock &block, int column) {
     QChar type = getTextType(block, column);
-
-    return type == 'c' || type == 'b' || type == 'h';
+    return type == TextType::Comment || type == TextType::CommentSpell ||
+           type == TextType::BlockComment || type == TextType::BlockCommentSpell ||
+           type == TextType::HereDoc || type == TextType::HereDocSpell;
 }
 
 bool isBlockComment(const QTextBlock &block, int column) {
-    return getTextType(block, column) == 'b';
+    QChar type = getTextType(block, column);
+    return type == TextType::BlockComment || type == TextType::BlockCommentSpell;
 }
 
-bool isHereDoc(const QTextBlock &block, int column) { return getTextType(block, column) == 'h'; }
+bool isHereDoc(const QTextBlock &block, int column) {
+    QChar type = getTextType(block, column);
+    return type == TextType::HereDoc || type == TextType::HereDocSpell;
+}
+
+bool isSpellCheckable(const QTextBlock &block, int column) {
+    return getTextType(block, column).isUpper();
+}
 
 } // namespace Qutepart

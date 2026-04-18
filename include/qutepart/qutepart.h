@@ -249,7 +249,9 @@ struct CompletionItem {
     }
 
     bool operator<(const CompletionItem &other) const {
-        if (text != other.text) return text < other.text;
+        if (text != other.text) {
+            return text < other.text;
+        }
         return source < other.source;
     }
 };
@@ -258,9 +260,8 @@ inline size_t qHash(const CompletionItem &key, size_t seed = 0) {
     return qHash(key.text, seed) ^ qHash(key.source, seed);
 }
 
-using CompletionCallback =
-    std::function<QFuture<QSet<CompletionItem>>(const QString &prefix, const QString &previousWord,
-                                                const QString &separator)>;
+using CompletionCallback = std::function<QFuture<QSet<CompletionItem>>(
+    const QString &prefix, const QString &previousWord, const QString &separator)>;
 
 /**
   Code editor widget

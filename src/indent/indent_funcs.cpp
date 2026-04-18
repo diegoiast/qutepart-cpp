@@ -81,7 +81,7 @@ QString textWithCommentsWiped(const QTextBlock &block) {
     QString text = block.text();
     QString typeMap = textTypeMap(block);
     for (int i = 0; i < text.length(); i++) {
-        if (typeMap[i] == 'c') {
+        if (typeMap[i] == TextType::Comment || typeMap[i] == TextType::CommentSpell) {
             text[i] = ' ';
         }
     }

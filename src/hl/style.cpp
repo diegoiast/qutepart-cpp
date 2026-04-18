@@ -5,6 +5,7 @@
  */
 
 #include "style.h"
+#include "text_type.h"
 #include "theme.h"
 
 namespace Qutepart {
@@ -191,28 +192,29 @@ QSharedPointer<QTextCharFormat> makeFormat(const QString &defStyle, const QStrin
     return format;
 }
 
-/* ' ' for code
-   'c' for comments
-   'b' for block comments
-   'h' for here documents
-*/
-char detectTextType(const QString &attribute, const QString &defStyleName) {
+char detectTextType(const QString &attribute, const QString &defStyleName, bool spellCheckable) {
     if (attribute.toLower().contains("here") && defStyleName == "dsOthers") {
-        return 'h'; // ruby
+        return spellCheckable ? TextType::HereDocSpell : TextType::HereDoc;
     } else if (attribute.toLower().contains("block") && defStyleName == "dsComment") {
-        return 'b';
+        return spellCheckable ? TextType::BlockCommentSpell : TextType::BlockComment;
     }
 
     if (defStyleName == "dsString" || defStyleName == "dsRegionMarker" ||
         defStyleName == "dsChar" || defStyleName == "dsOthers") {
-        return 's';
+        return spellCheckable ? TextType::StringSpell : TextType::String;
     }
 
     if (defStyleName == "dsComment") {
-        return 'c';
+        return spellCheckable ? TextType::CommentSpell : TextType::Comment;
     }
 
-    return ' ';
+    return TextType::Code;
+}
+
+static bool defaultSpellCheckable(const QString &defStyleName) {
+    return defStyleName == "dsComment" || defStyleName == "dsDocumentation" ||
+           defStyleName == "dsString" || defStyleName == "dsVerbatimString" ||
+           defStyleName == "dsSpecialString";
 }
 
 Style makeStyle(const QString &defStyleName, const QString &color, const QString &selColor,
@@ -222,22 +224,25 @@ Style makeStyle(const QString &defStyleName, const QString &color, const QString
         return Style();
     }
 
-    return Style(defStyleName, format);
+    bool spellCheckable = flags.contains("spellChecking") ? flags["spellChecking"]
+                                                          : defaultSpellCheckable(defStyleName);
+    return Style(defStyleName, format, spellCheckable);
 }
 
 Style::Style() : _textType(' ') {
     // displayFormat = QSharedPointer<QTextCharFormat>(new QTextCharFormat());
 }
 
-Style::Style(const QString &defStyleName, QSharedPointer<QTextCharFormat> format)
-    : savedFormat(format), _textType(detectTextType(QString(), defStyleName)),
-      defStyleName(defStyleName) {
+Style::Style(const QString &defStyleName, QSharedPointer<QTextCharFormat> format,
+             bool spellCheckable)
+    : savedFormat(format), _textType(detectTextType(QString(), defStyleName, spellCheckable)),
+      _spellCheckable(spellCheckable), defStyleName(defStyleName) {
     displayFormat = QSharedPointer<QTextCharFormat>(new QTextCharFormat());
     *displayFormat = *savedFormat;
 }
 
 void Style::updateTextType(const QString &attribute) {
-    _textType = detectTextType(attribute, defStyleName);
+    _textType = detectTextType(attribute, defStyleName, _spellCheckable);
 }
 
 void Style::setTheme(const Theme *newTheme) {

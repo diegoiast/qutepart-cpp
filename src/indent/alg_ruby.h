@@ -48,7 +48,6 @@ class IndentAlgRuby : public IndentAlgImpl {
     virtual bool shouldTrimPrevEmptyLine() const override { return true; }
     virtual QString computeSmartIndent(QTextBlock block, int cursorPos) const override;
 
-
   private:
     bool isCommentBlock(QTextBlock block) const;
     QTextBlock prevNonCommentBlock(QTextBlock block) const;

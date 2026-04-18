@@ -52,8 +52,8 @@ class Context {
 
     const ContextStack parseBlock(const ContextStack &contextStack, TextToMatch &textToMatch,
                                   QVector<QTextLayout::FormatRange> &formats, QString &textTypeMap,
-                                  QVector<QSharedPointer<Language>> &languageMap, bool &lineContinue,
-                                  TextBlockUserData *data) const;
+                                  QVector<QSharedPointer<Language>> &languageMap,
+                                  bool &lineContinue, TextBlockUserData *data) const;
 
     // Try to match textToMatch with nested rules
     MatchResult *tryMatch(const TextToMatch &textToMatch) const;

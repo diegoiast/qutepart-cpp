@@ -17,6 +17,14 @@ namespace Qutepart {
 SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent, QSharedPointer<Language> language)
     : QSyntaxHighlighter(parent), language(language) {}
 
+void SyntaxHighlighter::addBlockFormat(int start, int length, const QTextCharFormat &format) {
+    for (int i = start; i < start + length; ++i) {
+        QTextCharFormat merged = this->format(i);
+        merged.merge(format);
+        setFormat(i, 1, merged);
+    }
+}
+
 SyntaxHighlighter::SyntaxHighlighter(QObject *parent, QSharedPointer<Language> language)
     : QSyntaxHighlighter(parent), language(language) {}
 
@@ -30,9 +38,6 @@ void SyntaxHighlighter::highlightBlock(const QString &) {
         b.setUserData(data);
     }
 
-    if (spellChecker_) {
-        spellChecker_->spellCheck(b, this);
-    }
     auto state = language->highlightBlock(b, formats);
     for (auto &range : std::as_const(formats)) {
         for (auto i = range.start; i < range.start + range.length; ++i) {
@@ -42,9 +47,8 @@ void SyntaxHighlighter::highlightBlock(const QString &) {
         }
     }
     setCurrentBlockState(state);
-
     if (spellChecker_) {
-        spellChecker_->spellCheck(currentBlock());
+        spellChecker_->spellCheck(b, this);
     }
 }
 

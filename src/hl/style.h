@@ -16,7 +16,8 @@ class Theme;
 class Style {
   public:
     Style();
-    Style(const QString &defStyleName, QSharedPointer<QTextCharFormat> format);
+    Style(const QString &defStyleName, QSharedPointer<QTextCharFormat> format,
+          bool spellCheckable = false);
 
     /* Called by some clients.
        If the style knows attribute it can better detect textType
@@ -24,6 +25,7 @@ class Style {
     void updateTextType(const QString &attribute);
 
     inline char textType() const { return _textType; }
+    inline bool spellCheckable() const { return _spellCheckable; }
     inline const QStringView getDefStyle() const { return defStyleName; }
     inline const QSharedPointer<QTextCharFormat> format() const { return displayFormat; }
 
@@ -34,6 +36,7 @@ class Style {
     QSharedPointer<QTextCharFormat> savedFormat;
     QSharedPointer<QTextCharFormat> displayFormat;
     char _textType;
+    bool _spellCheckable = false;
 
     QString defStyleName;
     const Theme *theme = nullptr;

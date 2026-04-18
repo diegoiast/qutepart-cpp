@@ -12,6 +12,7 @@
 #include "rules.h"
 #include "text_block_user_data.h"
 #include "text_to_match.h"
+#include "text_type.h"
 #include "theme.h"
 
 namespace Qutepart {
@@ -179,7 +180,7 @@ void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult
     }
 
     QChar textType = matchRes->style.textType();
-    if (textType == 0) {
+    if (textType == TextType::Code) {
         textType = context->style.textType();
     }
     fillTextTypeMap(textTypeMap, textToMatch.currentColumnIndex, matchRes->length, textType);
