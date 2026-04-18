@@ -21,6 +21,7 @@
 #include <QSharedPointer>
 #include <QTextBlock>
 
+class QContextMenuEvent;
 class QSyntaxHighlighter;
 
 namespace Qutepart {
@@ -541,6 +542,7 @@ class Qutepart : public QPlainTextEdit {
     void changeEvent(QEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
   private:
     QList<QTextEdit::ExtraSelection> persitentSelections;

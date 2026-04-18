@@ -7,10 +7,12 @@
 #include <QAction>
 #include <QApplication>
 #include <QClipboard>
+#include <QContextMenuEvent>
 #include <QDebug>
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QKeyEvent>
+#include <QMenu>
 #include <QPainter>
 #include <QScrollBar>
 #include <QStyle>
@@ -121,7 +123,12 @@ QList<QTextEdit::ExtraSelection> Qutepart::highlightText(const QString &text, bo
     return extraSelections;
 }
 
-Qutepart::~Qutepart() {}
+Qutepart::~Qutepart() {
+    if (auto sh = dynamic_cast<SyntaxHighlighter *>(highlighter_)) {
+        sh->setSpellChecker(nullptr);
+    }
+    delete spellChecker_;
+}
 
 Lines Qutepart::lines() const { return Lines(document()); }
 
@@ -2743,6 +2750,64 @@ void Qutepart::mouseReleaseEvent(QMouseEvent *event) {
     } else {
         event->accept();
     }
+}
+
+void Qutepart::contextMenuEvent(QContextMenuEvent *event) {
+    QMenu *menu = createStandardContextMenu();
+
+    if (spellChecker_) {
+        QTextCursor cursor = cursorForPosition(event->pos());
+        cursor.select(QTextCursor::WordUnderCursor);
+        const QString word = cursor.selectedText();
+
+        if (!word.isEmpty() && isSpellCheckable(cursor.block(), cursor.anchor() - cursor.block().position())) {
+            if (spellChecker_->isMisspelled(word)) {
+                QStringList suggestions = spellChecker_->suggestions(word);
+
+                QAction *separator = new QAction(menu);
+                separator->setSeparator(true);
+
+                // "Add to dictionary" and "Ignore" actions
+                QAction *addAction = new QAction(tr("Add \"%1\" to Dictionary").arg(word), menu);
+                connect(addAction, &QAction::triggered, this, [this, word] {
+                    spellChecker_->addToPersonalDictionary(word);
+                    if (highlighter_) highlighter_->rehighlight();
+                });
+
+                QAction *ignoreAction = new QAction(tr("Ignore \"%1\"").arg(word), menu);
+                connect(ignoreAction, &QAction::triggered, this, [this, word] {
+                    spellChecker_->ignoreWord(word);
+                    if (highlighter_) highlighter_->rehighlight();
+                });
+
+                QAction *wordSeparator = new QAction(menu);
+                wordSeparator->setSeparator(true);
+
+                menu->insertAction(menu->actions().first(), separator);
+                menu->insertAction(separator, wordSeparator);
+                menu->insertAction(wordSeparator, ignoreAction);
+                menu->insertAction(ignoreAction, addAction);
+
+                if (suggestions.isEmpty()) {
+                    QAction *noSuggestions = new QAction(tr("No suggestions for \"%1\"").arg(word), menu);
+                    noSuggestions->setEnabled(false);
+                    menu->insertAction(addAction, noSuggestions);
+                } else {
+                    for (int i = suggestions.size() - 1; i >= 0; --i) {
+                        const QString &suggestion = suggestions[i];
+                        QAction *action = new QAction(suggestion, menu);
+                        connect(action, &QAction::triggered, this, [this, cursor, suggestion]() mutable {
+                            cursor.insertText(suggestion);
+                        });
+                        menu->insertAction(menu->actions().first(), action);
+                    }
+                }
+            }
+        }
+    }
+
+    menu->exec(event->globalPos());
+    delete menu;
 }
 
 void Qutepart::toggleExtraCursorsVisibility() {

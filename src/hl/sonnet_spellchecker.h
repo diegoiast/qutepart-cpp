@@ -16,6 +16,13 @@ class SonnetSpellChecker : public SpellChecker {
     SonnetSpellChecker();
     ~SonnetSpellChecker() override;
     void spellCheck(const QTextBlock &block, SyntaxHighlighter *highlighter) override;
+    bool isMisspelled(const QString &word) override;
+    QStringList suggestions(const QString &word) override;
+    void ignoreWord(const QString &word) override;
+    void addToPersonalDictionary(const QString &word) override;
+
+  private:
+    QSet<QString> ignoredWords_;
 
   private:
     Sonnet::Speller *speller_;
