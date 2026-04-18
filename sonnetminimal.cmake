@@ -67,10 +67,12 @@ file(WRITE ${GEN}/logging_categories.cpp [[
 #include "core_debug.h"
 #include "ui_debug.h"
 #include "hunspelldebug.h"
+#include <QtPlugin>
 // auto generated file - do not modify!!!
 Q_LOGGING_CATEGORY(SONNET_LOG_CORE, "sonnet.core")
 Q_LOGGING_CATEGORY(SONNET_LOG_UI, "sonnet.ui")
 Q_LOGGING_CATEGORY(SONNET_HUNSPELL, "sonnet.hunspell")
+Q_IMPORT_PLUGIN(HunspellClient)
 ]])
 
 file(WRITE ${FAKE_SONNET_DIR}/Speller
@@ -136,8 +138,10 @@ target_include_directories(sonnet-minimal
 
 target_compile_definitions(sonnet-minimal PRIVATE
     SONNET_STATIC
+    QT_STATICPLUGIN
     INSTALLATION_PLUGIN_PATH="sonnet/plugins"
 )
+
 
 target_link_libraries(sonnet-minimal
     PUBLIC Qt6::Widgets
