@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <stdio.h>
-
 #include <QApplication>
 #include <QByteArray>
 #include <QDebug>
@@ -46,7 +44,9 @@ bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart) {
             qutepart->setIndentAlgorithm(langInfo.indentAlg);
         }
 
-        file.open(QIODevice::ReadOnly);
+        if (!file.open(QIODevice::ReadOnly)) {
+            return false;
+        }
         QByteArray data = file.readAll();
         QString text = QString::fromUtf8(data);
         qutepart->setPlainText(text);
@@ -119,7 +119,7 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
         auto addMarkingsAction = new QAction(viewMenu);
         addMarkingsAction->setText("Set markings on code");
         QObject::connect(addMarkingsAction, &QAction::triggered, addMarkingsAction, [qutepart]() {
-            for (auto line : qutepart->lines()) {
+            for (const auto &line : qutepart->lines()) {
                 auto s1 = countLeadingSpaces(line.text());
                 auto s2 = countTrailingSpaces(line.text());
                 auto lineNumber = line.lineNumber();

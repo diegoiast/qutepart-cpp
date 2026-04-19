@@ -52,7 +52,8 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     setAttribute(Qt::WA_KeyCompression, false); // vim can't process compressed keys
     completionWatcher = new QFutureWatcher<QSet<CompletionItem>>(this);
     completionFuture = QFuture<QSet<CompletionItem>>(); // Initialize the future
-    connect(completionWatcher, &QFutureWatcher<QSet<CompletionItem>>::finished, this, &Qutepart::onCompletionFutureFinished);
+    connect(completionWatcher, &QFutureWatcher<QSet<CompletionItem>>::finished, this,
+            &Qutepart::onCompletionFutureFinished);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
     updateTabStopWidth();
@@ -1316,9 +1317,10 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
         bool textTyped = false;
         if (!event->text().isEmpty()) {
             QChar ch = event->text()[0];
-            textTyped = ((event->modifiers() == Qt::NoModifier ||
-                          event->modifiers() == Qt::ShiftModifier)) &&
-                        (ch.isLetter() || ch.isDigit() || ch == '_' || ch == '.' || ch == '>' || ch == ':');
+            textTyped =
+                ((event->modifiers() == Qt::NoModifier ||
+                  event->modifiers() == Qt::ShiftModifier)) &&
+                (ch.isLetter() || ch.isDigit() || ch == '_' || ch == '.' || ch == '>' || ch == ':');
         }
 
         if (textTyped || (event->key() == Qt::Key_Backspace && completer_->isVisible())) {
@@ -1351,7 +1353,8 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
                         // skip spaces
                         i--;
                     }
-                    while (i >= 0 && (line[i].isLetterOrNumber() || line[i] == '_' || line[i] == ':')) {
+                    while (i >= 0 &&
+                           (line[i].isLetterOrNumber() || line[i] == '_' || line[i] == ':')) {
                         previousWord.prepend(line[i]);
                         i--;
                     }
@@ -2089,8 +2092,8 @@ void Qutepart::moveSelectedLines(int offsetLines) {
             }
 
             if (foldStart.isValid()) {
-                auto data = static_cast<TextBlockUserData *>(foldStart.userData());
-                if (data && data->folding.folded) {
+                auto blockData = static_cast<TextBlockUserData *>(foldStart.userData());
+                if (blockData && blockData->folding.folded) {
                     unfoldBlock(foldStart.blockNumber());
                 }
             }
@@ -2152,7 +2155,7 @@ void Qutepart::moveSelectedLines(int offsetLines) {
 
     // Reapply selections after move
     auto newCursors = QList<QTextCursor>();
-    for (const auto &state : originalSelections) {
+    for (const auto &state : std::as_const(originalSelections)) {
         auto c = QTextCursor(document());
         auto newStartBlockNum = state.startBlock + offsetLines;
         auto newEndBlockNum = state.endBlock + offsetLines;

@@ -138,6 +138,7 @@ class definition. Try to find a previous private/protected/private... or
 class and return its indentation or null if not found.
 */
 QString IndentAlgCstyle::tryAccessModifiers(const QTextBlock &block) const {
+    // FIXME: CFG_ACCESS_MODIFIERS is actually -1, which means it just returns on CL
     if constexpr (CFG_ACCESS_MODIFIERS < 0) {
         return QString();
     }
@@ -827,8 +828,9 @@ QString IndentAlgCstyle::computeSmartIndent(QTextBlock block, int cursorPos) con
 }
 
 QString IndentAlgCstyle::indentLine(QTextBlock block, int cursorPos) const {
-    if (CFG_SNAP_SLASH && cursorPos != -1 && cursorPos > 0 && block.text()[cursorPos - 1] == '/' &&
-        stripLeftWhitespace(block.text()) == "* /") {
+    auto t = block.text();
+    if (CFG_SNAP_SLASH && cursorPos != -1 && cursorPos > 0 && t[cursorPos - 1] == '/' &&
+        stripLeftWhitespace(t) == "* /") {
         // special case. Closing comment with autoinserted asterisk + space.
         // Remove the space.
         dbg(QString("snapSlash at block %1").arg(block.blockNumber()));
