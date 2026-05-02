@@ -82,12 +82,12 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
     data->languageMap = languageMap;
     data->contexts = contextStack;
 
-    uint regionsHash = 0;
-    for (const auto &region : data->regions) {
+    size_t regionsHash = 0;
+    for (const auto &region : std::as_const(data->regions)) {
         regionsHash = qHash(region, regionsHash);
     }
 
-    return qHash(contextStack) ^ regionsHash;
+    return static_cast<int>((qHash(contextStack) ^ regionsHash));
 }
 
 ContextPtr Language::getContext(const QString &contextName) const {

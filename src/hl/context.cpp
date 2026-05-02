@@ -71,10 +71,10 @@ void Context::setTheme(const Theme *theme) {
     }
 }
 
-void Context::setLanguage(QSharedPointer<Language> language) {
-    this->language = language;
+void Context::setLanguage(QSharedPointer<Language> newLanguage) {
+    this->language = newLanguage;
     for (auto &rule : rules) {
-        rule->language = language;
+        rule->language = newLanguage;
     }
 }
 
