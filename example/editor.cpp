@@ -15,8 +15,8 @@
 #include <QString>
 #include <QXmlStreamReader>
 
-#include "qutepart.h"
-#include "theme.h"
+#include "qutepart/qutepart.h"
+#include "qutepart/theme.h"
 
 // a C comment
 /*

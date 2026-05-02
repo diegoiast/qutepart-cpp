@@ -85,13 +85,23 @@ set(qutepart_SRCS
     src/indent/alg_ruby.cpp
     src/indent/alg_cstyle.cpp)
 
-include_directories(include/qutepart)
 include_directories(src)
 include_directories(test)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Tell CMake to create the qutepart library
-add_library(qutepart ${qutepart_SRCS} include/qutepart/qutepart.h)
+# Tell CMake to create the qutepart library.
+# qt_add_library() (Qt6) calls qt_finalize_target() which ensures resource
+# initializers in the static library survive linker dead-stripping, so
+# consumers don't need to compile the .qrc files themselves.
+qt_add_library(qutepart STATIC ${qutepart_SRCS} include/qutepart/qutepart.h)
+
+target_include_directories(qutepart
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/qutepart
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
 
 # Use the Widgets module from Qt
 target_link_libraries(qutepart Qt::Core Qt::Widgets)
