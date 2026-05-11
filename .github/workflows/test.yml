@@ -96,7 +96,7 @@ jobs:
 
       - name: Setup MSVC (Windows)
         if: matrix.config.cxx == 'cl'
-        uses: ilammy/msvc-dev-cmd@v1.13.0
+        uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: ${{ matrix.config.arch || 'x64' }}
 
