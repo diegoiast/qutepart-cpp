@@ -7,7 +7,7 @@
 #include <QObject>
 #include <QTest>
 
-#include "qutepart.h"
+#include "qutepart/qutepart.h"
 #include "text_block_user_data.h"
 #include "hl/syntax_highlighter.h"
 
@@ -62,7 +62,7 @@ class Test : public QObject {
         }
 
         auto doc = qpart.document();
-        
+
         // In pascal.xml, 'begin' starts Region1 and 'end' ends it.
         // Line 1 is 'begin'.
         qpart.foldBlock(1);
@@ -88,7 +88,7 @@ class Test : public QObject {
         }
 
         auto doc = qpart.document();
-        
+
         // Line 0 has '{' which starts block1.
         qpart.foldBlock(0);
 
@@ -321,9 +321,9 @@ class Test : public QObject {
 
         // Both top-level items should be folded.
         QVERIFY(doc->findBlockByNumber(0).isVisible()); // /*
-        QVERIFY(!doc->findBlockByNumber(1).isVisible()); //  license... 
+        QVERIFY(!doc->findBlockByNumber(1).isVisible()); //  license...
         QVERIFY(doc->findBlockByNumber(2).isVisible()); // */
-        
+
         QVERIFY(doc->findBlockByNumber(3).isVisible()); // namespace
         QVERIFY(!doc->findBlockByNumber(4).isVisible()); //   int bar() {
         QVERIFY(!doc->findBlockByNumber(5).isVisible()); //   }

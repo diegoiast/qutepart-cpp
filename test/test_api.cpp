@@ -9,9 +9,9 @@
 #include <QStyle>
 #include <QTest>
 
-#include "qutepart.h"
+#include "qutepart/qutepart.h"
+#include "qutepart/theme.h"
 #include "text_block_user_data.h"
-#include "theme.h"
 
 class Test : public QObject {
     Q_OBJECT
@@ -88,18 +88,18 @@ class Test : public QObject {
         QPalette p = QApplication::palette();
         p.setColor(QPalette::Highlight, Qt::blue);
         QApplication::setPalette(p);
-        
+
         QEvent paletteEvent1(QEvent::PaletteChange);
         QApplication::sendEvent(&qutepart, &paletteEvent1);
 
         // Viewport should have customized 180 alpha highlight
         QCOMPARE(qutepart.viewport()->palette().color(QPalette::Highlight).alpha(), 180);
         QCOMPARE(qutepart.viewport()->palette().brush(QPalette::HighlightedText).style(), Qt::NoBrush);
-        
+
         // 2. Change to Red
         p.setColor(QPalette::Highlight, Qt::red);
         QApplication::setPalette(p);
-        
+
         QEvent paletteEvent2(QEvent::PaletteChange);
         QApplication::sendEvent(&qutepart, &paletteEvent2);
 

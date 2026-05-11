@@ -7,7 +7,7 @@
 #include <QTest>
 #include <QDebug>
 
-#include "qutepart.h"
+#include "qutepart/qutepart.h"
 #include "side_areas.h"
 #include "hl/syntax_highlighter.h"
 #include "text_block_user_data.h"
@@ -35,7 +35,7 @@ class Test : public QObject {
         }
 
         auto doc = qpart.document();
-        
+
         // Find FoldingArea. It's private, but we can find it via children
         auto foldingArea = qpart.findChild<Qutepart::FoldingArea*>();
         QVERIFY(foldingArea != nullptr);

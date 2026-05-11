@@ -11,7 +11,7 @@
 #include <QTest>
 
 #include "char_iterator.h"
-#include "qutepart.h"
+#include "qutepart/qutepart.h"
 
 class Test : public QObject {
     Q_OBJECT

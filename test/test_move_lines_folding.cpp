@@ -7,7 +7,7 @@
 #include <QTest>
 #include <QDebug>
 
-#include "qutepart.h"
+#include "qutepart/qutepart.h"
 #include "hl/syntax_highlighter.h"
 
 class Test : public QObject {
@@ -47,12 +47,12 @@ class Test : public QObject {
         QVERIFY(doc->findBlockByNumber(0).isVisible());
         QVERIFY(doc->findBlockByNumber(1).isVisible());
         QVERIFY(doc->findBlockByNumber(2).isVisible());
-        
+
         // Now move line 2 down. Target is line 3 (/* of block2).
         qpart.goTo(2, 0);
         qDebug() << "Moving line 2 down";
         qpart.moveLineDownAction()->trigger();
-        
+
         // Target is line 3. Line 3 is start of block2. It should unfold.
         QVERIFY(doc->findBlockByNumber(4).isVisible()); // comment2 should be visible
     }

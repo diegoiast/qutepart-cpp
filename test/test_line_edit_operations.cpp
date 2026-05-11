@@ -9,7 +9,7 @@
 #include <QTest>
 #include <QApplication>
 
-#include "qutepart.h"
+#include "qutepart/qutepart.h"
 
 class Test : public QObject {
     Q_OBJECT

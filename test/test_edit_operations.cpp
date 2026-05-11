@@ -8,7 +8,7 @@
 #include <QObject>
 #include <QTest>
 
-#include "qutepart.h"
+#include "qutepart/qutepart.h"
 #include "hl/syntax_highlighter.h"
 
 class Test : public QObject {
@@ -208,11 +208,11 @@ class Test : public QObject {
         // <style> (line 6)
         // a: { baa: 0} (line 7)
         // </style> (line 8)
-        
+
         qpart.goTo(7, 0);
         qpart.toggleCommentAction()->trigger();
         QString lineText = qpart.lines().at(7).text().trimmed();
-        
+
         // It should NOT be an HTML comment
         QVERIFY(!lineText.startsWith("<!--"));
         // Based on css.xml, it should be /* */

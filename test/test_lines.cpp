@@ -8,7 +8,7 @@
 #include <QObject>
 #include <QTest>
 
-#include "qutepart.h"
+#include "qutepart/qutepart.h"
 
 class Test : public QObject {
     Q_OBJECT

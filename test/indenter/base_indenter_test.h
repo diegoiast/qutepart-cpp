@@ -8,7 +8,7 @@
 
 #include <QObject>
 
-#include "qutepart.h"
+#include "qutepart/qutepart.h"
 
 typedef std::pair<int, int> CursorPos;
 

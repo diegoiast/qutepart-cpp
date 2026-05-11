@@ -8,7 +8,7 @@
 #include <QTest>
 
 #include "bracket_highlighter.h"
-#include "qutepart.h"
+#include "qutepart/qutepart.h"
 #include "text_pos.h"
 
 class Test : public QObject {
