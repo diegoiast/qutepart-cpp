@@ -2913,7 +2913,12 @@ void Qutepart::onCompletionFutureFinished() {
             completer_->invokeCompletion();
         }
     }
-    completionWatcher->setFuture(QFuture<QSet<CompletionItem>>());
+    // Do NOT call completionWatcher->setFuture(QFuture<>()) here.
+    // QFuture<T>() constructs a canceled+finished future (Qt 6 canceledResult()),
+    // which causes the watcher to immediately post QFutureCallOutEvent(Finished)
+    // back to the main thread, re-entering this handler — an infinite event loop
+    // that pegs the main thread at ~70% CPU.
+    // The watcher is reused automatically when setFuture() is called next keypress.
 }
 
 } // namespace Qutepart
