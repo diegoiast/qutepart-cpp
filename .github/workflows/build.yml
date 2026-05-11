@@ -74,14 +74,14 @@ jobs:
           - build_type: "Release"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: lukka/get-cmake@latest
         with:
           cmakeVersion: "~3.31.0"
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4.3.0
+        uses: jurplel/install-qt-action@v4.3.1
         with:
           version: ${{ matrix.qt_version }}
           arch: ${{ matrix.qtArch }}
