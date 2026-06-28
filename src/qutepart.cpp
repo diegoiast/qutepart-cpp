@@ -6,6 +6,7 @@
 
 #include <QAction>
 #include <QApplication>
+#include <QStyleHints>
 #include <QClipboard>
 #include <QDebug>
 #include <QFuture>
@@ -535,23 +536,25 @@ void Qutepart::setLineMessage(int lineNumber, const QString &message) {
 
 auto Qutepart::getColorForLineFlag(int flag) -> QColor {
     // https://www.color-hex.com/color-palette/5361
+    const bool dark =
+        QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark;
     auto color = QColor(Qt::transparent);
     switch (flag) {
     case INFO_BIT:
-        color = QColor(0xbae1ff);
+        color = QColor(dark ? 0x1a3a5f : 0xbae1ff);
         break;
     case WARNING_BIT:
         if (theme && theme->getEditorColors().contains(Theme::Colors::MarkWarning)) {
             color = theme->getEditorColors().value(Theme::Colors::MarkWarning);
         } else {
-            color = QColor(0xffffba);
+            color = QColor(dark ? 0x3d3000 : 0xffffba);
         }
         break;
     case ERROR_BIT:
         if (theme && theme->getEditorColors().contains(Theme::Colors::MarkError)) {
             color = theme->getEditorColors().value(Theme::Colors::MarkError);
         } else {
-            color = QColor(0xffb3ba);
+            color = QColor(dark ? 0x4d1010 : 0xffb3ba);
         }
         break;
 
@@ -560,14 +563,14 @@ auto Qutepart::getColorForLineFlag(int flag) -> QColor {
         if (theme && theme->getEditorColors().contains(Theme::Colors::MarkExecution)) {
             color = theme->getEditorColors().value(Theme::Colors::MarkExecution);
         } else {
-            color = QColor(Qt::blue);
+            color = QColor(dark ? 0x001050 : 0x0000ff);
         }
         break;
     case BREAKPOINT_BIT:
         if (theme && theme->getEditorColors().contains(Theme::Colors::MarkBreakpointActive)) {
             color = theme->getEditorColors().value(Theme::Colors::MarkBreakpointActive);
         } else {
-            color = QColor(Qt::magenta);
+            color = QColor(dark ? 0x500050 : 0xff00ff);
         }
         break;
     default:

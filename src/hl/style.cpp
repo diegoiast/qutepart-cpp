@@ -4,10 +4,17 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <QGuiApplication>
+#include <QStyleHints>
+
 #include "style.h"
 #include "theme.h"
 
 namespace Qutepart {
+
+static bool isDarkPalette() {
+    return QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark;
+}
 
 auto static applyTheme(QTextCharFormat &format, const Theme *theme, QStringView defStyle) -> void {
     auto fixedName = defStyle.toString().mid(2);
@@ -64,72 +71,74 @@ QSharedPointer<QTextCharFormat> defaultFormat(const QString &style, QString &err
     QString colorName;
     QString bgColorName;
 
+    const bool dark = isDarkPalette();
+
     if (style == "dsNormal") {
     } else if (style == "dsKeyword") {
         bold = true;
     } else if (style == "dsFunction") {
-        colorName = "#644a9a";
+        colorName = dark ? "#cf9ef1" : "#644a9a";
     } else if (style == "dsVariable") {
-        colorName = "#0057ad";
+        colorName = dark ? "#27aeae" : "#0057ad";
     } else if (style == "dsControlFlow") {
         bold = true;
     } else if (style == "dsOperator") {
         // TODO
     } else if (style == "dsBuiltIn") {
-        colorName = "#644a9a";
+        colorName = dark ? "#cf9ef1" : "#644a9a";
         bold = true;
     } else if (style == "dsExtension") {
-        colorName = "#0094fe";
+        colorName = dark ? "#3daee9" : "#0094fe";
         bold = true;
     } else if (style == "dsPreprocessor") {
-        colorName = "#006e28";
+        colorName = dark ? "#27ae60" : "#006e28";
     } else if (style == "dsAttribute") {
-        colorName = "#0057ad";
+        colorName = dark ? "#3daee9" : "#0057ad";
     } else if (style == "dsChar") {
-        colorName = "#914c9c";
+        colorName = dark ? "#3daee9" : "#914c9c";
     } else if (style == "dsSpecialChar") {
-        colorName = "#3dade8";
+        colorName = dark ? "#3daee9" : "#3dade8";
     } else if (style == "dsString") {
-        colorName = "#be0303";
+        colorName = dark ? "#da4453" : "#be0303";
     } else if (style == "dsVerbatimString") {
-        colorName = "#be0303";
+        colorName = dark ? "#da4453" : "#be0303";
     } else if (style == "dsSpecialString") {
-        colorName = "#fe5500";
+        colorName = dark ? "#f67400" : "#fe5500";
     } else if (style == "dsImport") {
-        colorName = "#b969c3";
+        colorName = dark ? "#1d99f3" : "#b969c3";
     } else if (style == "dsDataType") {
-        colorName = "#0057ad";
+        colorName = dark ? "#3daee9" : "#0057ad";
     } else if (style == "dsDecVal") {
-        colorName = "#af8000";
+        colorName = dark ? "#f67400" : "#af8000";
     } else if (style == "dsBaseN") {
-        colorName = "#af8000";
+        colorName = dark ? "#f67400" : "#af8000";
     } else if (style == "dsFloat") {
-        colorName = "#af8000";
+        colorName = dark ? "#f67400" : "#af8000";
     } else if (style == "dsConstant") {
         bold = true;
     } else if (style == "dsComment") {
-        colorName = "#888786";
+        colorName = dark ? "#9a9b9c" : "#888786";
     } else if (style == "dsDocumentation") {
-        colorName = "#608880";
+        colorName = dark ? "#a8b8b0" : "#608880";
     } else if (style == "dsAnnotation") {
-        colorName = "#0094fe";
+        colorName = dark ? "#27ae60" : "#0094fe";
     } else if (style == "dsCommentVar") {
-        colorName = "#c960c9";
+        colorName = dark ? "#ca60ca" : "#c960c9";
     } else if (style == "dsRegionMarker") {
-        colorName = "#0057ad";
-        bgColorName = "#e0e9f8";
+        colorName = dark ? "#3daee9" : "#0057ad";
+        bgColorName = dark ? "#12181f" : "#e0e9f8";
     } else if (style == "dsInformation") {
-        colorName = "#af8000";
+        colorName = dark ? "#f67400" : "#af8000";
     } else if (style == "dsWarning") {
-        colorName = "#be0303";
+        colorName = dark ? "#da4453" : "#be0303";
     } else if (style == "dsAlert") {
-        colorName = "#be0303";
-        bgColorName = "#f7e6e6";
+        colorName = dark ? "#da4453" : "#be0303";
+        bgColorName = dark ? "#311b1b" : "#f7e6e6";
         bold = true;
     } else if (style == "dsOthers") {
-        colorName = "#006e28";
+        colorName = dark ? "#27ae60" : "#006e28";
     } else if (style == "dsError") {
-        colorName = "#bf0303";
+        colorName = dark ? "#c45060" : "#bf0303";
         underline = true;
     } else {
         error = QString("Unknown default style '%1'").arg(style);
