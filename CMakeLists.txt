@@ -83,7 +83,8 @@ set(qutepart_SRCS
     src/indent/alg_scheme.cpp
     src/indent/alg_python.cpp
     src/indent/alg_ruby.cpp
-    src/indent/alg_cstyle.cpp)
+    src/indent/alg_cstyle.cpp
+    src/indent/alg_markdown.cpp)
 
 include_directories(src)
 include_directories(test)
@@ -143,6 +144,7 @@ if(QUTEPART_TESTS)
   indent_test(bug)
   indent_test(unindent)
   indent_test(cursor)
+  indent_test(markdown)
   # indent_test(haskel)
 
   function(qpart_test name)

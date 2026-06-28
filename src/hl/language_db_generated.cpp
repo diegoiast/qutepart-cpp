@@ -1463,6 +1463,7 @@ QMap<QString, QString> create_xmlFileNameToIndenter() {
     xmlFileNameToIndenter["literate-curry.xml"] = "haskell";
     xmlFileNameToIndenter["lilypond.xml"] = "lilypond";
     xmlFileNameToIndenter["ruby.xml"] = "ruby";
+    xmlFileNameToIndenter["markdown.xml"] = "markdown";
     xmlFileNameToIndenter["qml.xml"] = "cstyle";
     xmlFileNameToIndenter["pli.xml"] = "pli";
     xmlFileNameToIndenter["nim.xml"] = "python";

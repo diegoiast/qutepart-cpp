@@ -1232,6 +1232,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
         // Only try to preserve cursor position if it's in the middle of the line
         const bool shouldPreservePosition =
             (cursorPosInBlock > 0) && (cursorPosInBlock < currentLine.length());
+        const bool cursorAtEndOfLine = (cursorPosInBlock >= currentLine.length());
         QString textAfterCursor;
         if (shouldPreservePosition) {
             textAfterCursor = currentLine.mid(cursorPosInBlock);
@@ -1256,6 +1257,11 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
                     newCursor.setPosition(newBlock.position() + newPos);
                     setTextCursor(newCursor);
                 }
+            } else if (cursorAtEndOfLine) {
+                // indentBlock inserts text at position 0, leaving Qt's cursor there.
+                // Move to the end of the freshly indented line.
+                newCursor.setPosition(newBlock.position() + newBlock.length() - 1);
+                setTextCursor(newCursor);
             }
         }
     } else if (cursor.positionInBlock() == (cursor.block().length() - 1) &&

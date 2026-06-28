@@ -11,6 +11,7 @@
 
 #include "alg_cstyle.h"
 #include "alg_lisp.h"
+#include "alg_markdown.h"
 #include "alg_python.h"
 #include "alg_ruby.h"
 #include "alg_scheme.h"
@@ -75,6 +76,10 @@ void Indenter::setAlgorithm(IndentAlg alg) {
     case INDENT_ALG_RUBY:
         delete alg_;
         alg_ = new IndentAlgRuby();
+        break;
+    case INDENT_ALG_MARKDOWN:
+        delete alg_;
+        alg_ = new IndentAlgMarkdown();
         break;
     case INDENT_ALG_CSTYLE:
         delete alg_;

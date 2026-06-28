@@ -88,6 +88,8 @@ IndentAlg convertIndenter(const QString &stringVal) {
         return INDENT_ALG_PYTHON;
     } else if (stringVal == "ruby") {
         return INDENT_ALG_RUBY;
+    } else if (stringVal == "markdown") {
+        return INDENT_ALG_MARKDOWN;
     } else if (stringVal.isNull()) {
         return INDENT_ALG_NORMAL; // default
     } else {

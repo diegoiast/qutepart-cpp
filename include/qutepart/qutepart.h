@@ -73,6 +73,8 @@ enum IndentAlg {
     INDENT_ALG_PYTHON,
     /// Ruby indentation.
     INDENT_ALG_RUBY,
+    /// Markdown indentation (continues list markers, blockquotes, ordered lists).
+    INDENT_ALG_MARKDOWN,
 };
 
 /**
