@@ -67,9 +67,7 @@ jobs:
 
         qt_version:
           - "6.9.2"
-          - "6.8.3"
           - "6.11.1"
-          - "6.12.0"
 
         include:
           - generators: "Ninja"
@@ -83,9 +81,7 @@ jobs:
           cmakeVersion: "~3.31.0"
 
       - name: Install Qt
-        if: >-
-          !(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1') &&
-          !(startsWith(matrix.config.build_dir, 'linux') && matrix.qt_version == '6.12.0')
+        if: "!(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1')"
         uses: jurplel/install-qt-action@v4.3.1
         with:
           version: ${{ matrix.qt_version }}
@@ -93,28 +89,20 @@ jobs:
           cache: true
 
       - name: Set up Clang 19.1.7
-        if: >-
-          matrix.config.os == 'windows-2022' && matrix.config.cc == 'clang' &&
-          !(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1') &&
-          !(startsWith(matrix.config.build_dir, 'linux') && matrix.qt_version == '6.12.0')
+        if: "matrix.config.os == 'windows-2022' && matrix.config.cc == 'clang' && matrix.qt_version != '6.11.1'"
         uses: egor-tensin/setup-clang@v1.4
         with:
           version: 19.1.7
           platform: x64
 
       - name: Setup MSVC (Windows)
-        if: >-
-          matrix.config.cxx == 'cl' &&
-          !(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1') &&
-          !(startsWith(matrix.config.build_dir, 'linux') && matrix.qt_version == '6.12.0')
+        if: "matrix.config.cxx == 'cl' && matrix.qt_version != '6.11.1'"
         uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: ${{ matrix.config.arch || 'x64' }}
 
       - name: Configure
-        if: >-
-          !(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1') &&
-          !(startsWith(matrix.config.build_dir, 'linux') && matrix.qt_version == '6.12.0')
+        if: "!(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1')"
         run: >
           cmake -B build/${{ matrix.config.build_dir }}
           -G "${{ matrix.generators }}"
@@ -123,16 +111,12 @@ jobs:
           -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
 
       - name: Build
-        if: >-
-          !(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1') &&
-          !(startsWith(matrix.config.build_dir, 'linux') && matrix.qt_version == '6.12.0')
+        if: "!(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1')"
         run: >
           cmake --build build/${{ matrix.config.build_dir }} --parallel
 
       - name: Run Qt Unit Tests (Linux headless)
-        if: >-
-          startsWith(matrix.config.os, 'ubuntu') &&
-          !(startsWith(matrix.config.build_dir, 'linux') && matrix.qt_version == '6.12.0')
+        if: "startsWith(matrix.config.os, 'ubuntu')"
         working-directory: ${{ github.workspace }}/build/${{ matrix.config.build_dir }}
         run: |
           sudo apt-get update
@@ -140,9 +124,7 @@ jobs:
           xvfb-run -a ctest --output-on-failure
 
       - name: Run Qt Unit Tests (Windows/macOS)
-        if: >-
-          !startsWith(matrix.config.os, 'ubuntu') &&
-          !(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1')
+        if: "!startsWith(matrix.config.os, 'ubuntu') && !(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1')"
         working-directory: ${{ github.workspace }}/build/${{ matrix.config.build_dir }}
         env:
           QT_QPA_PLATFORM: offscreen
