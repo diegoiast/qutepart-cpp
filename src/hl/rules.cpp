@@ -126,14 +126,14 @@ void KeywordRule::setKeywordParams(const QHash<QString, QStringList> &lists, boo
         error = QString("List '%1' not found").arg(error);
         return;
     }
-    items = lists[listName];
     this->caseSensitive = newCaseSensitive;
     this->deliminators = newDeliminators;
 
-    if (!this->caseSensitive) {
-        for (auto it = items.begin(); it != items.end(); it++) {
-            *it = (*it).toLower();
-        }
+    items.clear();
+    const auto &list = lists[listName];
+    items.reserve(list.size());
+    for (const auto &word : list) {
+        items.insert(this->caseSensitive ? word : word.toLower());
     }
 }
 

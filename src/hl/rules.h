@@ -7,6 +7,7 @@
 #pragma once
 
 #include <QRegularExpression>
+#include <QSet>
 #include <QSharedPointer>
 #include <QString>
 #include <QTextStream>
@@ -102,7 +103,7 @@ class KeywordRule : public AbstractRule {
     virtual MatchResult *tryMatchImpl(const TextToMatch &textToMatch) const override;
 
     QString listName;
-    QStringList items;
+    QSet<QString> items;
     bool caseSensitive;
     QString deliminators;
 };
