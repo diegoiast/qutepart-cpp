@@ -49,7 +49,7 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
     ContextStack contextStack = getContextStack(block);
     TextToMatch textToMatch(block.text(), contextStack.currentData());
     QString textTypeMap(textToMatch.text.length(), ' ');
-    QVector<QSharedPointer<Language>> languageMap(textToMatch.text.length());
+    QVector<Language *> languageMap(textToMatch.text.length());
     auto lineContinue = false;
     auto data = static_cast<TextBlockUserData *>(block.userData());
     if (!data) {

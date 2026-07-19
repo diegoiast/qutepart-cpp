@@ -2306,20 +2306,20 @@ void Qutepart::toggleComment() {
                 return;
             }
 
-            QSharedPointer<Language> language;
+            Language *language = nullptr;
             int relativePos = selectionStart - cursor.block().position();
             if (relativePos >= 0 && relativePos < blockData->languageMap.size()) {
                 language = blockData->languageMap[relativePos];
             }
 
-            if (language.isNull()) {
+            if (language == nullptr) {
                 if (blockData->contexts.currentContext() &&
                     blockData->contexts.currentContext()->language) {
-                    language = blockData->contexts.currentContext()->language;
+                    language = blockData->contexts.currentContext()->language.data();
                 }
             }
 
-            if (language.isNull()) {
+            if (language == nullptr) {
                 return;
             }
 

@@ -156,8 +156,7 @@ void fillTextTypeMap(QString &textTypeMap, int start, int length, QChar textType
     }
 }
 
-void fillLanguageMap(QVector<QSharedPointer<Language>> &languageMap, int start, int length,
-                     QSharedPointer<Language> language) {
+void fillLanguageMap(QVector<Language *> &languageMap, int start, int length, Language *language) {
     for (auto i = start; i < start + length; i++) {
         languageMap[i] = language;
     }
@@ -166,8 +165,7 @@ void fillLanguageMap(QVector<QSharedPointer<Language>> &languageMap, int start, 
 // Helper function for parseBlock()
 void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult &matchRes,
                                const Context *context, QVector<QTextLayout::FormatRange> &formats,
-                               QString &textTypeMap,
-                               QVector<QSharedPointer<Language>> &languageMap) const {
+                               QString &textTypeMap, QVector<Language *> &languageMap) const {
     auto displayFormat = matchRes.style.format();
 
     if (displayFormat.isNull()) {
@@ -188,14 +186,13 @@ void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult
     if (lang.isNull()) {
         lang = context->language;
     }
-    fillLanguageMap(languageMap, textToMatch.currentColumnIndex, matchRes.length, lang);
+    fillLanguageMap(languageMap, textToMatch.currentColumnIndex, matchRes.length, lang.data());
 }
 
 // Parse block. Exits, when reached end of the text, or when context is switched
 const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToMatch &textToMatch,
                                        QVector<QTextLayout::FormatRange> &formats,
-                                       QString &textTypeMap,
-                                       QVector<QSharedPointer<Language>> &languageMap,
+                                       QString &textTypeMap, QVector<Language *> &languageMap,
                                        bool &lineContinue, TextBlockUserData *data) const {
     textToMatch.contextData = &contextStack.currentData();
 
@@ -242,7 +239,7 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
                 appendFormat(formats, textToMatch.currentColumnIndex, 1, *style.format());
             }
             textTypeMap[textToMatch.currentColumnIndex] = style.textType();
-            languageMap[textToMatch.currentColumnIndex] = this->language;
+            languageMap[textToMatch.currentColumnIndex] = this->language.data();
             if (!this->fallthroughContext.isNull()) {
                 return contextStack.switchContext(this->fallthroughContext);
             }
