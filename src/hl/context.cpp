@@ -164,31 +164,31 @@ void fillLanguageMap(QVector<QSharedPointer<Language>> &languageMap, int start, 
 }
 
 // Helper function for parseBlock()
-void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult *matchRes,
+void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult &matchRes,
                                const Context *context, QVector<QTextLayout::FormatRange> &formats,
                                QString &textTypeMap,
                                QVector<QSharedPointer<Language>> &languageMap) const {
-    auto displayFormat = matchRes->style.format();
+    auto displayFormat = matchRes.style.format();
 
     if (displayFormat.isNull()) {
         displayFormat = context->style.format();
     }
 
     if (!displayFormat.isNull()) {
-        appendFormat(formats, textToMatch.currentColumnIndex, matchRes->length, *displayFormat);
+        appendFormat(formats, textToMatch.currentColumnIndex, matchRes.length, *displayFormat);
     }
 
-    QChar textType = matchRes->style.textType();
+    QChar textType = matchRes.style.textType();
     if (textType == 0) {
         textType = context->style.textType();
     }
-    fillTextTypeMap(textTypeMap, textToMatch.currentColumnIndex, matchRes->length, textType);
+    fillTextTypeMap(textTypeMap, textToMatch.currentColumnIndex, matchRes.length, textType);
 
-    auto lang = matchRes->rule->language;
+    auto lang = matchRes.rule->language;
     if (lang.isNull()) {
         lang = context->language;
     }
-    fillLanguageMap(languageMap, textToMatch.currentColumnIndex, matchRes->length, lang);
+    fillLanguageMap(languageMap, textToMatch.currentColumnIndex, matchRes.length, lang);
 }
 
 // Parse block. Exits, when reached end of the text, or when context is switched
@@ -203,18 +203,19 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
         return contextStack.switchContext(_lineEmptyContext);
     }
 
+    MatchResult matchRes;
     while (!textToMatch.isEmpty()) {
-        auto matchRes = tryMatch(textToMatch);
+        bool matched = tryMatch(textToMatch, matchRes);
 
-        if (matchRes) {
-            lineContinue = matchRes->lineContinue;
+        if (matched) {
+            lineContinue = matchRes.lineContinue;
 
-            if (data && !matchRes->rule->beginRegion.isEmpty()) {
-                data->regions.push(matchRes->rule->beginRegion);
+            if (data && !matchRes.rule->beginRegion.isEmpty()) {
+                data->regions.push(matchRes.rule->beginRegion);
             }
 
-            if (data && !matchRes->rule->endRegion.isEmpty()) {
-                if (!data->regions.isEmpty() && data->regions.top() == matchRes->rule->endRegion) {
+            if (data && !matchRes.rule->endRegion.isEmpty()) {
+                if (!data->regions.isEmpty() && data->regions.top() == matchRes.rule->endRegion) {
                     data->regions.pop();
                 }
             }
@@ -223,18 +224,16 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
                 data->folding.level = data->regions.size();
             }
 
-            if (matchRes->nextContext.isNull()) {
+            if (matchRes.nextContext.isNull()) {
                 applyMatchResult(textToMatch, matchRes, this, formats, textTypeMap, languageMap);
-                textToMatch.shift(matchRes->length);
-                delete matchRes;
+                textToMatch.shift(matchRes.length);
             } else {
                 ContextStack newContextStack =
-                    contextStack.switchContext(matchRes->nextContext, matchRes->data);
+                    contextStack.switchContext(matchRes.nextContext, matchRes.data);
 
                 applyMatchResult(textToMatch, matchRes, newContextStack.currentContext(), formats,
                                  textTypeMap, languageMap);
-                textToMatch.shift(matchRes->length);
-                delete matchRes;
+                textToMatch.shift(matchRes.length);
                 return newContextStack;
             }
         } else {
@@ -254,15 +253,14 @@ const ContextStack Context::parseBlock(const ContextStack &contextStack, TextToM
     return contextStack;
 }
 
-MatchResult *Context::tryMatch(const TextToMatch &textToMatch) const {
+bool Context::tryMatch(const TextToMatch &textToMatch, MatchResult &result) const {
     for (auto &rule : rules) {
-        MatchResult *matchRes = rule->tryMatch(textToMatch);
-        if (matchRes != nullptr) {
-            return matchRes;
+        if (rule->tryMatch(textToMatch, result)) {
+            return true;
         }
     }
 
-    return nullptr;
+    return false;
 }
 
 } // namespace Qutepart

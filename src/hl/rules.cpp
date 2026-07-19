@@ -54,27 +54,28 @@ void AbstractRule::setTheme(const Theme *theme) {
     }
 }
 
-MatchResult *AbstractRule::makeMatchResult(int length, bool lineContinue,
-                                           const QStringList &data) const {
+bool AbstractRule::makeMatchResult(MatchResult &result, int length, bool lineContinue,
+                                   const QStringList &data) const {
     // qDebug() << "\t\trule matched" << description() << length << "lookAhead"
     // << lookAhead;
     if (lookAhead) {
         length = 0;
     }
 
-    return new MatchResult(length, data, lineContinue, contextSwitcher, style, this);
+    result = MatchResult(length, data, lineContinue, contextSwitcher, style, this);
+    return true;
 }
 
-MatchResult *AbstractRule::tryMatch(const TextToMatch &textToMatch) const {
+bool AbstractRule::tryMatch(const TextToMatch &textToMatch, MatchResult &result) const {
     if (column != -1 && column != textToMatch.currentColumnIndex) {
-        return nullptr;
+        return false;
     }
 
     if (firstNonSpace && (not textToMatch.firstNonSpace)) {
-        return nullptr;
+        return false;
     }
 
-    return tryMatchImpl(textToMatch);
+    return tryMatchImpl(textToMatch, result);
 }
 
 AbstractStringRule::AbstractStringRule(const AbstractRuleParams &params, const QString &value,
@@ -100,21 +101,21 @@ QString makeDynamicSubsctitutions(QString pattern, const QStringList &data) {
 }
 } // namespace
 
-MatchResult *StringDetectRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool StringDetectRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     QString pattern = value;
     if (dynamic) {
         pattern = makeDynamicSubsctitutions(value, *textToMatch.contextData);
     }
 
     if (pattern.isEmpty()) {
-        return nullptr;
+        return false;
     }
 
     if (textToMatch.text.startsWith(pattern)) {
-        return makeMatchResult(pattern.length());
+        return makeMatchResult(result, pattern.length());
     }
 
-    return nullptr;
+    return false;
 }
 
 KeywordRule::KeywordRule(const AbstractRuleParams &params, const QString &listName)
@@ -133,28 +134,28 @@ void KeywordRule::setKeywordParams(const QHash<QString, QStringList> &lists, boo
     const auto &list = lists[listName];
     items.reserve(list.size());
     for (const auto &word : list) {
-        items.insert(this->caseSensitive ? word : word.toLower());
+        items.insert(this->caseSensitive ? word : word.toLower(), true);
     }
 }
 
-MatchResult *KeywordRule::tryMatchImpl(const TextToMatch &textToMatch) const {
-    QString word = textToMatch.word(deliminators);
+bool KeywordRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
+    QStringView word = textToMatch.word(deliminators);
 
     if (word.isEmpty()) {
-        return nullptr;
+        return false;
     }
 
     bool matched = false;
     if (this->caseSensitive) {
         matched = items.contains(word);
     } else {
-        matched = items.contains(word.toLower());
+        matched = items.contains(word.toString().toLower());
     }
 
     if (matched) {
-        return makeMatchResult(word.length(), false);
+        return makeMatchResult(result, word.length(), false);
     } else {
-        return nullptr;
+        return false;
     }
 }
 
@@ -169,7 +170,7 @@ QString DetectCharRule::args() const {
     }
 }
 
-MatchResult *DetectCharRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool DetectCharRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     QChar pattern = value;
 
     if (dynamic) {
@@ -180,54 +181,52 @@ MatchResult *DetectCharRule::tryMatchImpl(const TextToMatch &textToMatch) const 
 
         if (matchIndex >= textToMatch.contextData->length()) {
             qWarning() << "Invalid DetectChar index" << matchIndex;
-            return nullptr;
+            return false;
         }
 
         if (textToMatch.contextData->at(matchIndex).length() != 1) {
             qWarning() << "Too long DetectChar string " << *textToMatch.contextData;
-            return nullptr;
+            return false;
         }
 
         pattern = textToMatch.contextData->at(matchIndex)[0];
     }
 
     if (textToMatch.text.at(0) == pattern) {
-        return makeMatchResult(1, false);
+        return makeMatchResult(result, 1, false);
     } else {
-        return nullptr;
+        return false;
     }
 }
 
-MatchResult *Detect2CharsRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool Detect2CharsRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     if (textToMatch.text.startsWith(value)) {
-        return makeMatchResult(2);
+        return makeMatchResult(result, 2);
     }
 
-    return nullptr;
+    return false;
 }
 
-MatchResult *AnyCharRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool AnyCharRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     if (value.contains(textToMatch.text.at(0))) {
-        return makeMatchResult(1);
+        return makeMatchResult(result, 1);
     }
 
-    return nullptr;
+    return false;
 }
 
-MatchResult *WordDetectRule::tryMatchImpl(const TextToMatch &textToMatch) const {
-    QString word = textToMatch.word(mDeliminatorSet);
+bool WordDetectRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
+    QStringView word = textToMatch.word(mDeliminatorSet);
     if (word.isEmpty()) {
-        return nullptr;
+        return false;
     }
 
-    if (insensitive) {
-        word = word.toLower();
-    }
+    bool matched = insensitive ? word.compare(value, Qt::CaseInsensitive) == 0 : word == value;
 
-    if (word == value) {
-        return makeMatchResult(word.length());
+    if (matched) {
+        return makeMatchResult(result, word.length());
     } else {
-        return nullptr;
+        return false;
     }
 }
 
@@ -287,16 +286,16 @@ QRegularExpression RegExpRule::compileRegExp(const QString &pattern) const {
     return result;
 }
 
-MatchResult *RegExpRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool RegExpRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     // Special case. if pattern starts with \b, we have to check it manually,
     // because string is passed to .match(..) without beginning
     if (wordStart && (!textToMatch.isWordStart)) {
-        return nullptr;
+        return false;
     }
 
     // Special case. If pattern starts with ^ - check column number manually
     if (lineStart && textToMatch.currentColumnIndex > 0) {
-        return nullptr;
+        return false;
     }
 
     QRegularExpressionMatch match;
@@ -311,9 +310,9 @@ MatchResult *RegExpRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     }
 
     if (match.hasMatch() && match.capturedLength() > 0) {
-        return makeMatchResult(match.capturedLength(), false, match.capturedTexts());
+        return makeMatchResult(result, match.capturedLength(), false, match.capturedTexts());
     } else {
-        return nullptr;
+        return false;
     }
 }
 
@@ -329,35 +328,34 @@ void AbstractNumberRule::printDescription(QTextStream &out) const {
     }
 }
 
-MatchResult *AbstractNumberRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool AbstractNumberRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     // andreikop: This condition is not described in kate docs, and I haven't
     // found it in the code
     if (!textToMatch.isWordStart) {
-        return nullptr;
+        return false;
     }
 
     int matchedLength = tryMatchText(textToMatch.text);
 
     if (matchedLength <= 0) {
-        return nullptr;
+        return false;
     }
 
     if (matchedLength < textToMatch.text.length()) {
         TextToMatch textToMatchCopy = textToMatch;
         textToMatchCopy.shift(matchedLength);
 
+        MatchResult childResult;
         for (auto const &rule : std::as_const(childRules)) {
-            MatchResult *matchRes = rule->tryMatch(textToMatchCopy);
-            if (matchRes != nullptr) {
-                matchedLength += matchRes->length;
-                delete matchRes;
+            if (rule->tryMatch(textToMatchCopy, childResult)) {
+                matchedLength += childResult.length;
                 break;
             }
             // child rule context and attribute ignored
         }
     }
 
-    return makeMatchResult(matchedLength);
+    return makeMatchResult(result, matchedLength);
 }
 
 int AbstractNumberRule::countDigits(const QStringView &text) const {
@@ -473,9 +471,9 @@ int checkEscapedChar(QStringView text) {
 }
 } // namespace
 
-MatchResult *HlCOctRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool HlCOctRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     if (textToMatch.text.at(0) != '0') {
-        return nullptr;
+        return false;
     }
 
     int index = 1;
@@ -484,23 +482,23 @@ MatchResult *HlCOctRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     }
 
     if (index == 1) {
-        return nullptr;
+        return false;
     }
 
     if (index < textToMatch.text.length() && isNumberLengthSpecifier(textToMatch.text.at(index))) {
         index++;
     }
 
-    return makeMatchResult(index);
+    return makeMatchResult(result, index);
 }
 
-MatchResult *HlCHexRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool HlCHexRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     if (textToMatch.text.length() < 3) {
-        return nullptr;
+        return false;
     }
 
     if (textToMatch.text.at(0) != '0' || textToMatch.text.at(1).toUpper() != 'X') {
-        return nullptr;
+        return false;
     }
 
     int index = 2;
@@ -509,42 +507,42 @@ MatchResult *HlCHexRule::tryMatchImpl(const TextToMatch &textToMatch) const {
     }
 
     if (index == 2) {
-        return nullptr;
+        return false;
     }
 
     if (index < textToMatch.text.length() && isNumberLengthSpecifier(textToMatch.text.at(index))) {
         index++;
     }
 
-    return makeMatchResult(index);
+    return makeMatchResult(result, index);
 }
 
-MatchResult *HlCStringCharRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool HlCStringCharRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     int res = checkEscapedChar(textToMatch.text);
     if (res != -1) {
-        return makeMatchResult(res);
+        return makeMatchResult(result, res);
     } else {
-        return nullptr;
+        return false;
     }
 }
 
-MatchResult *HlCCharRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool HlCCharRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     if (textToMatch.text.length() > 2 && textToMatch.text.at(0) == '\'' &&
         textToMatch.text.at(1) != '\'') {
         int index = 0;
-        int result = checkEscapedChar(textToMatch.text.mid(1));
-        if (result != -1) {
-            index = 1 + result;
+        int escapedLen = checkEscapedChar(textToMatch.text.mid(1));
+        if (escapedLen != -1) {
+            index = 1 + escapedLen;
         } else { // 1 not escaped character
             index = 1 + 1;
         }
 
         if (index < textToMatch.text.length() && textToMatch.text.at(index) == '\'') {
-            return makeMatchResult(index + 1);
+            return makeMatchResult(result, index + 1);
         }
     }
 
-    return nullptr;
+    return false;
 }
 
 RangeDetectRule::RangeDetectRule(const AbstractRuleParams &params, const QString &char0,
@@ -553,15 +551,15 @@ RangeDetectRule::RangeDetectRule(const AbstractRuleParams &params, const QString
 
 QString RangeDetectRule::args() const { return QString("%1 - %2").arg(char0, char1); }
 
-MatchResult *RangeDetectRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool RangeDetectRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     if (textToMatch.text.startsWith(char0)) {
         int end = textToMatch.text.indexOf(char1, 1);
         if (end > 0) {
-            return makeMatchResult(end + 1);
+            return makeMatchResult(result, end + 1);
         }
     }
 
-    return nullptr;
+    return false;
 }
 
 IncludeRulesRule::IncludeRulesRule(const AbstractRuleParams &params, const QString &contextName)
@@ -592,37 +590,37 @@ void IncludeRulesRule::resolveContextReferences(const QHash<QString, ContextPtr>
     context = contexts[contextName];
 }
 
-MatchResult *IncludeRulesRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool IncludeRulesRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     if (context == nullptr) {
         qWarning() << "IncludeRules called for null context" << description();
-        return nullptr;
+        return false;
     }
 
-    return context->tryMatch(textToMatch);
+    return context->tryMatch(textToMatch, result);
 }
 
-MatchResult *LineContinueRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool LineContinueRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     if (textToMatch.text == QLatin1String("\\")) {
-        return makeMatchResult(1, true);
+        return makeMatchResult(result, 1, true);
     }
 
-    return nullptr;
+    return false;
 }
 
-MatchResult *DetectSpacesRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool DetectSpacesRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     int index = 0;
     while (index < textToMatch.text.length() && textToMatch.text.at(index).isSpace()) {
         index++;
     }
 
     if (index > 0) {
-        return makeMatchResult(index);
+        return makeMatchResult(result, index);
     } else {
-        return nullptr;
+        return false;
     }
 }
 
-MatchResult *DetectIdentifierRule::tryMatchImpl(const TextToMatch &textToMatch) const {
+bool DetectIdentifierRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     if (textToMatch.text.at(0).isLetter()) {
         int count = 1;
         while (count < textToMatch.text.length()) {
@@ -634,9 +632,9 @@ MatchResult *DetectIdentifierRule::tryMatchImpl(const TextToMatch &textToMatch) 
             }
         }
 
-        return makeMatchResult(count);
+        return makeMatchResult(result, count);
     } else {
-        return nullptr;
+        return false;
     }
 }
 
