@@ -11,6 +11,9 @@ jobs:
   build:
     name: ${{ matrix.config.name }} Qt${{ matrix.qt_version }}
     runs-on: ${{ matrix.config.os }}
+    if: >-
+      !(startsWith(matrix.config.build_dir, 'windows') && matrix.qt_version == '6.11.1') &&
+      !(startsWith(matrix.config.build_dir, 'linux') && matrix.qt_version == '6.12.0')
     strategy:
       fail-fast: false
       matrix:
@@ -68,6 +71,8 @@ jobs:
         qt_version:
           - "6.9.2"
           - "6.8.3"
+          - "6.11.1"
+          - "6.12.0"
 
         include:
           - generators: "Ninja"
