@@ -17,7 +17,7 @@ jobs:
         config:
           - name: "Windows MSVC (amd64)"
             build_dir: "windows-msvc"
-            os: windows-2022
+            os: windows-2025
             cc: "cl"
             cxx: "cl"
             qtArch: "win64_msvc2022_64"
@@ -32,26 +32,26 @@ jobs:
 
           - name: "Windows clang 19.1.7 (amd64)"
             build_dir: "windows-clang"
-            os: windows-2022
+            os: windows-2025
             cc: "clang"
             cxx: "clang++"
             qtArch: "win64_clang_amd64"
 
-          - name: "Ubuntu 22.04 gcc (amd64)"
+          - name: "Ubuntu 24.04 gcc (amd64)"
             build_dir: "linux-gcc-amd"
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             cc: "gcc"
             cxx: "g++"
             qtArch: "gcc_64"
 
-          - name: "Ubuntu 22.04 gcc (arm64)"
+          - name: "Ubuntu 24.04 gcc (arm64)"
             build_dir: "linux-gcc-arm64"
             os: ubuntu-24.04-arm
             cc: "gcc"
             cxx: "g++"
             qtArch: "linux_arm64"
 
-          - name: "Ubuntu 22.04 clang (amd64)"
+          - name: "Ubuntu 24.04 clang (amd64)"
             build_dir: "linux-clang-arm64"
             os: ubuntu-22.04
             cc: "clang"
@@ -60,14 +60,15 @@ jobs:
 
           - name: "macOS (Apple silicon)"
             build_dir: "macos"
-            os: macos-latest
+            os: macos-26
             cc: "clang"
             cxx: "clang++"
             qtArch: "macos_arm64"
 
         qt_version:
           - "6.9.2"
-          - "6.8.3"
+          - "6.10.3"
+          - "6.11.1"
 
         include:
           - generators: "Ninja"
