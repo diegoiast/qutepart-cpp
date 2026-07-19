@@ -8,6 +8,25 @@
 
 namespace Qutepart {
 
+DeliminatorSet::DeliminatorSet(const QString &deliminators) {
+    for (QChar ch : deliminators) {
+        ushort code = ch.unicode();
+        if (code < asciiChars_.size()) {
+            asciiChars_.set(code);
+        } else {
+            nonAsciiChars_.append(ch);
+        }
+    }
+}
+
+bool DeliminatorSet::contains(QChar ch) const {
+    ushort code = ch.unicode();
+    if (code < asciiChars_.size()) {
+        return asciiChars_.test(code);
+    }
+    return nonAsciiChars_.contains(ch);
+}
+
 TextToMatch::TextToMatch(const QString &text, const QStringList &contextData)
     : currentColumnIndex(0), wholeLineText(text), text(wholeLineText.left(wholeLineText.length())),
       textLength(text.length()), firstNonSpace(true), // copy-paste from Py code
@@ -42,25 +61,25 @@ void TextToMatch::shift(int count) {
 
 bool TextToMatch::isEmpty() const { return text.isEmpty(); }
 
-QString TextToMatch::word(const QString &deliminatorSet) const {
+QStringView TextToMatch::word(const DeliminatorSet &deliminators) const {
     if (currentColumnIndex > 0) {
         QChar prevChar = wholeLineText[currentColumnIndex - 1];
-        if (!deliminatorSet.contains(prevChar)) {
-            return QString();
+        if (!deliminators.contains(prevChar)) {
+            return QStringView();
         }
     }
 
     int wordEndIndex = 0;
     for (; wordEndIndex < text.length(); wordEndIndex++) {
-        if (deliminatorSet.contains(text.at(wordEndIndex))) {
+        if (deliminators.contains(text.at(wordEndIndex))) {
             break;
         }
     }
     if (wordEndIndex != 0) {
-        return text.left(wordEndIndex).toString();
+        return text.left(wordEndIndex);
     }
 
-    return QString();
+    return QStringView();
 }
 
 } // namespace Qutepart

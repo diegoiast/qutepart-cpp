@@ -128,7 +128,7 @@ void KeywordRule::setKeywordParams(const QHash<QString, QStringList> &lists, boo
         return;
     }
     this->caseSensitive = newCaseSensitive;
-    this->deliminators = newDeliminators;
+    this->deliminators = DeliminatorSet(newDeliminators);
 
     items.clear();
     const auto &list = lists[listName];
@@ -232,7 +232,7 @@ bool WordDetectRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &r
 
 void WordDetectRule::setKeywordParams(const QHash<QString, QStringList> &, bool,
                                       const QString &deliminatorSet, QString &) {
-    mDeliminatorSet = deliminatorSet;
+    mDeliminatorSet = DeliminatorSet(deliminatorSet);
 }
 
 RegExpRule::RegExpRule(const AbstractRuleParams &params, const QString &value, bool insensitive,

@@ -13,6 +13,7 @@
 #include <QTextStream>
 
 #include "context.h"
+#include "text_to_match.h"
 
 namespace Qutepart {
 
@@ -105,7 +106,7 @@ class KeywordRule : public AbstractRule {
     QString listName;
     QHash<QString, bool> items;
     bool caseSensitive;
-    QString deliminators;
+    DeliminatorSet deliminators;
 };
 
 class DetectCharRule : public AbstractRule {
@@ -162,7 +163,7 @@ class WordDetectRule : public AbstractStringRule {
 
   private:
     virtual bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
-    QString mDeliminatorSet;
+    DeliminatorSet mDeliminatorSet;
 };
 
 class RegExpRule : public AbstractRule {
