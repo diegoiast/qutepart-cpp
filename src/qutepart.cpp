@@ -1372,6 +1372,14 @@ void Qutepart::keyReleaseEvent(QKeyEvent *event) {
             lastSeparator_ = separator;
             auto forceShow = !separator.isEmpty();
             if ((!prefix.isEmpty() || !separator.isEmpty()) && completionCallback_) {
+                // Cancel is cooperative: it only flags the future. A well-behaved
+                // callback that checks isCanceled() can bail out early; others will
+                // keep running to completion. Either way, onCompletionFutureFinished()
+                // ignores canceled results, so a slow stale query can no longer
+                // clobber a newer one or reopen the popup with outdated words.
+                if (completionWatcher->isRunning()) {
+                    completionWatcher->future().cancel();
+                }
                 auto future = completionCallback_(prefix, previousWord, separator);
                 completionWatcher->setFuture(future);
             }
