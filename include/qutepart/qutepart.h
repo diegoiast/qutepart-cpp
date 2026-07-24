@@ -617,6 +617,7 @@ class Qutepart : public QPlainTextEdit {
     CompletionCallback completionCallback_;
     QFutureWatcher<QSet<CompletionItem>> *completionWatcher = nullptr;
     QFuture<QSet<CompletionItem>> completionFuture;
+    int completionRequestGeneration_ = 0;
     QString lastSeparator_;
     const Theme *theme = nullptr;
     bool inSetTheme_ = false;
