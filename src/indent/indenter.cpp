@@ -159,6 +159,24 @@ void Indenter::indentBlock(QTextBlock block, int cursorPos, int typedKey) const 
     }
 }
 
+void Indenter::indentWrappedBlock(QTextBlock block, int cursorPos) const {
+    if (alg_ == nullptr) {
+        return;
+    }
+
+    auto indent = alg_->computeWrapIndent(block, cursorPos);
+    if (indent.isNull()) {
+        return;
+    }
+
+    auto wrappedLine = indent + stripLeftWhitespace(block.text());
+    if (wrappedLine != block.text()) {
+        QTextCursor cursor(block);
+        cursor.select(QTextCursor::LineUnderCursor);
+        cursor.insertText(wrappedLine);
+    }
+}
+
 // Tab pressed
 void Indenter::onShortcutIndentAfterCursor(QTextCursor cursor) const {
     if (cursor.positionInBlock() == 0) { // if no any indent - indent smartly

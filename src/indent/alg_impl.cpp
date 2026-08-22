@@ -33,6 +33,10 @@ QString IndentAlgImpl::indentLine(QTextBlock block, int cursorPos) const {
     }
 }
 
+QString IndentAlgImpl::computeWrapIndent(QTextBlock block, int cursorPos) const {
+    return computeSmartIndent(block, cursorPos);
+}
+
 QString IndentAlgImpl::computeSmartIndent(QTextBlock /*block*/, int /*cursorPos*/) const {
     return "";
 }

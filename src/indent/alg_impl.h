@@ -40,6 +40,15 @@ class IndentAlgImpl {
      */
     virtual QString indentLine(QTextBlock block, int cursorPos) const;
 
+    /* Compute indent for a line which continues the previous one,
+     * instead of starting a new construct: a line created by soft line
+     * wrapping or by Shift+Enter.
+     * Default implementation indents as Enter does.
+     *
+     * Return value QString::null means 'do not modify the string'
+     */
+    virtual QString computeWrapIndent(QTextBlock block, int cursorPos) const;
+
     /* Compute indent for line.
      * The majority of algorithms should override this method.
      *

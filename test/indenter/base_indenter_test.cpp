@@ -24,6 +24,8 @@ void BaseTest::setCursorPosition(int line, int col) {
 
 void BaseTest::enter() { QTest::keyClick(&qpart, Qt::Key_Enter); }
 
+void BaseTest::shiftEnter() { QTest::keyClick(&qpart, Qt::Key_Return, Qt::ShiftModifier); }
+
 void BaseTest::tab() { QTest::keyClick(&qpart, Qt::Key_Tab); }
 
 void BaseTest::type(const QString &text) { QTest::keyClicks(&qpart, text); }

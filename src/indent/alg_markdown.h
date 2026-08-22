@@ -15,6 +15,7 @@ namespace Qutepart {
 class IndentAlgMarkdown : public IndentAlgImpl {
   public:
     QString computeSmartIndent(QTextBlock block, int cursorPos) const override;
+    QString computeWrapIndent(QTextBlock block, int cursorPos) const override;
 };
 
 } // namespace Qutepart

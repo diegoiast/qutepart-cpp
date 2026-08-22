@@ -22,6 +22,7 @@ class BaseTest : public QObject {
 
     void setCursorPosition(int line, int col);
     void enter();
+    void shiftEnter();
     void tab();
     void type(const QString &text);
     void verifyExpected(const QString &expected);

@@ -39,6 +39,10 @@ class Indenter : public QObject {
     void autoIndentBlock(QTextBlock block, QChar typedKey) const;
 #endif
     void indentBlock(QTextBlock block, int cursorPos, int typedKey) const;
+    /* Indent a block created by soft line wrapping - it continues the previous
+     * line instead of starting a new one.
+     */
+    void indentWrappedBlock(QTextBlock block, int cursorPos) const;
   public slots:
     void onShortcutIndentAfterCursor(QTextCursor cursor) const;
     void onShortcutUnindentWithBackspace(QTextCursor &cursor) const;

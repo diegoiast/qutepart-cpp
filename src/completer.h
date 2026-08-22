@@ -6,10 +6,10 @@
 
 #pragma once
 
+#include "qutepart.h"
 #include <QObject>
 #include <QSet>
 #include <QTimer>
-#include "qutepart.h"
 
 namespace Qutepart {
 
@@ -56,6 +56,5 @@ class Completer : public QObject {
     QSet<CompletionItem> wordSet_;
     QTimer updateWordSetTimer_;
 };
-
 
 } // namespace Qutepart

@@ -1213,7 +1213,7 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
             if (!currentWord.isEmpty()) {
                 cursor.beginEditBlock();
                 cursor.insertText("\n");
-                indenter_->indentBlock(cursor.block(), cursor.positionInBlock(), event->key());
+                indenter_->indentWrappedBlock(cursor.block(), cursor.positionInBlock());
                 cursor.insertText(currentWord);
                 cursor.insertText(event->text());
                 cursor.endEditBlock();
@@ -1225,6 +1225,34 @@ void Qutepart::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Backspace && indenter_->shouldUnindentWithBackspace(cursor)) {
         // Unindent on backspace
         indenter_->onShortcutUnindentWithBackspace(cursor);
+    } else if (event->matches(QKeySequence::InsertLineSeparator)) {
+        // Shift+Enter pressed. Open a line inside the current construct - a
+        // markdown list item continues, a new item is not started
+        AtomicEditOperation op(this);
+
+        auto const currentLine = cursor.block().text();
+        auto const cursorPosInBlock = cursor.positionInBlock();
+        auto const textAfterCursor = (cursorPosInBlock < currentLine.length())
+                                         ? currentLine.mid(cursorPosInBlock)
+                                         : QString();
+
+        cursor.insertBlock();
+        auto const newBlock = cursor.block();
+        if (newBlock.isValid()) {
+            indenter_->indentWrappedBlock(newBlock, cursor.positionInBlock());
+
+            // indentBlock() inserts at position 0 and leaves Qt's cursor at the
+            // end of the line. Put it back in front of the text moved down.
+            auto positionInBlock = newBlock.length() - 1;
+            if (!textAfterCursor.isEmpty()) {
+                auto const textPosition = newBlock.text().indexOf(textAfterCursor);
+                if (textPosition != -1) {
+                    positionInBlock = textPosition;
+                }
+            }
+            cursor.setPosition(newBlock.position() + positionInBlock);
+            setTextCursor(cursor);
+        }
     } else if (event->matches(QKeySequence::InsertParagraphSeparator)) {
         // Enter pressed. Indent new empty line
         AtomicEditOperation op(this);
