@@ -123,7 +123,10 @@ QList<QTextEdit::ExtraSelection> Qutepart::highlightText(const QString &text, bo
     return extraSelections;
 }
 
-Qutepart::~Qutepart() {}
+Qutepart::~Qutepart() {
+    delete bracketHighlighter_;
+    bracketHighlighter_ = nullptr;
+}
 
 Lines Qutepart::lines() const { return Lines(document()); }
 
