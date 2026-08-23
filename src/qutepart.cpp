@@ -139,6 +139,11 @@ void Qutepart::setHighlighter(const QString &languageId) {
         }
     }
     indenter_->setLanguage(languageId);
+
+    /* Without this the previous highlighter stays attached to the document and
+     * keeps re-highlighting it alongside the new one. */
+    delete highlighter_;
+
     highlighter_ = makeHighlighter(document(), languageId);
     hl = static_cast<SyntaxHighlighter *>(highlighter_);
     if (hl) {
@@ -175,8 +180,7 @@ void Qutepart::setTheme(const Theme *newTheme) {
     auto hl = dynamic_cast<SyntaxHighlighter *>(highlighter_);
     theme = newTheme;
     if (hl) {
-        hl->setTheme(theme);
-        hl->rehighlight();
+        hl->setTheme(theme); // re-highlights the document itself
     }
 
     fixLineFlagColors();
