@@ -24,7 +24,10 @@ QString IndentAlgLisp::computeSmartIndent(QTextBlock block, int /*cursorPos*/) c
                       ;   -> usually on the same line as code -> ignore
      */
     QString text = block.text();
-    QStringView leftStripped = text.right(text.length() - firstNonSpaceColumn(text));
+    /* View into `text`, not into a temporary: QString::right() allocates a new
+     * string, which would be destroyed at the end of this statement and leave
+     * the view dangling. */
+    QStringView leftStripped = QStringView(text).mid(firstNonSpaceColumn(text));
 
     if (leftStripped.startsWith(QLatin1String(";;;"))) {
         return "";

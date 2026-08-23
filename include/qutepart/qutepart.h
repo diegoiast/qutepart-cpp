@@ -623,7 +623,7 @@ class Qutepart : public QPlainTextEdit {
     const Theme *theme = nullptr;
     bool inSetTheme_ = false;
 
-    QTimer *currentWordTimer;
+    QTimer *currentWordTimer = nullptr;
     QString lastWordUnderCursor;
 
     QSyntaxHighlighter *highlighter_ = nullptr;

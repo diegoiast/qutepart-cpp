@@ -255,7 +255,7 @@ RegExpRule *loadRegExp(const QXmlStreamAttributes &attrs, const AbstractRulePara
     bool lineStart = false;
 
     if (!value.isEmpty()) {
-        QStringView strippedValue = value.mid(0);
+        QStringView strippedValue(value);
         while (strippedValue.startsWith('(')) {
             strippedValue = strippedValue.mid(1);
         }
