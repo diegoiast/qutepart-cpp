@@ -19,10 +19,10 @@ SyntaxHighlighter::SyntaxHighlighter(QTextDocument *parent, QSharedPointer<Langu
 SyntaxHighlighter::SyntaxHighlighter(QObject *parent, QSharedPointer<Language> language)
     : QSyntaxHighlighter(parent), language(language) {}
 
-void SyntaxHighlighter::highlightBlock(const QString &) {
-    QVector<QTextLayout::FormatRange> formats;
+void SyntaxHighlighter::highlightBlock(const QString &text) {
+    formats.clear();
 
-    auto state = language->highlightBlock(currentBlock(), formats);
+    auto state = language->highlightBlock(currentBlock(), text, formats);
     for (auto &range : std::as_const(formats)) {
         setFormat(range.start, range.length, range.format);
     }

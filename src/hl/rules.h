@@ -13,6 +13,7 @@
 #include <QTextStream>
 
 #include "context.h"
+#include "first_chars.h"
 #include "text_to_match.h"
 
 namespace Qutepart {
@@ -51,6 +52,16 @@ class AbstractRule {
     bool lookAhead;
     QSharedPointer<Language> language;
 
+    /* Characters this rule can start a match with. Contexts consult it before
+     * calling tryMatch(), which is what keeps regexps and keyword lookups off
+     * the hot path for the columns they could never match at anyway.
+     * Recomputed by computeFirstChars() once the rule is fully configured.
+     */
+    FirstCharSet firstChars;
+
+    /* Fills firstChars, once. `depth` bounds the recursion through IncludeRules. */
+    void ensureFirstChars(int depth = 0);
+
     /* Matching entrypoint. Checks common params and calls tryMatchImpl()
      * Returns true and fills result on a match; result is untouched otherwise.
      */
@@ -61,9 +72,35 @@ class AbstractRule {
     virtual QString name() const { return "AbstractRule"; }
     virtual QString args() const { return QString(); }
 
-    bool makeMatchResult(MatchResult &result, int length, bool lineContinue = false,
-                         const QStringList &data = QStringList()) const;
+    bool makeMatchResult(MatchResult &result, int length, bool lineContinue = false) const;
 
+    /* Whether the context this rule switches to can read back the capture
+     * groups. Extracting them costs a QStringList per match, so it is skipped
+     * for the (vast majority of) rules whose target context has no way to use
+     * them. Decided by finalize(), once every context reference is resolved.
+     */
+    bool capturesNeeded = false;
+
+    /* Whether this rule itself substitutes capture groups into its pattern. */
+    virtual bool readsCaptures() const { return dynamic; }
+
+    void finalize();
+
+  protected:
+    virtual void computeFirstChars(int depth) {
+        (void)depth;
+        firstChars.setUnknown();
+    }
+    bool firstCharsReady = false;
+
+    /* A rule flagged dynamic whose pattern has no %0..%4 placeholder would
+     * substitute nothing into it. Dropping the flag lets it be compiled once
+     * and lets its first characters be known - dynamic patterns are otherwise
+     * rebuilt, recompiled and JIT-compiled on every single match attempt.
+     */
+    void dropDynamicWithoutPlaceholders(const QString &pattern);
+
+  public:
     /* Rule matching implementation
      * Returns true and fills result on a match; result is untouched otherwise.
      */
@@ -99,6 +136,7 @@ class KeywordRule : public AbstractRule {
 
     QString name() const override { return "Keyword"; }
     QString args() const override { return listName; }
+    void computeFirstChars(int depth) override;
 
   private:
     virtual bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -106,7 +144,7 @@ class KeywordRule : public AbstractRule {
     QString listName;
     QHash<QString, bool> items;
     bool caseSensitive;
-    DeliminatorSet deliminators;
+    const DeliminatorSet *deliminators = sharedDeliminatorSet(QString());
 };
 
 class DetectCharRule : public AbstractRule {
@@ -115,6 +153,7 @@ class DetectCharRule : public AbstractRule {
 
     QString name() const override { return "DetectChar"; }
     QString args() const override;
+    void computeFirstChars(int depth) override;
 
   private:
     virtual bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -128,6 +167,7 @@ class Detect2CharsRule : public AbstractStringRule {
 
   public:
     QString name() const override { return "Detect2Chars"; }
+    void computeFirstChars(int depth) override;
 
   private:
     bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -138,6 +178,7 @@ class AnyCharRule : public AbstractStringRule {
 
   public:
     QString name() const override { return "AnyChar"; }
+    void computeFirstChars(int depth) override;
 
   private:
     virtual bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -148,6 +189,7 @@ class StringDetectRule : public AbstractStringRule {
 
   public:
     QString name() const override { return "StringDetect"; }
+    void computeFirstChars(int depth) override;
 
   private:
     virtual bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -158,18 +200,20 @@ class WordDetectRule : public AbstractStringRule {
 
   public:
     QString name() const override { return "WordDetect"; }
+    void computeFirstChars(int depth) override;
     void setKeywordParams(const QHash<QString, QStringList> &lists, bool caseSensitive,
                           const QString &, QString &error) override;
 
   private:
     virtual bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
-    DeliminatorSet mDeliminatorSet;
+    const DeliminatorSet *mDeliminatorSet = sharedDeliminatorSet(QString());
 };
 
 class RegExpRule : public AbstractRule {
   public:
     RegExpRule(const AbstractRuleParams &params, const QString &value, bool insensitive,
                bool minimal, bool wordStart, bool lineStart);
+    void computeFirstChars(int depth) override;
 
   private:
     QString name() const override { return "RegExpr"; }
@@ -184,6 +228,12 @@ class RegExpRule : public AbstractRule {
     bool wordStart;
     bool lineStart;
     QRegularExpression regExp;
+
+    /* Memo for the still-dynamic patterns: the substituted pattern only
+     * changes when the enclosing context's captures do, which is rare compared
+     * to how often the rule is tried. */
+    mutable QString dynamicPattern;
+    mutable QRegularExpression dynamicRegExp;
 };
 
 class AbstractNumberRule : public AbstractRule {
@@ -205,6 +255,7 @@ class IntRule : public AbstractNumberRule {
 
   public:
     QString name() const override { return "Int"; }
+    void computeFirstChars(int depth) override;
 
   private:
     virtual int tryMatchText(const QStringView &text) const override;
@@ -215,6 +266,7 @@ class FloatRule : public AbstractNumberRule {
 
   public:
     QString name() const override { return "Float"; }
+    void computeFirstChars(int depth) override;
 
   private:
     int tryMatchText(const QStringView &text) const override;
@@ -225,6 +277,7 @@ class HlCOctRule : public AbstractRule {
 
   public:
     QString name() const override { return "HlCOct"; }
+    void computeFirstChars(int depth) override;
 
   private:
     bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -235,6 +288,7 @@ class HlCHexRule : public AbstractRule {
 
   public:
     QString name() const override { return "HlCHex"; }
+    void computeFirstChars(int depth) override;
 
   private:
     bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -245,6 +299,7 @@ class HlCStringCharRule : public AbstractRule {
 
   public:
     QString name() const override { return "HlCStringChar"; }
+    void computeFirstChars(int depth) override;
 
   private:
     bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -255,6 +310,7 @@ class HlCCharRule : public AbstractRule {
 
   public:
     QString name() const override { return "HlCChar"; }
+    void computeFirstChars(int depth) override;
 
   private:
     bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -265,6 +321,7 @@ class RangeDetectRule : public AbstractRule {
     RangeDetectRule(const AbstractRuleParams &params, const QString &char0, const QString &char1);
     QString name() const override { return "RangeDetect"; }
     QString args() const override;
+    void computeFirstChars(int depth) override;
 
   private:
     bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -278,6 +335,7 @@ class LineContinueRule : public AbstractRule {
 
   public:
     QString name() const override { return "LineContinue"; }
+    void computeFirstChars(int depth) override;
 
   private:
     bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -289,6 +347,8 @@ class IncludeRulesRule : public AbstractRule {
 
     QString name() const override { return "IncludeRules"; }
     QString args() const override { return contextName; }
+    bool readsCaptures() const override;
+    void computeFirstChars(int depth) override;
 
     void resolveContextReferences(const QHash<QString, ContextPtr> &contexts,
                                   QString &error) override;
@@ -305,6 +365,7 @@ class DetectSpacesRule : public AbstractRule {
 
   public:
     QString name() const override { return "DetectSpaces"; }
+    void computeFirstChars(int depth) override;
 
   private:
     bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;
@@ -315,6 +376,7 @@ class DetectIdentifierRule : public AbstractRule {
 
   public:
     QString name() const override { return "DetectIdentifier"; }
+    void computeFirstChars(int depth) override;
 
   private:
     bool tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const override;

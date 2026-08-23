@@ -26,6 +26,13 @@ class Language {
              const QSet<QString> &allLanguageKeywords, const QList<ContextPtr> &contexts);
 
     void printDescription(QTextStream &out) const;
+
+    /* Highlights one block and returns the state to store on it.
+     * `text` must be the block's own text; the overload below fetches it, which
+     * costs a document lookup callers that already have the text can skip.
+     */
+    int highlightBlock(QTextBlock block, const QString &text,
+                       QVector<QTextLayout::FormatRange> &formats);
     int highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats);
 
     inline ContextPtr defaultContext() const { return contexts.first(); }
@@ -57,7 +64,7 @@ class Language {
     ContextStack defaultContextStack;
 
     ContextStack getContextStack(QTextBlock block);
-    ContextStack switchAtEndOfLine(ContextStack contextStack);
+    void switchAtEndOfLine(ContextStack &contextStack);
 };
 
 } // namespace Qutepart

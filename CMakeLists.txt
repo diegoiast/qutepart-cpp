@@ -62,6 +62,7 @@ set(qutepart_SRCS
     src/html_delegate.cpp
     src/hl_factory.cpp
     src/hl/context.cpp
+    src/hl/first_chars.cpp
     src/hl/language.cpp
     src/hl/loader.cpp
     src/hl/rules.cpp

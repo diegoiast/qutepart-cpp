@@ -821,6 +821,12 @@ QSharedPointer<Language> parseXmlFile(const QString &xmlFileName, QXmlStreamRead
         ctx->setLanguage(languagePtr);
     }
 
+    /* Every context reference is resolved now, so the rules can work out what
+     * they need at match time. */
+    for (auto &ctx : contexts) {
+        ctx->finalize();
+    }
+
     return languagePtr;
 }
 

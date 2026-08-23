@@ -36,29 +36,31 @@ const Context *ContextStack::currentContext() const { return items.last().contex
 
 const QStringList &ContextStack::currentData() const { return items.last().data; }
 
-ContextStack ContextStack::switchContext(const ContextSwitcher &operation,
-                                         const QStringList &data) const {
-    auto newItems = items;
-
+void ContextStack::switchTo(const ContextSwitcher &operation, const QStringList &data) {
     if (operation.popsCount() > 0) {
-        if (newItems.size() - 1 < operation.popsCount()) {
+        if (items.size() - 1 < operation.popsCount()) {
 #if VERBOSE_LOGS
-            qWarning() << "#pop value is too big " << newItems.size() << operation.popsCount();
+            qWarning() << "#pop value is too big " << items.size() << operation.popsCount();
 #endif
 
-            if (newItems.size() > 1) {
-                newItems = newItems.mid(0, 1);
+            if (items.size() > 1) {
+                items.resize(1);
             }
         } else {
-            newItems = newItems.mid(0, newItems.size() - operation.popsCount());
+            items.resize(items.size() - operation.popsCount());
         }
     }
 
     if (!operation.context().isNull()) {
-        newItems.append(ContextStackItem(operation.context().data(), data));
+        items.append(ContextStackItem(operation.context().data(), data));
     }
+}
 
-    return ContextStack(newItems);
+ContextStack ContextStack::switchContext(const ContextSwitcher &operation,
+                                         const QStringList &data) const {
+    ContextStack result(items);
+    result.switchTo(operation, data);
+    return result;
 }
 
 bool ContextStack::operator!=(const ContextStack &other) const { return !(*this == other); }

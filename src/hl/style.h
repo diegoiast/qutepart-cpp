@@ -27,6 +27,13 @@ class Style {
     inline const QStringView getDefStyle() const { return defStyleName; }
     inline const QSharedPointer<QTextCharFormat> format() const { return displayFormat; }
 
+    /* The format without touching the shared pointer's reference count. The
+     * highlighter asks for it once per matched token, where a pair of atomic
+     * increments is measurable. The pointee outlives every match: it is owned
+     * by the Style, which is owned by the rule or context being matched.
+     */
+    inline const QTextCharFormat *formatData() const { return displayFormat.data(); }
+
     void setTheme(const Theme *newTheme);
     inline const Theme *getTheme() const { return theme; }
 

@@ -15,17 +15,23 @@ namespace Qutepart {
 
 class AbstractRule;
 
+/* The outcome of a successful rule match.
+ *
+ * A single instance is reused for every match attempt of a whole document, so
+ * everything here that belongs to the matched rule is referenced rather than
+ * copied - a Style copy alone costs two atomic reference counts, and there is
+ * one match per token.  The pointees are owned by the rule, which outlives the
+ * highlighting pass.
+ */
 class MatchResult {
   public:
-    MatchResult(int length, const QStringList &data, bool lineContinue,
-                const ContextSwitcher &context, const Style &style, const AbstractRule *rule);
     MatchResult();
 
     int length;
-    QStringList data;
+    QStringList data; // capture groups; only filled when the target context is dynamic
     bool lineContinue;
-    ContextSwitcher nextContext;
-    Style style;
+    const ContextSwitcher *nextContext;
+    const Style *style;
     const AbstractRule *rule;
 };
 

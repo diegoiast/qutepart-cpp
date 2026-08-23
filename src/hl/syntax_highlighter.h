@@ -32,6 +32,10 @@ class SyntaxHighlighter : public QSyntaxHighlighter {
   protected:
     void highlightBlock(const QString &text) override;
     QSharedPointer<Language> language;
+
+  private:
+    // Kept across blocks so the formats of a whole document cost one allocation.
+    QVector<QTextLayout::FormatRange> formats;
 };
 
 } // namespace Qutepart

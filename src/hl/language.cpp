@@ -46,16 +46,24 @@ void Language::printDescription(QTextStream &out) const {
 }
 
 int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange> &formats) {
-    ContextStack contextStack = getContextStack(block);
-    TextToMatch textToMatch(block.text(), contextStack.currentData());
-    QString textTypeMap(textToMatch.text.length(), ' ');
-    QVector<Language *> languageMap(textToMatch.text.length());
-    auto lineContinue = false;
-    auto data = static_cast<TextBlockUserData *>(block.userData());
+    return highlightBlock(block, block.text(), formats);
+}
+
+int Language::highlightBlock(QTextBlock block, const QString &text,
+                             QVector<QTextLayout::FormatRange> &formats) {
+    auto contextStack = getContextStack(block);
+    TextToMatch textToMatch(text, contextStack.currentData());
+
+    auto *data = static_cast<TextBlockUserData *>(block.userData());
     if (!data) {
-        data = new TextBlockUserData(textTypeMap, contextStack);
+        data = new TextBlockUserData(QString(), contextStack);
         block.setUserData(data);
     }
+
+    /* Filled in place rather than through local copies: these are per-block
+     * buffers which keep their capacity from the previous highlighting pass. */
+    data->textTypeMap.fill(QLatin1Char(' '), textToMatch.textLength);
+    data->languageMap.fill(nullptr, textToMatch.textLength);
 
     QTextBlock prevBlock = block.previous();
     if (prevBlock.isValid()) {
@@ -64,22 +72,19 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
             data->regions = prevData->regions;
         }
     }
-    if (data) {
-        data->folding.level = data->regions.size();
-    }
+    data->folding.level = data->regions.size();
 
+    auto lineContinue = false;
     do {
-        auto const context = contextStack.currentContext();
-        contextStack = context->parseBlock(contextStack, textToMatch, formats, textTypeMap,
-                                           languageMap, lineContinue, data);
+        auto const *context = contextStack.currentContext();
+        context->parseBlock(contextStack, textToMatch, formats, data->textTypeMap,
+                            data->languageMap, lineContinue, data);
     } while (!textToMatch.isEmpty());
 
     if (!lineContinue) {
-        contextStack = switchAtEndOfLine(contextStack);
+        switchAtEndOfLine(contextStack);
     }
 
-    data->textTypeMap = textTypeMap;
-    data->languageMap = languageMap;
     data->contexts = contextStack;
 
     size_t regionsHash = 0;
@@ -122,11 +127,13 @@ ContextStack Language::getContextStack(QTextBlock block) {
     }
 }
 
-ContextStack Language::switchAtEndOfLine(ContextStack contextStack) {
+void Language::switchAtEndOfLine(ContextStack &contextStack) {
     while (!contextStack.currentContext()->lineEndContext().isNull()) {
-        ContextStack oldStack = contextStack;
-        contextStack = contextStack.switchContext(contextStack.currentContext()->lineEndContext());
-        if (oldStack == contextStack) {
+        auto const *previousContext = contextStack.currentContext();
+        auto const previousDepth = contextStack.depth();
+        contextStack.switchTo(contextStack.currentContext()->lineEndContext());
+        if (contextStack.currentContext() == previousContext &&
+            contextStack.depth() == previousDepth) {
             // avoid infinite while loop if nothing to switch
             break;
         }
@@ -134,11 +141,8 @@ ContextStack Language::switchAtEndOfLine(ContextStack contextStack) {
 
     // this code is not tested, because lineBeginContext is not defined by any xml file
     if (!contextStack.currentContext()->lineBeginContext().isNull()) {
-        contextStack =
-            contextStack.switchContext(contextStack.currentContext()->lineBeginContext());
+        contextStack.switchTo(contextStack.currentContext()->lineBeginContext());
     }
-
-    return contextStack;
 }
 
 } // namespace Qutepart

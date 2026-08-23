@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <QHash>
+#include <QMutex>
+
 #include "text_to_match.h"
 
 namespace Qutepart {
@@ -27,6 +30,18 @@ bool DeliminatorSet::contains(QChar ch) const {
     return nonAsciiChars_.contains(ch);
 }
 
+const DeliminatorSet *sharedDeliminatorSet(const QString &deliminators) {
+    auto static mutex = QMutex();
+    auto static cache = QHash<QString, DeliminatorSet *>();
+
+    QMutexLocker locker(&mutex);
+    auto it = cache.constFind(deliminators);
+    if (it == cache.constEnd()) {
+        it = cache.insert(deliminators, new DeliminatorSet(deliminators));
+    }
+    return it.value();
+}
+
 TextToMatch::TextToMatch(const QString &text, const QStringList &contextData)
     : currentColumnIndex(0), wholeLineText(text), text(wholeLineText.left(wholeLineText.length())),
       textLength(text.length()), firstNonSpace(true), // copy-paste from Py code
@@ -38,6 +53,7 @@ bool isWordChar(QChar ch) { return ch.isLetterOrNumber() || ch == '_'; }
 } // namespace
 
 void TextToMatch::shiftOnce() {
+    cachedWordDeliminators = nullptr;
     QChar prevChar = text.at(0);
     firstNonSpace = firstNonSpace && prevChar.isSpace();
     isWordStart = (!isWordStart) && textLength > 1 && isWordChar(text.at(1));
@@ -48,6 +64,7 @@ void TextToMatch::shiftOnce() {
 }
 
 void TextToMatch::shift(int count) {
+    cachedWordDeliminators = nullptr;
     for (int i = 0; i < count; i++) {
         QChar prevChar = text.at(i);
         firstNonSpace = firstNonSpace && prevChar.isSpace();
@@ -61,25 +78,33 @@ void TextToMatch::shift(int count) {
 
 bool TextToMatch::isEmpty() const { return text.isEmpty(); }
 
-QStringView TextToMatch::word(const DeliminatorSet &deliminators) const {
+QStringView TextToMatch::word(const DeliminatorSet *deliminators) const {
+    // Several rules of a context ask for the word at the same position, one
+    // after the other, and they all share the same deliminator set.
+    if (cachedWordDeliminators == deliminators) {
+        return cachedWord;
+    }
+    cachedWordDeliminators = deliminators;
+    cachedWord = QStringView();
+
     if (currentColumnIndex > 0) {
         QChar prevChar = wholeLineText[currentColumnIndex - 1];
-        if (!deliminators.contains(prevChar)) {
-            return QStringView();
+        if (!deliminators->contains(prevChar)) {
+            return cachedWord;
         }
     }
 
     int wordEndIndex = 0;
     for (; wordEndIndex < text.length(); wordEndIndex++) {
-        if (deliminators.contains(text.at(wordEndIndex))) {
+        if (deliminators->contains(text.at(wordEndIndex))) {
             break;
         }
     }
     if (wordEndIndex != 0) {
-        return text.left(wordEndIndex);
+        cachedWord = text.left(wordEndIndex);
     }
 
-    return QStringView();
+    return cachedWord;
 }
 
 } // namespace Qutepart

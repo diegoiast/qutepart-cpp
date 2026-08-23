@@ -30,6 +30,21 @@ void AbstractRule::resolveContextReferences(const QHash<QString, ContextPtr> &co
     contextSwitcher.resolveContextReferences(contexts, error);
 }
 
+void AbstractRule::ensureFirstChars(int depth) {
+    if (firstCharsReady) {
+        return;
+    }
+    computeFirstChars(depth);
+    firstCharsReady = true;
+}
+
+void AbstractRule::finalize() {
+    // Capture groups are only ever read back through the stack entry pushed by
+    // a context switch, so a rule which does not push one cannot need them.
+    auto target = contextSwitcher.context();
+    capturesNeeded = !target.isNull() && target->usesCaptures();
+}
+
 void AbstractRule::setStyles(const QHash<QString, Style> &styles, QString &error) {
     if (!attribute.isNull()) {
         if (!styles.contains(attribute)) {
@@ -54,15 +69,15 @@ void AbstractRule::setTheme(const Theme *theme) {
     }
 }
 
-bool AbstractRule::makeMatchResult(MatchResult &result, int length, bool lineContinue,
-                                   const QStringList &data) const {
-    // qDebug() << "\t\trule matched" << description() << length << "lookAhead"
-    // << lookAhead;
-    if (lookAhead) {
-        length = 0;
+bool AbstractRule::makeMatchResult(MatchResult &result, int length, bool lineContinue) const {
+    result.length = lookAhead ? 0 : length;
+    result.lineContinue = lineContinue;
+    result.nextContext = &contextSwitcher;
+    result.style = &style;
+    result.rule = this;
+    if (!result.data.isEmpty()) {
+        result.data.clear(); // do not leak captures from a previously matched rule
     }
-
-    result = MatchResult(length, data, lineContinue, contextSwitcher, style, this);
     return true;
 }
 
@@ -80,7 +95,9 @@ bool AbstractRule::tryMatch(const TextToMatch &textToMatch, MatchResult &result)
 
 AbstractStringRule::AbstractStringRule(const AbstractRuleParams &params, const QString &value,
                                        bool insensitive)
-    : AbstractRule(params), value(value), insensitive(insensitive) {}
+    : AbstractRule(params), value(value), insensitive(insensitive) {
+    dropDynamicWithoutPlaceholders(value);
+}
 
 QString AbstractStringRule::args() const {
     QString result = value;
@@ -89,6 +106,18 @@ QString AbstractStringRule::args() const {
     }
 
     return result;
+}
+
+void AbstractRule::dropDynamicWithoutPlaceholders(const QString &pattern) {
+    if (!dynamic) {
+        return;
+    }
+    for (auto index = 0; index + 1 < pattern.length(); index++) {
+        if (pattern.at(index) == QLatin1Char('%') && pattern.at(index + 1).isDigit()) {
+            return;
+        }
+    }
+    dynamic = false;
 }
 
 namespace {
@@ -128,7 +157,7 @@ void KeywordRule::setKeywordParams(const QHash<QString, QStringList> &lists, boo
         return;
     }
     this->caseSensitive = newCaseSensitive;
-    this->deliminators = DeliminatorSet(newDeliminators);
+    this->deliminators = sharedDeliminatorSet(newDeliminators);
 
     items.clear();
     const auto &list = lists[listName];
@@ -153,7 +182,7 @@ bool KeywordRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &resu
     }
 
     if (matched) {
-        return makeMatchResult(result, word.length(), false);
+        return makeMatchResult(result, word.length());
     } else {
         return false;
     }
@@ -193,7 +222,7 @@ bool DetectCharRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &r
     }
 
     if (textToMatch.text.at(0) == pattern) {
-        return makeMatchResult(result, 1, false);
+        return makeMatchResult(result, 1);
     } else {
         return false;
     }
@@ -232,13 +261,14 @@ bool WordDetectRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &r
 
 void WordDetectRule::setKeywordParams(const QHash<QString, QStringList> &, bool,
                                       const QString &deliminatorSet, QString &) {
-    mDeliminatorSet = DeliminatorSet(deliminatorSet);
+    mDeliminatorSet = sharedDeliminatorSet(deliminatorSet);
 }
 
 RegExpRule::RegExpRule(const AbstractRuleParams &params, const QString &value, bool insensitive,
                        bool minimal, bool wordStart, bool lineStart)
     : AbstractRule(params), value(value), insensitive(insensitive), minimal(minimal),
       wordStart(wordStart), lineStart(lineStart) {
+    dropDynamicWithoutPlaceholders(value);
     if (!dynamic) {
         regExp = compileRegExp(value);
     }
@@ -300,8 +330,11 @@ bool RegExpRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &resul
 
     QRegularExpressionMatch match;
     if (dynamic) {
-        QString pattern = makeDynamicSubsctitutions(value, *textToMatch.contextData);
-        QRegularExpression dynamicRegExp = compileRegExp(pattern);
+        auto pattern = makeDynamicSubsctitutions(value, *textToMatch.contextData);
+        if (pattern != dynamicPattern) {
+            dynamicPattern = pattern;
+            dynamicRegExp = compileRegExp(pattern);
+        }
         match = dynamicRegExp.matchView(textToMatch.text, 0, QRegularExpression::NormalMatch,
                                         QRegularExpression::AnchorAtOffsetMatchOption);
     } else {
@@ -310,7 +343,11 @@ bool RegExpRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &resul
     }
 
     if (match.hasMatch() && match.capturedLength() > 0) {
-        return makeMatchResult(result, match.capturedLength(), false, match.capturedTexts());
+        makeMatchResult(result, match.capturedLength(), false);
+        if (capturesNeeded) {
+            result.data = match.capturedTexts();
+        }
+        return true;
     } else {
         return false;
     }
@@ -590,6 +627,22 @@ void IncludeRulesRule::resolveContextReferences(const QHash<QString, ContextPtr>
     context = contexts[contextName];
 }
 
+void IncludeRulesRule::computeFirstChars(int depth) {
+    // An include matches exactly what the included context's own rules match.
+    if (context.isNull()) {
+        firstChars.setUnknown();
+        return;
+    }
+    firstChars = context->firstCharsOfRules(depth);
+}
+
+bool IncludeRulesRule::readsCaptures() const {
+    // The included rules run with the *including* context on top of the stack,
+    // so they read that context's captures. An unresolved include is assumed to
+    // need them.
+    return dynamic || context.isNull() || context->usesCaptures();
+}
+
 bool IncludeRulesRule::tryMatchImpl(const TextToMatch &textToMatch, MatchResult &result) const {
     if (context == nullptr) {
         qWarning() << "IncludeRules called for null context" << description();
@@ -636,6 +689,163 @@ bool DetectIdentifierRule::tryMatchImpl(const TextToMatch &textToMatch, MatchRes
     } else {
         return false;
     }
+}
+
+/* ---------------------------------------------------------------------------
+ * First-character sets
+ *
+ * Every rule declares which characters it could possibly match at, so that
+ * Context::tryMatch() can skip it outright at every other column. Anything not
+ * described here keeps the base implementation, which claims every character
+ * and therefore behaves exactly as before.
+ * ------------------------------------------------------------------------- */
+
+void KeywordRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    for (auto it = items.constBegin(); it != items.constEnd(); ++it) {
+        const auto &word = it.key();
+        if (word.isEmpty()) {
+            continue;
+        }
+        if (caseSensitive) {
+            firstChars.addChar(word.at(0));
+        } else {
+            // Keywords are stored lower-cased and the candidate word is
+            // lower-cased before the lookup, so either case can start a match.
+            firstChars.addCharBothCases(word.at(0));
+        }
+    }
+}
+
+void DetectCharRule::computeFirstChars(int depth) {
+    (void)depth;
+    if (dynamic) {
+        firstChars.setUnknown();
+        return;
+    }
+    firstChars.clear();
+    firstChars.addChar(value);
+}
+
+void Detect2CharsRule::computeFirstChars(int depth) {
+    (void)depth;
+    if (value.isEmpty()) {
+        firstChars.setUnknown();
+        return;
+    }
+    firstChars.clear();
+    firstChars.addChar(value.at(0));
+}
+
+void AnyCharRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    firstChars.addString(value);
+}
+
+void StringDetectRule::computeFirstChars(int depth) {
+    (void)depth;
+    if (dynamic || value.isEmpty()) {
+        firstChars.setUnknown();
+        return;
+    }
+    firstChars.clear();
+    firstChars.addChar(value.at(0));
+}
+
+void WordDetectRule::computeFirstChars(int depth) {
+    (void)depth;
+    if (value.isEmpty()) {
+        firstChars.setUnknown();
+        return;
+    }
+    firstChars.clear();
+    if (insensitive) {
+        firstChars.addCharBothCases(value.at(0));
+        firstChars.setNonAscii();
+    } else {
+        firstChars.addChar(value.at(0));
+    }
+}
+
+void RegExpRule::computeFirstChars(int depth) {
+    (void)depth;
+    if (dynamic) {
+        firstChars.setUnknown();
+        return;
+    }
+    firstChars = regExpFirstChars(value, insensitive);
+}
+
+void IntRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    firstChars.addDigits();
+}
+
+void FloatRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    firstChars.addDigits();
+    // tryMatchText() also accepts a leading '.' and a bare exponent.
+    firstChars.addChar(QChar('.'));
+    firstChars.addChar(QChar('e'));
+    firstChars.addChar(QChar('E'));
+}
+
+void HlCOctRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    firstChars.addChar(QChar('0'));
+}
+
+void HlCHexRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    firstChars.addChar(QChar('0'));
+}
+
+void HlCStringCharRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    firstChars.addChar(QChar('\\'));
+}
+
+void HlCCharRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    firstChars.addChar(QChar('\''));
+}
+
+void RangeDetectRule::computeFirstChars(int depth) {
+    (void)depth;
+    if (char0.isEmpty()) {
+        firstChars.setUnknown();
+        return;
+    }
+    firstChars.clear();
+    firstChars.addChar(char0.at(0));
+}
+
+void LineContinueRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    firstChars.addChar(QChar('\\'));
+}
+
+void DetectSpacesRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    firstChars.addSpaces();
+    firstChars.setNonAscii(); // QChar::isSpace() is not limited to ASCII
+}
+
+void DetectIdentifierRule::computeFirstChars(int depth) {
+    (void)depth;
+    firstChars.clear();
+    firstChars.addAsciiLetters();
+    firstChars.setNonAscii(); // QChar::isLetter() is not limited to ASCII
 }
 
 } // namespace Qutepart

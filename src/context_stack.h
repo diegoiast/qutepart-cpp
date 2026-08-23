@@ -39,6 +39,14 @@ class ContextStack {
     ContextStack(const QVector<ContextStackItem> &items);
 
   public:
+    /* Apply a context switch operation in place.
+     *
+     * The parser throws the previous stack away on every switch, so mutating
+     * beats returning a fresh copy: the underlying list keeps its capacity and
+     * a whole document's worth of switches costs no allocation at all.
+     */
+    void switchTo(const ContextSwitcher &operation, const QStringList &data = QStringList());
+
     // Apply context switch operation and return new context
     ContextStack switchContext(const ContextSwitcher &operation,
                                const QStringList &data = QStringList()) const;
@@ -48,6 +56,8 @@ class ContextStack {
 
     // Get current data
     const QStringList &currentData() const;
+
+    inline int depth() const { return int(items.size()); }
 
   private:
     QVector<ContextStackItem> items;
