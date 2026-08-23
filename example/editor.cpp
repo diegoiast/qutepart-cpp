@@ -8,6 +8,7 @@
 #include <QByteArray>
 #include <QDebug>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QMainWindow>
 #include <QMenu>
@@ -38,6 +39,8 @@ this will also be displayed as a comment
 bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart) {
     QFile file(filePath);
     if (file.exists()) {
+	QElapsedTimer t;
+	t.start();
         Qutepart::LangInfo langInfo = Qutepart::chooseLanguage(QString(), QString(), filePath);
         if (langInfo.isValid()) {
             qutepart->setHighlighter(langInfo.id);
@@ -50,6 +53,8 @@ bool openFile(const QString &filePath, Qutepart::Qutepart *qutepart) {
         QByteArray data = file.readAll();
         QString text = QString::fromUtf8(data);
         qutepart->setPlainText(text);
+
+	qDebug() << "Loading time = " << t.elapsed();
     } else {
         qWarning() << "File does not exist" << filePath;
         return false;
