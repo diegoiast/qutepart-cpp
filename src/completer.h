@@ -27,6 +27,11 @@ class Completer : public QObject {
 
     void setKeywords(const QSet<QString> &keywords);
     void setCustomCompletions(const QSet<CompletionItem> &wordSet);
+    /// When exclusive, custom completions replace the keyword and document-word
+    /// suggestions instead of being merged with them. Only takes effect while
+    /// there actually are custom completions, so a provider that returns nothing
+    /// still falls back to word completion rather than showing an empty popup.
+    void setCustomCompletionsExclusive(bool exclusive);
 
     bool isVisible() const;
     bool invokeCompletionIfAvailable(bool requestedByUser);
@@ -53,6 +58,7 @@ class Completer : public QObject {
     bool completionOpenedManually_;
     QSet<QString> keywords_;
     QSet<CompletionItem> customCompletions_;
+    bool customCompletionsExclusive_ = false;
     QSet<CompletionItem> wordSet_;
     QTimer updateWordSetTimer_;
 };

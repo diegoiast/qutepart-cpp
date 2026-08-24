@@ -389,6 +389,14 @@ void Completer::setCustomCompletions(const QSet<CompletionItem> &wordSet) {
     updateWordSet();
 }
 
+void Completer::setCustomCompletionsExclusive(bool exclusive) {
+    if (customCompletionsExclusive_ == exclusive) {
+        return;
+    }
+    customCompletionsExclusive_ = exclusive;
+    updateWordSet();
+}
+
 bool Completer::isVisible() const { return widget_ != nullptr; }
 
 // Text in the qpart changed. Update word set
@@ -402,7 +410,10 @@ void Completer::onModificationChanged(bool modified) {
 
 // Make a set of words, which shall be completed, from text
 void Completer::updateWordSet() {
-    if (!qpart_->lastCompletionSeparator().isEmpty() && !customCompletions_.isEmpty()) {
+    // Either a member access (foo. / foo-> / foo::), or a provider that has
+    // declared itself authoritative for this document.
+    if ((customCompletionsExclusive_ || !qpart_->lastCompletionSeparator().isEmpty()) &&
+        !customCompletions_.isEmpty()) {
         wordSet_ = customCompletions_;
         return;
     }

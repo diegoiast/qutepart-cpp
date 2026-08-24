@@ -615,6 +615,15 @@ auto Qutepart::fixLineFlagColors() -> void {
 
 void Qutepart::setCompletionThreshold(int val) { completionThreshold_ = val; }
 
+void Qutepart::setCustomCompletionsExclusive(bool exclusive) {
+    customCompletionsExclusive_ = exclusive;
+    if (completer_) {
+        completer_->setCustomCompletionsExclusive(exclusive);
+    }
+}
+
+bool Qutepart::customCompletionsExclusive() const { return customCompletionsExclusive_; }
+
 void Qutepart::resetSelection() {
     QTextCursor cursor = textCursor();
     cursor.setPosition(cursor.position());

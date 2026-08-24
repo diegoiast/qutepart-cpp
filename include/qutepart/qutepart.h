@@ -407,6 +407,11 @@ class Qutepart : public QPlainTextEdit {
         completionCallback_ = callback;
     }
 
+    /// Make the completion callback the only source of suggestions for this
+    /// document, suppressing keywords and words scraped from the buffer.
+    void setCustomCompletionsExclusive(bool exclusive);
+    bool customCompletionsExclusive() const;
+
     inline QString lastCompletionSeparator() const { return lastSeparator_; }
     void removeMetaData();
 
@@ -616,6 +621,7 @@ class Qutepart : public QPlainTextEdit {
 
   private:
     CompletionCallback completionCallback_;
+    bool customCompletionsExclusive_ = false;
     QFutureWatcher<QSet<CompletionItem>> *completionWatcher = nullptr;
     QFuture<QSet<CompletionItem>> completionFuture;
     int completionRequestGeneration_ = 0;
