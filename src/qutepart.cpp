@@ -55,7 +55,7 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     completionFuture = QFuture<QSet<CompletionItem>>(); // Initialize the future
     connect(completionWatcher, &QFutureWatcher<QSet<CompletionItem>>::finished, this,
             &Qutepart::onCompletionFutureFinished);
-    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    setVerticalScrollBarPolicy(miniMap_ ? Qt::ScrollBarAlwaysOff : Qt::ScrollBarAlwaysOn);
 
     updateTabStopWidth();
     connect(this, &Qutepart::cursorPositionChanged, this, [this]() {
@@ -335,7 +335,7 @@ void Qutepart::setLineNumbersVisible(bool value) {
     updateViewport();
 }
 
-bool Qutepart::minimapVisible() const { return lineNumberArea_ != nullptr; }
+bool Qutepart::minimapVisible() const { return miniMap_ != nullptr; }
 
 void Qutepart::setMinimapVisible(bool value) {
     if ((miniMap_ != nullptr) == value) {
@@ -345,9 +345,11 @@ void Qutepart::setMinimapVisible(bool value) {
     if (miniMap_) {
         delete miniMap_;
         miniMap_ = nullptr;
+        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     } else {
         miniMap_ = new Minimap(this);
         miniMap_->show();
+        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
     updateViewport();
 }
@@ -1866,6 +1868,30 @@ QTextEdit::ExtraSelection Qutepart::currentLineExtraSelection() const {
 
 void Qutepart::updateViewport() {
     auto cr = contentsRect();
+
+    // Hide scrollbar when minimap is effectively visible
+    if (miniMap_) {
+        auto w = miniMap_->widthHint();
+        auto shouldHideMinimap = cr.width() < w * 4;
+        // If we hide the scrollbar we gain width, so re-evaluate
+        if (shouldHideMinimap && verticalScrollBar()->isVisible()) {
+            if (cr.width() + verticalScrollBar()->width() >= w * 4) {
+                shouldHideMinimap = false;
+            }
+        }
+        Qt::ScrollBarPolicy desired =
+            shouldHideMinimap ? Qt::ScrollBarAlwaysOn : Qt::ScrollBarAlwaysOff;
+        if (verticalScrollBarPolicy() != desired) {
+            setVerticalScrollBarPolicy(desired);
+            cr = contentsRect();
+        }
+    } else {
+        if (verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOn) {
+            setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+            cr = contentsRect();
+        }
+    }
+
     auto currentX = cr.left();
     auto top = cr.top();
     auto height = cr.height();
@@ -1900,6 +1926,9 @@ void Qutepart::updateViewport() {
 
         if (shouldHide) {
             miniMap_->hide();
+            if (verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOn) {
+                setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+            }
         } else {
             miniMap_->show();
             miniMap_->setGeometry(QRect(cr.width() - width - deltaOrizontal, top, width, height));

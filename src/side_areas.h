@@ -82,8 +82,14 @@ class Minimap : public SideArea {
     QFont minimapFont() const;
     void updateScroll(const QPoint &pos);
     void drawMinimapText(QPainter *painter, bool simple);
+    int visibleLineCount() const;
+    int visibleViewportStartIndex() const;
+    int viewportLineCount() const;
+    int minimapOffsetForStart(int startIndex) const;
+    QRect viewportRect() const;
 
     bool isDragging = false;
+    int dragOffset = 0;
     const int lineHeight = 3;
     const int charWidth = 3;
 };
