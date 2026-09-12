@@ -1,6 +1,5 @@
 #include "sonnet_spellchecker.h"
 #include "syntax_highlighter.h"
-#include "text_type.h"
 
 #include <QDir>
 #include <QFile>
@@ -52,7 +51,7 @@ SonnetSpellChecker::~SonnetSpellChecker() {
 }
 
 void SonnetSpellChecker::spellCheck(const QTextBlock &block, SyntaxHighlighter *highlighter) {
-    const QString text = block.text();
+    auto text = block.text();
 
     if (text.isEmpty() || !speller_->isValid()) {
         return;
@@ -64,13 +63,13 @@ void SonnetSpellChecker::spellCheck(const QTextBlock &block, SyntaxHighlighter *
         if (!wordTokenizer_->isSpellcheckable()) {
             continue;
         }
-        if (!isSpellCheckable(block, word.position())) {
+        if (!highlighter->isSpellCheckable(word.position(), word.length())) {
             continue;
         }
-
         if (speller_->isMisspelled(word.toString())) {
             QTextCharFormat format;
             format.setFontUnderline(true);
+            // format.setUnderlineStyle(QTextCharFormat::WaveUnderline);
             format.setUnderlineStyle(QTextCharFormat::SpellCheckUnderline);
             format.setUnderlineColor(Qt::red);
             highlighter->addBlockFormat(word.position(), word.length(), format);
