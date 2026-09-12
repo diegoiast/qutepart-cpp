@@ -389,13 +389,17 @@ int Minimap::visibleLineCount() const {
 }
 
 int Minimap::visibleViewportStartIndex() const {
-    auto viewportStartLine = qpart_->verticalScrollBar()->value();
+    auto first = qpart_->firstVisibleBlock();
+    if (!first.isValid()) {
+        return 0;
+    }
     auto idx = 0;
     for (auto b = qpart_->document()->firstBlock(); b.isValid(); b = b.next()) {
+        if (b == first) {
+            break;
+        }
         if (b.isVisible()) {
-            if (b.blockNumber() < viewportStartLine) {
-                ++idx;
-            }
+            ++idx;
         }
     }
     idx = qBound(0, idx, qMax(0, visibleLineCount() - 1));
@@ -498,8 +502,8 @@ void Minimap::updateScroll(const QPoint &pos) {
     // dragOffset preserves the grab point inside the thumb for smooth dragging.
     auto desiredY = pos.y() - dragOffset;
 
-    int maxStart = qMax(0, total - viewportLines);
-    int maxViewportY;
+    auto maxStart = qMax(0, total - viewportLines);
+    auto maxViewportY = 0;
     if (contentH <= visibleH) {
         maxViewportY = qMax(0, contentH - viewportHeight);
     } else {
@@ -507,7 +511,7 @@ void Minimap::updateScroll(const QPoint &pos) {
     }
     desiredY = qBound(0, desiredY, maxViewportY);
 
-    int targetVisibleIndex = 0;
+    auto targetVisibleIndex = 0;
     if (contentH <= visibleH) {
         // Content fits: 1:1 mapping (3px per line)
         targetVisibleIndex = desiredY / lineHeight;
@@ -549,13 +553,39 @@ void Minimap::updateScroll(const QPoint &pos) {
         }
     }
 
+    // Determine the line under the mouse before scrolling (handles hidden blocks via visible index)
+    auto oldStart = visibleViewportStartIndex();
+    auto oldOffset = minimapOffsetForStart(oldStart);
+    auto clickedVisibleIndex = (pos.y() + oldOffset) / lineHeight;
+    auto clickedBlock = QTextBlock();
+
+    clickedVisibleIndex = qBound(0, clickedVisibleIndex, total - 1);
+    {
+        auto idx = 0;
+        for (auto b = doc->firstBlock(); b.isValid(); b = b.next()) {
+            if (b.isVisible()) {
+                if (idx == clickedVisibleIndex) {
+                    clickedBlock = b;
+                    break;
+                }
+                ++idx;
+            }
+        }
+        if (!clickedBlock.isValid()) {
+            for (auto b = doc->lastBlock(); b.isValid(); b = b.previous()) {
+                if (b.isVisible()) {
+                    clickedBlock = b;
+                    break;
+                }
+            }
+        }
+    }
+
     qpart_->verticalScrollBar()->setValue(targetBlock.blockNumber());
-    // Keep cursor near the viewport top for a stable current-line highlight,
-    // but avoid moving it on every drag if already visible.
-    auto cursorBlock = qpart_->textCursor().block();
-    if (!cursorBlock.isVisible() ||
-        cursorBlock.blockNumber() < targetBlock.blockNumber() ||
-        cursorBlock.blockNumber() >= targetBlock.blockNumber() + viewportLines) {
+    // Current line should be where the mouse clicked, always
+    if (clickedBlock.isValid()) {
+        qpart_->setTextCursor(QTextCursor(clickedBlock));
+    } else if (targetBlock.isValid()) {
         qpart_->setTextCursor(QTextCursor(targetBlock));
     }
 }
