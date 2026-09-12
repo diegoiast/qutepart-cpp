@@ -51,10 +51,10 @@ int Language::highlightBlock(QTextBlock block, QVector<QTextLayout::FormatRange>
 
 int Language::highlightBlock(QTextBlock block, const QString &text,
                              QVector<QTextLayout::FormatRange> &formats) {
-    ContextStack contextStack = getContextStack(block);
-    TextToMatch textToMatch(text, contextStack.currentData());
+    auto contextStack = getContextStack(block);
+    auto textToMatch = TextToMatch(text, contextStack.currentData());
     auto lineContinue = false;
-    TextBlockUserData *data = dynamic_cast<TextBlockUserData *>(block.userData());
+    auto data = dynamic_cast<TextBlockUserData *>(block.userData());
     if (data && data->magic != 0x51555445) {
         data = nullptr;
     }
@@ -68,9 +68,9 @@ int Language::highlightBlock(QTextBlock block, const QString &text,
     data->textTypeMap.fill(QLatin1Char(' '), textToMatch.textLength);
     data->languageMap.fill(nullptr, textToMatch.textLength);
 
-    QTextBlock prevBlock = block.previous();
+    auto prevBlock = block.previous();
     if (prevBlock.isValid()) {
-        const TextBlockUserData *prevData = dynamic_cast<TextBlockUserData *>(prevBlock.userData());
+        auto prevData = dynamic_cast<const TextBlockUserData *>(prevBlock.userData());
         if (prevData && prevData->magic != 0x51555445) {
             prevData = nullptr;
         }
@@ -92,7 +92,7 @@ int Language::highlightBlock(QTextBlock block, const QString &text,
 
     data->contexts = contextStack;
 
-    size_t regionsHash = 0;
+    auto regionsHash = 0;
     for (const auto &region : std::as_const(data->regions)) {
         regionsHash = qHash(region, regionsHash);
     }
@@ -120,7 +120,7 @@ void Language::setTheme(const Theme *theme) {
 ContextStack Language::getContextStack(QTextBlock block) {
     TextBlockUserData *data = nullptr;
 
-    QTextBlock prevBlock = block.previous();
+    auto prevBlock = block.previous();
     if (prevBlock.isValid()) {
         data = dynamic_cast<TextBlockUserData *>(prevBlock.userData());
     }

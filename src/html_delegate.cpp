@@ -5,7 +5,6 @@
  */
 
 #include <map>
-#include <string>
 
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>

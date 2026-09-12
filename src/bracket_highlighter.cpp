@@ -55,14 +55,14 @@ QList<QTextEdit::ExtraSelection> BracketHighlighter::highlightBracket(QChar brac
 }
 
 QList<QTextEdit::ExtraSelection> BracketHighlighter::extraSelections(const TextPosition &pos) {
-    QString blockText = pos.block.text();
+    auto blockText = pos.block.text();
 
     if (pos.column < blockText.length() && ALL_BRACKETS.contains(blockText[pos.column]) &&
         isCode(pos.block, pos.column)) {
         return highlightBracket(blockText[pos.column], pos);
     } else if (pos.column > 0 && ALL_BRACKETS.contains(blockText[pos.column - 1]) &&
                isCode(pos.block, pos.column - 1)) {
-        TextPosition newPos = pos;
+        auto newPos = pos;
         newPos.column -= 1;
         return highlightBracket(blockText[pos.column - 1], newPos);
     } else {

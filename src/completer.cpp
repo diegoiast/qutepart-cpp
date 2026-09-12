@@ -65,13 +65,13 @@ class CompletionModel : public QAbstractItemModel {
     // QAbstractItemModel method implementation
     QVariant data(const QModelIndex &index, int role) const override {
         if (role == Qt::DisplayRole && index.row() < words_.length()) {
-            const CompletionItem& item = words_[index.row()];
-            QString text = item.text;
-            QString typed = text.left(typedText_.length());
-            QString canComplete = text.mid(typedText_.length(), canCompleteText_.length());
-            QString rest = text.mid(typedText_.length() + canCompleteText_.length());
-            
-            QString display;
+            auto &item = words_[index.row()];
+            auto text = item.text;
+            auto typed = text.left(typedText_.length());
+            auto canComplete = text.mid(typedText_.length(), canCompleteText_.length());
+            auto rest = text.mid(typedText_.length() + canCompleteText_.length());
+            auto display = QString();
+
             if (!canComplete.isEmpty()) {
                 display = QString("%1<font color=\"#e80000\">%2</font>%3")
                     .arg(typed, canComplete, rest);
@@ -105,10 +105,10 @@ class CompletionModel : public QAbstractItemModel {
             return "";
         }
 
-        QString firstWord = words[0].text;
-        for (int chIndex = 0; chIndex < firstWord.length(); chIndex++) {
-            QChar ch = firstWord[chIndex];
-            for (int wordIndex = 1; wordIndex < words.length(); wordIndex++) {
+        auto firstWord = words[0].text;
+        for (auto chIndex = 0; chIndex < firstWord.length(); chIndex++) {
+            auto ch = firstWord[chIndex];
+            for (auto wordIndex = 1; wordIndex < words.length(); wordIndex++) {
                 if (words[wordIndex].text.length() <= chIndex || words[wordIndex].text[chIndex] != ch) {
                     return firstWord.left(chIndex);
                 }
@@ -122,7 +122,7 @@ class CompletionModel : public QAbstractItemModel {
     QVector<CompletionItem> makeListOfCompletions(const QString &wordBeforeCursor,
                                            const QString &wholeWord) const {
         QVector<CompletionItem> result;
-        for (auto const &item : std::as_const(wordSet_)) {
+        for (auto &item : std::as_const(wordSet_)) {
             if (item.text.startsWith(wordBeforeCursor, Qt::CaseInsensitive) && item.text != wholeWord) {
                 result << item;
             }

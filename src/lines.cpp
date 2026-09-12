@@ -19,7 +19,7 @@ QString Line::text() const { return block_.text(); }
 int Line::length() const { return block_.length() - 1; }
 
 void Line::remove(int pos, int count) {
-    int blockLen = block_.length();
+    auto blockLen = block_.length();
 
     if (pos < 0 || pos > blockLen) {
         qFatal("Wrong Line::remove(pos) %d", pos);
@@ -29,7 +29,7 @@ void Line::remove(int pos, int count) {
         qFatal("Wrong Line::remove(count) %d", count);
     }
 
-    QTextCursor cursor(block_);
+    auto cursor = QTextCursor(block_);
     cursor.setPosition(block_.position() + pos);
     cursor.setPosition(block_.position() + pos + count, QTextCursor::KeepAnchor);
     cursor.removeSelectedText();
@@ -82,29 +82,26 @@ Line Lines::last() const { return Line(document_->lastBlock()); }
 void Lines::append(const QString &lineText) {
     QTextCursor cursor(document_->lastBlock());
     cursor.movePosition(QTextCursor::End);
-
     cursor.beginEditBlock();
-
     cursor.insertBlock();
     cursor.insertText(lineText);
-
     cursor.endEditBlock();
 }
 
 QString Lines::popAt(int lineNumber) {
-    QTextCursor cursor(document_->findBlockByNumber(lineNumber));
-    QString result = cursor.block().text();
+    auto cursor = QTextCursor(document_->findBlockByNumber(lineNumber));
+    auto result = cursor.block().text();
+    auto removedEolAtStart = cursor.selectedText().startsWith(QChar(0x2029));
 
     cursor.beginEditBlock();
-
     cursor.select(QTextCursor::BlockUnderCursor);
-    bool removedEolAtStart = cursor.selectedText().startsWith(QChar(0x2029));
     cursor.removeSelectedText();
-
     if (cursor.atStart()) {
-        cursor.deleteChar(); // remove \n after the line
+        // remove \n after the line
+        cursor.deleteChar();
     } else if (not removedEolAtStart) {
-        cursor.deletePreviousChar(); // remove \n before the line
+        // remove \n before the line
+        cursor.deletePreviousChar();
     }
     cursor.endEditBlock();
 
@@ -113,13 +110,13 @@ QString Lines::popAt(int lineNumber) {
 
 void Lines::insertAt(int lineNumber, const QString &text) {
     if (lineNumber < document_->blockCount()) {
-        QTextCursor cursor(document_->findBlockByNumber(lineNumber));
+        auto cursor = QTextCursor(document_->findBlockByNumber(lineNumber));
         cursor.beginEditBlock();
         cursor.insertText(text);
         cursor.insertBlock();
         cursor.endEditBlock();
     } else if (lineNumber == document_->blockCount()) {
-        QTextCursor cursor(document_);
+        auto cursor = QTextCursor(document_);
         cursor.movePosition(QTextCursor::End);
         cursor.beginEditBlock();
         cursor.insertBlock();

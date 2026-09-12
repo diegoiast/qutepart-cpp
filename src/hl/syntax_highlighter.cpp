@@ -23,8 +23,8 @@ void SyntaxHighlighter::addBlockFormat(int start, int length, const QTextCharFor
         return;
     }
 
-    for (int i = start; i < start + length; ++i) {
-        QTextCharFormat merged = this->format(i);
+    for (auto i = start; i < start + length; ++i) {
+        auto merged = this->format(i);
         merged.merge(format);
         setFormat(i, 1, merged);
     }
@@ -38,8 +38,8 @@ bool SyntaxHighlighter::isSpellCheckable(int start, int length) const {
         return false;
     }
 
-    const QTextBlock block = currentBlock();
-    for (int column = start; column < start + length; ++column) {
+    auto block = currentBlock();
+    for (auto column = start; column < start + length; ++column) {
         if (!Qutepart::isSpellCheckable(block, column)) {
             return false;
         }

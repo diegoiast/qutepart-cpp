@@ -99,13 +99,12 @@ TextPosition findClosingBracketForward(QChar bracket, const TextPosition &positi
         return TextPosition();
     }
 
-    int depth = 1;
-
+    auto depth = 1;
     ForwardCharIterator it(position);
     it.step();
 
     while (!it.atEnd()) {
-        QChar ch = it.step();
+        auto ch = it.step();
         // TODO if not self._qpart.isComment(foundBlock.blockNumber(),
         // foundColumn):
         if (ch == opening) {
@@ -147,7 +146,7 @@ TextPosition findOpeningBracketBackward(QChar bracket, const TextPosition &posit
     BackwardCharIterator it(position);
     it.step();
     while (!it.atEnd()) {
-        QChar ch = it.step();
+        auto ch = it.step();
         // TODO if not self._qpart.isComment(foundBlock.blockNumber(),
         // foundColumn):
         if (ch == opening) {
