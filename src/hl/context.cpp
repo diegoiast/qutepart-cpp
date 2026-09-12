@@ -282,7 +282,6 @@ void Context::applyMatchResult(const TextToMatch &textToMatch, const MatchResult
 }
 
 // Parse block. Exits, when reached end of the text, or when context is switched
-
 void Context::parseBlock(ContextStack &contextStack, TextToMatch &textToMatch,
                          QVector<QTextLayout::FormatRange> &formats, QString &textTypeMap,
                          QVector<Language *> &languageMap, bool &lineContinue,
@@ -330,16 +329,17 @@ void Context::parseBlock(ContextStack &contextStack, TextToMatch &textToMatch,
             }
         } else {
             lineContinue = false;
-            if (auto const *format = style.formatData()) {
-                appendFormat(formats, textToMatch.currentColumnIndex, 1, *format);
-            }
-            textTypeMap[textToMatch.currentColumnIndex] = style.textType();
-            languageMap[textToMatch.currentColumnIndex] = this->language.data();
-            if (!this->fallthroughContext.isNull()) {
+            if (this->fallthroughContext.isNull()) {
+                if (auto const *format = style.formatData()) {
+                    appendFormat(formats, textToMatch.currentColumnIndex, 1, *format);
+                }
+                textTypeMap[textToMatch.currentColumnIndex] = style.textType();
+                languageMap[textToMatch.currentColumnIndex] = this->language.data();
+                textToMatch.shiftOnce();
+            } else {
                 contextStack.switchTo(this->fallthroughContext);
                 return;
             }
-            textToMatch.shiftOnce();
         }
     }
 }
