@@ -651,10 +651,63 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
                         }
                     }
                 }
+                // Selection tint if >=50% of line is selected - just text, not whole line
+                auto isSelected = false;
+                auto selColor = QColor();
+                {
+                    auto blockStart = static_cast<int>(block.position());
+                    auto blockLen = static_cast<int>(block.text().length());
+                    if (blockLen > 0) {
+                        auto blockEnd = blockStart + blockLen;
+                        auto checkCursor = [&](const QTextCursor &c) -> bool {
+                            if (!c.hasSelection()) return false;
+                            auto s = static_cast<int>(c.selectionStart());
+                            auto e = static_cast<int>(c.selectionEnd());
+                            auto is = std::max(blockStart, s);
+                            auto ie = std::min(blockEnd, e);
+                            if (ie > is) {
+                                auto ratio = double(ie - is) / blockLen;
+                                return ratio >= 0.5;
+                            }
+                            return false;
+                        };
+                        if (checkCursor(qpart_->textCursor())) {
+                            isSelected = true;
+                        } else {
+                            for (auto &ec : qpart_->extraCursors) {
+                                if (checkCursor(ec)) {
+                                    isSelected = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (isSelected) {
+                            selColor = qpart_->palette().color(QPalette::Highlight);
+                            selColor.setAlpha(130);
+                        }
+                    }
+                }
                 if (backgronud.alpha() != 0) {
                     painter->setPen(Qt::NoPen);
                     painter->setBrush(backgronud);
                     painter->drawRect(minimapArea.left(), y, minimapArea.width(), lineHeight);
+                }
+                // Draw selection tint over text only
+                if (isSelected) {
+                    painter->setPen(Qt::NoPen);
+                    painter->setBrush(selColor);
+                    if (simple) {
+                        auto textLen = block.text().length();
+                        auto selW = qMin(minimapArea.width(), textLen * charWidth);
+                        painter->drawRect(minimapArea.left(), y, selW, lineHeight);
+                    } else {
+                        auto fm = painter->fontMetrics();
+                        auto textW = fm.horizontalAdvance(block.text());
+                        auto availW = minimapArea.width() - 10;
+                        auto selW = qMin(availW, textW);
+                        // Add a little padding so tint covers text nicely
+                        painter->drawRect(minimapArea.left() + 5, y, selW, lineHeight);
+                    }
                 }
                 painter->setPen(textColor);
                 if (simple) {
