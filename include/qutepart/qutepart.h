@@ -662,6 +662,12 @@ class Qutepart : public QPlainTextEdit {
     int completionThreshold_;
     int viewportMarginStart_;
     int viewportMarginEnd_;
+    int lastMinimapBlock_ = -1;
+    bool lastMinimapHasSelection_ = false;
+    int lastHighlightBlock_ = -1;
+    QString lastHighlightText_;
+    int lastHighlightBlockCount_ = -1;
+    QList<QTextEdit::ExtraSelection> lastHighlightResult_;
 
     // private, not API
     QAction *homeAction_;

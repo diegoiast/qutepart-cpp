@@ -67,10 +67,12 @@ class MarkArea : public SideArea {
 };
 
 class Minimap : public SideArea {
+    Q_OBJECT
   public:
     Minimap(Qutepart *textEdit);
 
     int widthHint() const;
+    void invalidateCache();
 
   protected:
     virtual void mouseMoveEvent(QMouseEvent *event) override;
@@ -87,11 +89,19 @@ class Minimap : public SideArea {
     int viewportLineCount() const;
     int minimapOffsetForStart(int startIndex) const;
     QRect viewportRect() const;
+    void ensureCache() const;
+    int blockNumberForVisibleIndex(int idx) const;
+    int visibleIndexForBlock(int blockNumber) const;
 
     bool isDragging = false;
     int dragOffset = 0;
+    bool dragCenter = false;
     const int lineHeight = 3;
     const int charWidth = 3;
+
+    mutable QVector<QTextBlock> visibleCache_;
+    mutable bool cacheDirty_ = true;
+    mutable int cachedBlockCount_ = -1;
 };
 
 class FoldingArea : public SideArea {

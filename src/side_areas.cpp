@@ -11,8 +11,10 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QScrollBar>
+#include <QSet>
 #include <QTextBlock>
 #include <QToolTip>
+#include <algorithm>
 
 #include "qutepart.h"
 #include "text_block_flags.h"
@@ -349,7 +351,9 @@ QPixmap MarkArea::getCachedPixmap(QPixmap pixmap, int targetSize, QHash<QString,
 }
 
 Minimap::Minimap(Qutepart *textEdit) : SideArea(textEdit) {
-    // TODO?
+    connect(textEdit->document(), &QTextDocument::blockCountChanged, this,
+            [this]() { invalidateCache(); });
+    cacheDirty_ = true;
 }
 
 int Minimap::widthHint() const { return 150; }
@@ -368,42 +372,116 @@ void Minimap::mousePressEvent(QMouseEvent *event) {
     auto rect = viewportRect();
     if (rect.isValid() && rect.contains(event->pos())) {
         dragOffset = event->pos().y() - rect.top();
+        dragCenter = false;
     } else {
-        // Click outside thumb: grab thumb by its center so the view centers on click
-        // and subsequent dragging keeps the cursor centered.
+        // Click outside thumb: first line at click position
         dragOffset = rect.height() / 2;
+        dragCenter = true;
     }
     updateScroll(event->pos());
 }
 
-void Minimap::mouseReleaseEvent(QMouseEvent *) { isDragging = false; }
+void Minimap::mouseReleaseEvent(QMouseEvent *) {
+    isDragging = false;
+    dragCenter = false;
+}
 
-int Minimap::visibleLineCount() const {
-    auto count = 0;
-    for (auto b = qpart_->document()->firstBlock(); b.isValid(); b = b.next()) {
-        if (b.isVisible()) {
-            ++count;
+void Minimap::invalidateCache() { cacheDirty_ = true; }
+
+void Minimap::ensureCache() const {
+    auto doc = qpart_ ? qpart_->document() : nullptr;
+    if (!doc) {
+        return;
+    }
+    if (!isVisible() || doc->blockCount() > 20000) {
+        if (!visibleCache_.isEmpty() || cacheDirty_) {
+            visibleCache_.clear();
+            cachedBlockCount_ = doc->blockCount();
+            cacheDirty_ = false;
+        }
+        return;
+    }
+    auto curCount = doc->blockCount();
+    if (!cacheDirty_ && cachedBlockCount_ == curCount && !visibleCache_.isEmpty()) {
+        return;
+    }
+    if (!cacheDirty_ && cachedBlockCount_ == curCount) {
+        return;
+    }
+    if (!cacheDirty_ && curCount == cachedBlockCount_ + 1 && !visibleCache_.isEmpty()) {
+        auto lastBlock = doc->findBlockByNumber(curCount - 1);
+        if (lastBlock.isValid()) {
+            auto lastCachedNum = visibleCache_.isEmpty() ? -1 : visibleCache_.last().blockNumber();
+            if (lastBlock.isVisible() && lastBlock.blockNumber() > lastCachedNum) {
+                visibleCache_.append(lastBlock);
+                cachedBlockCount_ = curCount;
+                cacheDirty_ = false;
+                return;
+            } else if (!lastBlock.isVisible()) {
+                cachedBlockCount_ = curCount;
+                cacheDirty_ = false;
+                return;
+            }
         }
     }
-    return count;
+    visibleCache_.clear();
+    visibleCache_.reserve(curCount);
+    for (auto b = doc->firstBlock(); b.isValid(); b = b.next()) {
+        if (b.isVisible()) {
+            visibleCache_.append(b);
+        }
+    }
+    cachedBlockCount_ = curCount;
+    cacheDirty_ = false;
+}
+
+int Minimap::visibleLineCount() const {
+    if (!isVisible() || !qpart_ || !qpart_->document() || qpart_->document()->blockCount() > 20000) {
+        return 0;
+    }
+    ensureCache();
+    return visibleCache_.size();
 }
 
 int Minimap::visibleViewportStartIndex() const {
+    if (!isVisible() || !qpart_ || !qpart_->document() || qpart_->document()->blockCount() > 20000) {
+        return 0;
+    }
+    ensureCache();
+    if (visibleCache_.isEmpty()) {
+        return 0;
+    }
     auto first = qpart_->firstVisibleBlock();
     if (!first.isValid()) {
         return 0;
     }
-    auto idx = 0;
-    for (auto b = qpart_->document()->firstBlock(); b.isValid(); b = b.next()) {
-        if (b == first) {
-            break;
+    for (auto i = 0; i < visibleCache_.size(); ++i) {
+        if (visibleCache_.at(i).blockNumber() == first.blockNumber()) {
+            return i;
         }
-        if (b.isVisible()) {
-            ++idx;
+        if (visibleCache_.at(i).blockNumber() > first.blockNumber()) {
+            return i;
         }
     }
-    idx = qBound(0, idx, qMax(0, visibleLineCount() - 1));
-    return idx;
+    return qMax(0, int(visibleCache_.size()) - 1);
+}
+
+int Minimap::blockNumberForVisibleIndex(int idx) const {
+    ensureCache();
+    if (idx < 0 || idx >= visibleCache_.size()) {
+        return -1;
+    }
+    return visibleCache_.at(idx).blockNumber();
+}
+
+int Minimap::visibleIndexForBlock(int blockNumber) const {
+    ensureCache();
+    for (auto i = 0; i < visibleCache_.size(); ++i) {
+        if (visibleCache_.at(i).blockNumber() == blockNumber) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 int Minimap::viewportLineCount() const {
@@ -427,9 +505,7 @@ int Minimap::minimapOffsetForStart(int startIndex) const {
         return 0;
     }
     auto maxOffset = contentH - visibleH;
-    // Proportional offset: maps start 0..maxStart -> offset 0..maxOffset
-    // Use 64-bit to avoid overflow for large docs.
-    auto offset = static_cast<int>((static_cast<qint64>(startIndex) * maxOffset) / maxStart);
+    auto offset = qRound(double(startIndex) * maxOffset / maxStart);
     return qBound(0, offset, maxOffset);
 }
 
@@ -440,16 +516,18 @@ QRect Minimap::viewportRect() const {
     auto total = visibleLineCount();
     auto viewportLines = viewportLineCount();
     auto start = visibleViewportStartIndex();
-    auto offset = minimapOffsetForStart(start);
     auto viewportHeight = viewportLines * lineHeight;
     auto minimapArea = rect();
     auto minimapVisibleHeight = minimapArea.height();
-    auto viewportStartY = start * lineHeight - offset;
     auto maxY = qMax(0, minimapVisibleHeight - viewportHeight);
     auto h = qMin(viewportHeight, minimapVisibleHeight);
-
+    auto viewportStartY = 0;
     if (total * lineHeight <= minimapVisibleHeight) {
         maxY = qMax(0, total * lineHeight - viewportHeight);
+        viewportStartY = start * lineHeight;
+    } else {
+        auto maxStart = qMax(1, total - viewportLines);
+        viewportStartY = qRound(double(start) * maxY / maxStart);
     }
     viewportStartY = qBound(0, viewportStartY, maxY);
     if (total * lineHeight <= minimapVisibleHeight) {
@@ -488,7 +566,6 @@ void Minimap::updateScroll(const QPoint &pos) {
     if (!qpart_) {
         return;
     }
-    auto doc = qpart_->document();
     auto total = visibleLineCount();
     if (total == 0) {
         return;
@@ -496,96 +573,52 @@ void Minimap::updateScroll(const QPoint &pos) {
     auto viewportLines = viewportLineCount();
     auto viewportHeight = viewportLines * lineHeight;
     auto visibleH = height();
-    auto contentH = total * lineHeight;
 
-    // Desired top of the viewport indicator inside the minimap widget.
-    // dragOffset preserves the grab point inside the thumb for smooth dragging.
-    auto desiredY = pos.y() - dragOffset;
+    auto clickedVisibleIndex = 0;
+    if (visibleH > 0) {
+        clickedVisibleIndex = qRound(double(pos.y()) * total / visibleH);
+    }
+    clickedVisibleIndex = qBound(0, clickedVisibleIndex, total - 1);
 
     auto maxStart = qMax(0, total - viewportLines);
-    auto maxViewportY = 0;
-    if (contentH <= visibleH) {
-        maxViewportY = qMax(0, contentH - viewportHeight);
-    } else {
-        maxViewportY = qMax(0, visibleH - viewportHeight);
-    }
-    desiredY = qBound(0, desiredY, maxViewportY);
-
     auto targetVisibleIndex = 0;
-    if (contentH <= visibleH) {
-        // Content fits: 1:1 mapping (3px per line)
-        targetVisibleIndex = desiredY / lineHeight;
+    if (dragCenter) {
+        targetVisibleIndex = qBound(0, clickedVisibleIndex, maxStart);
     } else {
-        if (maxViewportY == 0) {
-            targetVisibleIndex = 0;
+        auto maxViewportY = qMax(0, visibleH - viewportHeight);
+        auto desiredY = pos.y() - dragOffset;
+        desiredY = qBound(0, desiredY, maxViewportY);
+        if (maxViewportY > 0) {
+            targetVisibleIndex = qRound(double(desiredY) * maxStart / maxViewportY);
         } else {
-            // Invert viewportStartY = start*lh - offset(start)
-            // where offset = start * (contentH - visibleH) / maxStart
-            // => desiredY = start * (visibleH - viewportHeight) / maxStart
-            targetVisibleIndex =
-                static_cast<int>((static_cast<qint64>(desiredY) * maxStart) / maxViewportY);
+            targetVisibleIndex = 0;
         }
+        targetVisibleIndex = qBound(0, targetVisibleIndex, maxStart);
     }
-    targetVisibleIndex = qBound(0, targetVisibleIndex, maxStart);
 
-    // Map visible index -> document block.
+    // Map visible index -> document block via cache O(1)
+    ensureCache();
     auto targetBlock = QTextBlock();
-    auto visibleIdx = 0;
-    for (auto b = doc->firstBlock(); b.isValid(); b = b.next()) {
-        if (b.isVisible()) {
-            if (visibleIdx == targetVisibleIndex) {
-                targetBlock = b;
-                break;
-            }
-            ++visibleIdx;
-        }
+    if (targetVisibleIndex >= 0 && targetVisibleIndex < visibleCache_.size()) {
+        targetBlock = visibleCache_.at(targetVisibleIndex);
+    } else if (!visibleCache_.isEmpty()) {
+        targetBlock = visibleCache_.last();
     }
     if (!targetBlock.isValid()) {
-        // Fallback: last visible block
-        for (auto b = doc->lastBlock(); b.isValid(); b = b.previous()) {
-            if (b.isVisible()) {
-                targetBlock = b;
-                break;
-            }
-        }
-        if (!targetBlock.isValid()) {
-            return;
-        }
+        return;
     }
 
-    // Determine the line under the mouse before scrolling (handles hidden blocks via visible index)
-    auto oldStart = visibleViewportStartIndex();
-    auto oldOffset = minimapOffsetForStart(oldStart);
-    auto clickedVisibleIndex = (pos.y() + oldOffset) / lineHeight;
     auto clickedBlock = QTextBlock();
-
-    clickedVisibleIndex = qBound(0, clickedVisibleIndex, total - 1);
-    {
-        auto idx = 0;
-        for (auto b = doc->firstBlock(); b.isValid(); b = b.next()) {
-            if (b.isVisible()) {
-                if (idx == clickedVisibleIndex) {
-                    clickedBlock = b;
-                    break;
-                }
-                ++idx;
-            }
-        }
-        if (!clickedBlock.isValid()) {
-            for (auto b = doc->lastBlock(); b.isValid(); b = b.previous()) {
-                if (b.isVisible()) {
-                    clickedBlock = b;
-                    break;
-                }
-            }
-        }
+    if (clickedVisibleIndex >= 0 && clickedVisibleIndex < visibleCache_.size()) {
+        clickedBlock = visibleCache_.at(clickedVisibleIndex);
+    } else if (!visibleCache_.isEmpty()) {
+        clickedBlock = visibleCache_.last();
     }
 
     qpart_->verticalScrollBar()->setValue(targetBlock.blockNumber());
-    // Current line should be where the mouse clicked, always
-    if (clickedBlock.isValid()) {
+    if (dragCenter && clickedBlock.isValid()) {
         qpart_->setTextCursor(QTextCursor(clickedBlock));
-    } else if (targetBlock.isValid()) {
+    } else if (dragCenter && targetBlock.isValid()) {
         qpart_->setTextCursor(QTextCursor(targetBlock));
     }
 }
@@ -595,8 +628,6 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
         return;
     }
     auto minimapArea = rect();
-    auto doc = qpart_->document();
-    auto block = doc->firstBlock();
     auto visibleViewportStartLine = visibleViewportStartIndex();
     auto currentLineNumber = qpart_->textCursor().blockNumber();
 
@@ -627,113 +658,128 @@ void Minimap::drawMinimapText(QPainter *painter, bool simple) {
     painter->fillRect(viewportRect, minimapBackground);
     painter->setFont(minimapFont());
 
-    auto lineNumber = 0;
-    auto drawnLines = 0;
-    while (block.isValid()) {
-        if (block.isVisible()) {
-            auto y = drawnLines * lineHeight - minimapOffset;
-            if (y >= minimapArea.height()) {
-                break;
+    ensureCache();
+    auto total = visibleCache_.size();
+    if (total == 0) {
+        painter->restore();
+        return;
+    }
+    // Precompute selected blocks for fast per-line check during mouse selection drag
+    auto selectedBlocks = QSet<int>();
+    {
+        auto docForSel = qpart_->document();
+        auto addSelection = [&](const QTextCursor &c) {
+            if (!c.hasSelection()) return;
+            auto s = static_cast<int>(c.selectionStart());
+            auto e = static_cast<int>(c.selectionEnd());
+            if (e <= s) return;
+            auto startBlock = docForSel->findBlock(s);
+            auto endBlock = docForSel->findBlock(e);
+            for (auto b = startBlock; b.isValid(); b = b.next()) {
+                if (!b.isVisible()) {
+                    if (b == endBlock) break;
+                    continue;
+                }
+                auto bStart = static_cast<int>(b.position());
+                auto bLen = static_cast<int>(b.text().length());
+                if (bLen == 0) {
+                    if (b == endBlock) break;
+                    continue;
+                }
+                auto bEnd = bStart + bLen;
+                auto is = std::max(bStart, s);
+                auto ie = std::min(bEnd, e);
+                if (ie > is) {
+                    auto ratio = double(ie - is) / bLen;
+                    if (ratio >= 0.5) {
+                        selectedBlocks.insert(b.blockNumber());
+                    }
+                }
+                if (b == endBlock) break;
             }
-
-            if (y + lineHeight >= 0) {
-                auto backgronud = QColor(Qt::transparent);
-                int flags[] = {BOOMARK_BIT, MODIFIED_BIT,   WARNING_BIT,  ERROR_BIT,
-                               INFO_BIT,    BREAKPOINT_BIT, EXECUTING_BIT};
-                if (lineNumber == currentLineNumber) {
-                    backgronud = qpart_->currentLineColor();
-                }
-                for (auto flag : flags) {
-                    if (hasFlag(block, flag)) {
-                        auto color = qpart_->getColorForLineFlag(flag);
-                        if (color.alpha() != 0) {
-                            backgronud = blendColors(color, backgronud);
-                        }
-                    }
-                }
-                // Selection tint if >=50% of line is selected - just text, not whole line
-                auto isSelected = false;
-                auto selColor = QColor();
-                {
-                    auto blockStart = static_cast<int>(block.position());
-                    auto blockLen = static_cast<int>(block.text().length());
-                    if (blockLen > 0) {
-                        auto blockEnd = blockStart + blockLen;
-                        auto checkCursor = [&](const QTextCursor &c) -> bool {
-                            if (!c.hasSelection()) return false;
-                            auto s = static_cast<int>(c.selectionStart());
-                            auto e = static_cast<int>(c.selectionEnd());
-                            auto is = std::max(blockStart, s);
-                            auto ie = std::min(blockEnd, e);
-                            if (ie > is) {
-                                auto ratio = double(ie - is) / blockLen;
-                                return ratio >= 0.5;
-                            }
-                            return false;
-                        };
-                        if (checkCursor(qpart_->textCursor())) {
-                            isSelected = true;
-                        } else {
-                            for (auto &ec : qpart_->extraCursors) {
-                                if (checkCursor(ec)) {
-                                    isSelected = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (isSelected) {
-                            selColor = qpart_->palette().color(QPalette::Highlight);
-                            selColor.setAlpha(130);
-                        }
-                    }
-                }
-                if (backgronud.alpha() != 0) {
-                    painter->setPen(Qt::NoPen);
-                    painter->setBrush(backgronud);
-                    painter->drawRect(minimapArea.left(), y, minimapArea.width(), lineHeight);
-                }
-                // Draw selection tint over text only
-                if (isSelected) {
-                    painter->setPen(Qt::NoPen);
-                    painter->setBrush(selColor);
-                    if (simple) {
-                        auto textLen = block.text().length();
-                        auto selW = qMin(minimapArea.width(), textLen * charWidth);
-                        painter->drawRect(minimapArea.left(), y, selW, lineHeight);
-                    } else {
-                        auto fm = painter->fontMetrics();
-                        auto textW = fm.horizontalAdvance(block.text());
-                        auto availW = minimapArea.width() - 10;
-                        auto selW = qMin(availW, textW);
-                        // Add a little padding so tint covers text nicely
-                        painter->drawRect(minimapArea.left() + 5, y, selW, lineHeight);
-                    }
-                }
-                painter->setPen(textColor);
-                if (simple) {
-                    auto lineText = block.text();
-                    for (auto charIndex = 0; charIndex < lineText.length(); ++charIndex) {
-                        auto dotX = minimapArea.left() + charIndex * charWidth;
-                        if (dotX >= minimapArea.right()) {
-                            break;
-                        }
-                        auto isDrawable = lineText.at(charIndex).isLetterOrNumber() ||
-                                          lineText.at(charIndex).isPunct();
-                        if (isDrawable) {
-                            painter->drawPoint(dotX, y);
-                        }
-                    }
-                } else {
-                    auto padding = 5;
-                    auto textRect = QRectF(minimapArea.left() + padding, y,
-                                           minimapArea.width() - padding * 2, lineHeight);
-                    painter->drawText(textRect, Qt::AlignLeft, block.text());
-                }
-            }
-            drawnLines++;
+        };
+        addSelection(qpart_->textCursor());
+        for (auto &ec : qpart_->extraCursors) {
+            addSelection(ec);
         }
-        block = block.next();
-        lineNumber++;
+    }
+    auto startDrawIdx = minimapOffset / lineHeight;
+    startDrawIdx = qBound(0, startDrawIdx, qMax(0, total - 1));
+    auto maxLines = minimapArea.height() / lineHeight + 3;
+    auto endIdx = qMin(total, startDrawIdx + maxLines);
+    for (auto idx = startDrawIdx; idx < endIdx; ++idx) {
+        auto y = idx * lineHeight - minimapOffset;
+        if (y >= minimapArea.height()) {
+            break;
+        }
+        if (y + lineHeight < 0) {
+            continue;
+        }
+        auto curBlock = visibleCache_.at(idx);
+        if (!curBlock.isValid()) {
+            continue;
+        }
+        auto blockNumber = curBlock.blockNumber();
+        auto backgronud = QColor(Qt::transparent);
+        int flags[] = {BOOMARK_BIT, MODIFIED_BIT,   WARNING_BIT,  ERROR_BIT,
+                       INFO_BIT,    BREAKPOINT_BIT, EXECUTING_BIT};
+        if (blockNumber == currentLineNumber) {
+            backgronud = qpart_->currentLineColor();
+        }
+        for (auto flag : flags) {
+            if (hasFlag(curBlock, flag)) {
+                auto color = qpart_->getColorForLineFlag(flag);
+                if (color.alpha() != 0) {
+                    backgronud = blendColors(color, backgronud);
+                }
+            }
+        }
+        auto isSelected = selectedBlocks.contains(blockNumber);
+        auto selColor = QColor();
+        if (isSelected) {
+            selColor = qpart_->palette().color(QPalette::Highlight);
+            selColor.setAlpha(130);
+        }
+        if (backgronud.alpha() != 0) {
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(backgronud);
+            painter->drawRect(minimapArea.left(), y, minimapArea.width(), lineHeight);
+        }
+        if (isSelected) {
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(selColor);
+            if (simple) {
+                auto textLen = curBlock.text().length();
+                auto selW = qMin(minimapArea.width(), textLen * charWidth);
+                painter->drawRect(minimapArea.left(), y, selW, lineHeight);
+            } else {
+                auto fm = painter->fontMetrics();
+                auto textW = fm.horizontalAdvance(curBlock.text());
+                auto availW = minimapArea.width() - 10;
+                auto selW = qMin(availW, textW);
+                painter->drawRect(minimapArea.left() + 5, y, selW, lineHeight);
+            }
+        }
+        painter->setPen(textColor);
+        if (simple) {
+            auto lineText = curBlock.text();
+            for (auto charIndex = 0; charIndex < lineText.length(); ++charIndex) {
+                auto dotX = minimapArea.left() + charIndex * charWidth;
+                if (dotX >= minimapArea.right()) {
+                    break;
+                }
+                auto isDrawable = lineText.at(charIndex).isLetterOrNumber() ||
+                                  lineText.at(charIndex).isPunct();
+                if (isDrawable) {
+                    painter->drawPoint(dotX, y);
+                }
+            }
+        } else {
+            auto padding = 5;
+            auto textRect = QRectF(minimapArea.left() + padding, y,
+                                   minimapArea.width() - padding * 2, lineHeight);
+            painter->drawText(textRect, Qt::AlignLeft, curBlock.text());
+        }
     }
 
     painter->restore();

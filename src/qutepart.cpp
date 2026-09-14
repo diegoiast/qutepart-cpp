@@ -62,10 +62,25 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
         lastWordUnderCursor.clear();
         updateExtraSelections();
         viewport()->update();
-        if (miniMap_) {
-            miniMap_->update();
+        if (miniMap_ && miniMap_->isVisible()) {
+            auto curBlock = textCursor().blockNumber();
+            auto hasSel = textCursor().hasSelection();
+            if (!hasSel) {
+                for (auto &ec : extraCursors) {
+                    if (ec.hasSelection()) {
+                        hasSel = true;
+                        break;
+                    }
+                }
+            }
+            if (curBlock != lastMinimapBlock_ || hasSel != lastMinimapHasSelection_) {
+                lastMinimapBlock_ = curBlock;
+                lastMinimapHasSelection_ = hasSel;
+                miniMap_->update();
+            }
         }
     });
+    connect(document(), &QTextDocument::blockCountChanged, this, [this]() { updateViewport(); });
 
     connect(document(), &QTextDocument::contentsChange, this, [this]() {
         auto block = textCursor().block();
@@ -335,10 +350,18 @@ void Qutepart::setLineNumbersVisible(bool value) {
     updateViewport();
 }
 
-bool Qutepart::minimapVisible() const { return miniMap_ != nullptr; }
+bool Qutepart::minimapVisible() const {
+    if (!miniMap_) return false;
+    if (document()->blockCount() > 20000) return false;
+    return true;
+}
 
 void Qutepart::setMinimapVisible(bool value) {
     if ((miniMap_ != nullptr) == value) {
+        return;
+    }
+
+    if (value && document()->blockCount() > 20000) {
         return;
     }
 
@@ -1869,12 +1892,13 @@ QTextEdit::ExtraSelection Qutepart::currentLineExtraSelection() const {
 void Qutepart::updateViewport() {
     auto cr = contentsRect();
 
-    // Hide scrollbar when minimap is effectively visible
+    // Hide scrollbar when minimap is effectively visible, but not for large docs >20k
+    auto isLargeDoc = document()->blockCount() > 20000;
     if (miniMap_) {
         auto w = miniMap_->widthHint();
-        auto shouldHideMinimap = cr.width() < w * 4;
-        // If we hide the scrollbar we gain width, so re-evaluate
-        if (shouldHideMinimap && verticalScrollBar()->isVisible()) {
+        auto shouldHideMinimap = isLargeDoc || cr.width() < w * 4;
+        // If we hide the scrollbar we gain width, so re-evaluate (only for narrow check, not large doc)
+        if (!isLargeDoc && shouldHideMinimap && verticalScrollBar()->isVisible()) {
             if (cr.width() + verticalScrollBar()->width() >= w * 4) {
                 shouldHideMinimap = false;
             }
@@ -1922,7 +1946,8 @@ void Qutepart::updateViewport() {
     if (miniMap_) {
         auto mainWidth = cr.width();
         auto width = miniMap_->widthHint();
-        auto shouldHide = mainWidth < width * 4;
+        auto isLargeDocForHide = document()->blockCount() > 20000;
+        auto shouldHide = isLargeDocForHide || mainWidth < width * 4;
 
         if (shouldHide) {
             miniMap_->hide();
