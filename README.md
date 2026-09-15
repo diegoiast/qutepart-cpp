@@ -94,13 +94,16 @@ All features are configurable
     can be overwritten.
 37. Zoom document (change font size on the fly).
 38. Change indentation of text (tab/shift+tab).
-39. Preview side mini-map.
-40. Toogle folding.
-41. Smart toggle folding - when folding a nested fold, parent level will get folded.
+39. Toggle folding.
+40. Smart toggle folding - when folding a nested fold, parent level will get folded.
     `auto f() { while (){ if` ... - assume you are on `if`, this will get folded,
     then `while` then `f()`, all with the same shortcut key
-42. Top level folding. On Java, will fold all classes, keeping first level open (same for XML,
+41. Top level folding. On Java, will fold all classes, keeping first level open (same for XML,
     top level fold will be open, but the first childs gets folded).
+42. Preview side minimap, can be used as a scrollbar (vertical scrollbar is hidden)/
+43. Minimap gets hidden when widget is too narrow or document is too large (30,000 lines).
+44. Minimap degrades to "dots" instead text drawing between 20,000 and 30,000 lines for performance.
+
 
 Planned features
 
