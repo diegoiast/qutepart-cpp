@@ -574,9 +574,16 @@ void Minimap::updateScroll(const QPoint &pos) {
     auto viewportHeight = viewportLines * lineHeight;
     auto visibleH = height();
 
+    // For small docs the drawn text does not fill the widget, so the
+    // draggable/clickable range must follow the text extent, not the full
+    // widget height. Otherwise reaching the end of the document would
+    // require dragging into the empty area below the text.
+    auto contentH = total * lineHeight;
+    auto travelH = qMin(visibleH, contentH);
+
     auto clickedVisibleIndex = 0;
-    if (visibleH > 0) {
-        clickedVisibleIndex = qRound(double(pos.y()) * total / visibleH);
+    if (travelH > 0) {
+        clickedVisibleIndex = qRound(double(pos.y()) * total / travelH);
     }
     clickedVisibleIndex = qBound(0, clickedVisibleIndex, total - 1);
 
@@ -585,7 +592,7 @@ void Minimap::updateScroll(const QPoint &pos) {
     if (dragCenter) {
         targetVisibleIndex = qBound(0, clickedVisibleIndex, maxStart);
     } else {
-        auto maxViewportY = qMax(0, visibleH - viewportHeight);
+        auto maxViewportY = qMax(0, travelH - viewportHeight);
         auto desiredY = pos.y() - dragOffset;
         desiredY = qBound(0, desiredY, maxViewportY);
         if (maxViewportY > 0) {
