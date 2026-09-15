@@ -3,8 +3,6 @@
 #include "qutepart/qutepart.h"
 #include "side_areas.h"
 
-using namespace Qutepart;
-
 class TestMinimapLarge : public QObject {
     Q_OBJECT
 private slots:
@@ -21,7 +19,7 @@ private slots:
         qpart->setMinimapVisible(true);
         QApplication::processEvents();
         QVERIFY(qpart->minimapVisible());
-        auto *mini = qpart->findChild<Minimap*>();
+        auto *mini = qpart->findChild<Qutepart::Minimap*>();
         QVERIFY(mini != nullptr);
         QVERIFY(mini->isVisible());
 
@@ -52,7 +50,7 @@ private slots:
         QApplication::processEvents();
         QVERIFY(qpart->minimapVisible());
         // Note: need to get new mini pointer after re-creation
-        auto *mini2 = qpart->findChild<Minimap*>();
+        auto *mini2 = qpart->findChild<Qutepart::Minimap*>();
         QVERIFY(mini2 != nullptr);
         QVERIFY(mini2->isVisible());
 
@@ -75,7 +73,7 @@ private slots:
         qpart->setMinimapVisible(true);
         QApplication::processEvents();
         QVERIFY(qpart->minimapVisible());
-        auto *mini = qpart->findChild<Minimap*>();
+        auto *mini = qpart->findChild<Qutepart::Minimap*>();
         QVERIFY(mini->isVisible());
 
         // One more line should hide (20001)
@@ -85,7 +83,7 @@ private slots:
         QApplication::processEvents();
         QVERIFY(!qpart->minimapVisible());
         // mini may have been deleted or hidden, get new pointer
-        auto *mini2 = qpart->findChild<Minimap*>();
+        auto *mini2 = qpart->findChild<Qutepart::Minimap*>();
         if (mini2) QVERIFY(!mini2->isVisible());
 
         delete qpart;

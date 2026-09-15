@@ -4,8 +4,6 @@
 #include "qutepart/qutepart.h"
 #include "side_areas.h"
 
-using namespace Qutepart;
-
 class TestMinimapSmall : public QObject {
     Q_OBJECT
 private slots:
@@ -24,7 +22,7 @@ private slots:
         qpart->setMinimapVisible(true);
         QApplication::processEvents();
 
-        auto *mini = qpart->findChild<Minimap*>();
+        auto *mini = qpart->findChild<Qutepart::Minimap*>();
         QVERIFY(mini != nullptr);
         mini->resize(150, 800);
         QApplication::processEvents();
