@@ -73,6 +73,7 @@ class Minimap : public SideArea {
 
     int widthHint() const;
     void invalidateCache();
+    int visibleLineCount() const;
 
   protected:
     virtual void mouseMoveEvent(QMouseEvent *event) override;
@@ -84,7 +85,6 @@ class Minimap : public SideArea {
     QFont minimapFont() const;
     void updateScroll(const QPoint &pos);
     void drawMinimapText(QPainter *painter, bool simple);
-    int visibleLineCount() const;
     int visibleViewportStartIndex() const;
     int viewportLineCount() const;
     int minimapOffsetForStart(int startIndex) const;

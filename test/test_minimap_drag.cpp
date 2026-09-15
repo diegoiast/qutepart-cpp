@@ -60,6 +60,15 @@ private slots:
         QTest::mousePress(mini, Qt::LeftButton, Qt::NoModifier, pressPos);
         QApplication::processEvents();
 
+        // Pressing inside the thumb moves the cursor to the clicked line,
+        // without scrolling the viewport
+        auto cursorBlock = qpart->textCursor().blockNumber();
+        auto expectedCursor = qRound(double(pressY) * 10000 / h);
+        qDebug() << "cursor after press inside" << cursorBlock << "expected" << expectedCursor;
+        QVERIFY2(qAbs(cursorBlock - expectedCursor) < 100,
+                 qPrintable(QString("cursor inside press: got %1, expected ~%2")
+                                .arg(cursorBlock).arg(expectedCursor)));
+
         // After press inside, the viewport should not jump much (still at 0, since we pressed inside)
         auto sbAfterPress = qpart->verticalScrollBar()->value();
         qDebug() << "sb after press inside" << sbAfterPress;
@@ -98,6 +107,14 @@ private slots:
         QVERIFY2(qAbs(sbAfterDrag - expectedFirstLine) < tolerance,
                  qPrintable(QString("sbAfterDrag %1 expected %2 tolerance %3 dragOffset %4 newY %5")
                                 .arg(sbAfterDrag).arg(expectedFirstLine).arg(tolerance).arg(dragOffset).arg(newY)));
+
+        // Dragging the thumb should keep moving the current line
+        auto cursorAfterDrag = qpart->textCursor().blockNumber();
+        auto expectedCursorOnDrag = qRound(double(newY) * 10000 / h);
+        qDebug() << "cursor after drag" << cursorAfterDrag << "expected" << expectedCursorOnDrag;
+        QVERIFY2(qAbs(cursorAfterDrag - expectedCursorOnDrag) < tolerance,
+                 qPrintable(QString("cursorAfterDrag %1 expected ~%2 tolerance %3")
+                                .arg(cursorAfterDrag).arg(expectedCursorOnDrag).arg(tolerance)));
 
         // Also verify that the thumb now is at newPos - dragOffset
         // The new thumb top should be at newPos.y() - dragOffset = 200

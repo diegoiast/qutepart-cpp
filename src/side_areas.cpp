@@ -623,10 +623,13 @@ void Minimap::updateScroll(const QPoint &pos) {
     }
 
     qpart_->verticalScrollBar()->setValue(targetBlock.blockNumber());
-    if (dragCenter && clickedBlock.isValid()) {
-        qpart_->setTextCursor(QTextCursor(clickedBlock));
-    } else if (dragCenter && targetBlock.isValid()) {
-        qpart_->setTextCursor(QTextCursor(targetBlock));
+    // Move the current line to the block the user is clicking or dragging to.
+    // setTextCursor() may scroll the viewport to keep the cursor visible, so
+    // restore the scroll position chosen by the click/drag math afterwards.
+    auto cursorBlock = clickedBlock.isValid() ? clickedBlock : targetBlock;
+    if (cursorBlock.isValid()) {
+        qpart_->setTextCursor(QTextCursor(cursorBlock));
+        qpart_->verticalScrollBar()->setValue(targetBlock.blockNumber());
     }
 }
 

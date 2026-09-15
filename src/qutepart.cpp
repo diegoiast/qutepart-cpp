@@ -821,6 +821,7 @@ void Qutepart::setBlockFolded(QTextBlock &block, bool folded) {
         markArea_->update();
     }
     if (miniMap_) {
+        miniMap_->invalidateCache();
         miniMap_->update();
     }
 }
