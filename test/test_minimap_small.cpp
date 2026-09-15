@@ -24,7 +24,7 @@ private slots:
         qpart->setMinimapVisible(true);
         QApplication::processEvents();
 
-        auto *mini = qpart->findChild<Qutepart::Minimap*>();
+        auto *mini = qpart->findChild<Minimap*>();
         QVERIFY(mini != nullptr);
         mini->resize(150, 800);
         QApplication::processEvents();
