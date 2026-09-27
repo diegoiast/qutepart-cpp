@@ -7,6 +7,8 @@
 #include <QPlainTextEdit>
 #include <QWidget>
 
+class QShowEvent;
+
 namespace Qutepart {
 
 class Qutepart;
@@ -17,10 +19,13 @@ class SideArea : public QWidget {
   public:
     SideArea(Qutepart *textEdit);
 
-  private slots:
-    void onTextEditUpdateRequest(const QRect &rect, int dy);
+    // Line-number style areas bitblit with the editor (1:1 pixels).
+    // Overview widgets like the minimap must return false.
+    virtual bool usesEditorScrollBitblit() const { return true; }
 
   protected:
+    virtual void onTextEditUpdateRequest(const QRect &rect, int dy);
+
     virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void updateWidth() {}
@@ -74,12 +79,14 @@ class Minimap : public SideArea {
     int widthHint() const;
     void invalidateCache();
     int visibleLineCount() const;
+    bool usesEditorScrollBitblit() const override { return false; }
 
   protected:
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void paintEvent(QPaintEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
   private:
     QFont minimapFont() const;
