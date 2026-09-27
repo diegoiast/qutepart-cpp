@@ -12,6 +12,7 @@
 #include <QPainter>
 #include <QScrollBar>
 #include <QSet>
+#include <QShowEvent>
 #include <QTextBlock>
 #include <QToolTip>
 #include <algorithm>
@@ -52,7 +53,9 @@ auto static countDigits(int n) -> int {
 } // namespace
 
 SideArea::SideArea(Qutepart *textEdit) : QWidget(textEdit), qpart_(textEdit) {
-    connect(textEdit, &Qutepart::updateRequest, this, &SideArea::onTextEditUpdateRequest);
+    connect(textEdit, &Qutepart::updateRequest, this, [this](const QRect &rect, int dy) {
+        onTextEditUpdateRequest(rect, dy);
+    });
 }
 
 void SideArea::wheelEvent(QWheelEvent *event) {
@@ -95,7 +98,10 @@ void SideArea::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void SideArea::onTextEditUpdateRequest(const QRect &rect, int dy) {
-    if (dy) {
+    if (!usesEditorScrollBitblit()) {
+        // Scaled overviews must full-repaint; editor dy/rect are the wrong scale.
+        update();
+    } else if (dy) {
         scroll(0, dy);
     } else {
         update(0, rect.y(), width(), rect.height());
@@ -356,6 +362,12 @@ Minimap::Minimap(Qutepart *textEdit) : SideArea(textEdit) {
     cacheDirty_ = true;
 }
 
+void Minimap::showEvent(QShowEvent *event) {
+    SideArea::showEvent(event);
+    // ensureCache() may have cleared the cache while we were hidden; rebuild.
+    invalidateCache();
+}
+
 int Minimap::widthHint() const { return 150; }
 
 void Minimap::mouseMoveEvent(QMouseEvent *event) {
@@ -394,18 +406,17 @@ void Minimap::ensureCache() const {
         return;
     }
     if (!isVisible() || doc->blockCount() > 20000) {
-        if (!visibleCache_.isEmpty() || cacheDirty_) {
+        // Drop cache to save memory, but leave it dirty so the next visible
+        // ensureCache() rebuilds instead of returning an empty cache forever.
+        if (!visibleCache_.isEmpty() || !cacheDirty_) {
             visibleCache_.clear();
-            cachedBlockCount_ = doc->blockCount();
-            cacheDirty_ = false;
+            cachedBlockCount_ = -1;
+            cacheDirty_ = true;
         }
         return;
     }
     auto curCount = doc->blockCount();
     if (!cacheDirty_ && cachedBlockCount_ == curCount && !visibleCache_.isEmpty()) {
-        return;
-    }
-    if (!cacheDirty_ && cachedBlockCount_ == curCount) {
         return;
     }
     if (!cacheDirty_ && curCount == cachedBlockCount_ + 1 && !visibleCache_.isEmpty()) {
