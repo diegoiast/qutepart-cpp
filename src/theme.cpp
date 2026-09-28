@@ -36,20 +36,23 @@ auto Theme::loadTheme(const QString &filename) -> bool {
     if (document.isNull() || !document.isObject()) {
         return false;
     }
+    return loadTheme(document);
+}
 
+auto Theme::loadTheme(const QJsonDocument &document) -> bool {
     auto themeData = document.object();
 
     // Parse custom styles
-    QJsonObject customStylesObj = themeData["custom-styles"].toObject();
+    auto customStylesObj = themeData["custom-styles"].toObject();
     for (auto categoryIt = customStylesObj.begin(); categoryIt != customStylesObj.end();
          ++categoryIt) {
-        QString category = categoryIt.key();
-        QJsonObject categoryObj = categoryIt.value().toObject();
+        auto category = categoryIt.key();
+        auto categoryObj = categoryIt.value().toObject();
 
         QHash<QString, QStringHash> categoryStyles;
         for (auto styleIt = categoryObj.begin(); styleIt != categoryObj.end(); ++styleIt) {
-            QString styleName = styleIt.key();
-            QJsonObject styleObj = styleIt.value().toObject();
+            auto styleName = styleIt.key();
+            auto styleObj = styleIt.value().toObject();
 
             QStringHash styleProperties;
             for (auto propIt = styleObj.begin(); propIt != styleObj.end(); ++propIt) {
@@ -73,8 +76,8 @@ auto Theme::loadTheme(const QString &filename) -> bool {
     // Parse text styles
     QJsonObject textStylesObj = themeData["text-styles"].toObject();
     for (auto it = textStylesObj.begin(); it != textStylesObj.end(); ++it) {
-        QString styleName = it.key();
-        QJsonObject styleObj = it.value().toObject();
+        auto styleName = it.key();
+        auto styleObj = it.value().toObject();
 
         QStringHash styleProperties;
         for (auto propIt = styleObj.begin(); propIt != styleObj.end(); ++propIt) {
@@ -89,7 +92,7 @@ auto Theme::loadTheme(const QString &filename) -> bool {
     // Parse metadata
     auto metaDataObj = themeData["metadata"].toObject();
     auto copyrightArray = metaDataObj["copyright"].toArray();
-    for (const auto &copyright : std::as_const(copyrightArray)) {
+    for (auto &copyright : std::as_const(copyrightArray)) {
         metaData.copyright.push_back(copyright.toString());
     }
     metaData.name = metaDataObj["name"].toString();

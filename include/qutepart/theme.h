@@ -80,6 +80,9 @@ class Theme {
     /// Loads a theme definition from a JSON file
     auto loadTheme(const QString &filename) -> bool;
 
+    /// Loads a theme definition from a JSON document
+    auto loadTheme(const QJsonDocument &doc) -> bool;
+
     /// Get the list of colors definid in this theme, use the Colors struct as the keys
     auto inline getEditorColors() const -> const QHash<QString, QColor> & { return editorColors; }
 
