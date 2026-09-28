@@ -250,9 +250,6 @@ void Style::updateTextType(const QString &attribute) {
 }
 
 void Style::setTheme(const Theme *newTheme) {
-    if (this->theme == newTheme) {
-        return;
-    }
     this->theme = newTheme;
     if (!displayFormat) {
         return;

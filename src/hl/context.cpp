@@ -51,23 +51,33 @@ void Context::printDescription(QTextStream &out) const {
 QString Context::name() const { return _name; }
 
 void Context::setTheme(const Theme *theme) {
+    QSet<Context *> visited;
+    setTheme(theme, visited);
+}
+
+void Context::setTheme(const Theme *theme, QSet<Context *> &visited) {
+    if (visited.contains(this)) {
+        return;
+    }
+    visited.insert(this);
+
     style.setTheme(theme);
 
     if (_lineEndContext.context()) {
-        _lineEndContext.context()->setTheme(theme);
+        _lineEndContext.context()->setTheme(theme, visited);
     }
     if (_lineBeginContext.context()) {
-        _lineBeginContext.context()->setTheme(theme);
+        _lineBeginContext.context()->setTheme(theme, visited);
     }
     if (_lineEmptyContext.context()) {
-        _lineEmptyContext.context()->setTheme(theme);
+        _lineEmptyContext.context()->setTheme(theme, visited);
     }
     if (fallthroughContext.context()) {
-        fallthroughContext.context()->setTheme(theme);
+        fallthroughContext.context()->setTheme(theme, visited);
     }
 
     for (auto &rule : rules) {
-        rule->setTheme(theme);
+        rule->setTheme(theme, visited);
     }
 }
 

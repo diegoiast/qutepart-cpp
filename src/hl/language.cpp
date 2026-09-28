@@ -107,8 +107,9 @@ ContextPtr Language::getContext(const QString &contextName) const {
 }
 
 void Language::setTheme(const Theme *theme) {
+    QSet<Context *> visited;
     for (auto &ctx : contexts) {
-        ctx->setTheme(theme);
+        ctx->setTheme(theme, visited);
     }
 }
 

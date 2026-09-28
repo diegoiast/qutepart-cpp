@@ -7,6 +7,7 @@
 #pragma once
 
 #include <QHash>
+#include <QSet>
 #include <QSharedPointer>
 #include <QTextLayout>
 #include <QTextStream>
@@ -41,6 +42,9 @@ class Context {
     QString name() const;
 
     void setTheme(const Theme *theme);
+    /* `visited` breaks cycles in the context graph (lineEnd/fallthrough/rule
+     * switches and cross-language ##includes form loops). */
+    void setTheme(const Theme *theme, QSet<Context *> &visited);
     void setLanguage(QSharedPointer<Language> newLanguage);
     void resolveContextReferences(const QHash<QString, ContextPtr> &contexts, QString &error);
     void setKeywordParams(const QHash<QString, QStringList> &lists, const QString &deliminators,

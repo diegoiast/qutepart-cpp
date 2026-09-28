@@ -8,6 +8,7 @@
 
 #include <QHash>
 #include <QRegularExpression>
+#include <QSet>
 #include <QSharedPointer>
 #include <QString>
 #include <QTextStream>
@@ -48,6 +49,7 @@ class AbstractRule {
                                   QString &) {}
     void setStyles(const QHash<QString, Style> &styles, QString &error);
     void setTheme(const Theme *theme);
+    void setTheme(const Theme *theme, QSet<Context *> &visited);
 
     bool lookAhead;
     QSharedPointer<Language> language;

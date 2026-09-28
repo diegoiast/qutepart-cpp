@@ -57,15 +57,17 @@ void AbstractRule::setStyles(const QHash<QString, Style> &styles, QString &error
 }
 
 void AbstractRule::setTheme(const Theme *theme) {
-    if (theme == style.getTheme()) {
-        return;
-    }
+    QSet<Context *> visited;
+    setTheme(theme, visited);
+}
+
+void AbstractRule::setTheme(const Theme *theme, QSet<Context *> &visited) {
 #if 0
     qDebug() << "    - rule " << this->name() << args();
 #endif
     style.setTheme(theme);
     if (contextSwitcher.context()) {
-        contextSwitcher.context()->setTheme(theme);
+        contextSwitcher.context()->setTheme(theme, visited);
     }
 }
 
