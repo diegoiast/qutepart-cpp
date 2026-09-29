@@ -126,6 +126,7 @@ class LineNumberArea;
 class MarkArea;
 class Minimap;
 class Completer;
+class CallTip;
 class Theme;
 class FoldingArea;
 
@@ -415,6 +416,20 @@ class Qutepart : public QPlainTextEdit {
     inline QString lastCompletionSeparator() const { return lastSeparator_; }
     void removeMetaData();
 
+    // Call tips
+    /// Show a tooltip-like widget with `text` (HTML supported) next to the
+    /// current cursor. The tip is non-interactive and is hidden again when the
+    /// cursor moves, the text changes, or the view scrolls.
+    /// Showing again with a different position re-anchors it.
+    void showCallTip(const QString &text);
+    /// Replace the text of the currently shown call tip, keeping its
+    /// position. Shows a new tip if none is visible.
+    void updateCallTip(const QString &text);
+    /// Hide the call tip, if it is shown.
+    void hideCallTip();
+    /// Whether a call tip is currently shown.
+    bool isCallTipVisible() const;
+
     /// Returns the status of a line. A line is marked as modified when its changed via the user
     bool isLineModified(int lineNumber) const;
     /// Set the status of a line, modified or not
@@ -545,6 +560,7 @@ class Qutepart : public QPlainTextEdit {
     void changeEvent(QEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void scrollContentsBy(int dx, int dy) override;
 
   private:
     QList<QTextEdit::ExtraSelection> persitentSelections;
@@ -628,6 +644,7 @@ class Qutepart : public QPlainTextEdit {
     QString lastSeparator_;
     const Theme *theme = nullptr;
     bool inSetTheme_ = false;
+    CallTip *callTip_ = nullptr;
 
     QTimer *currentWordTimer = nullptr;
     QString lastWordUnderCursor;

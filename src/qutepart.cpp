@@ -17,6 +17,7 @@
 #include <QStyle>
 
 #include "bracket_highlighter.h"
+#include "call_tip.h"
 #include "completer.h"
 #include "qutepart.h"
 #include "side_areas.h"
@@ -40,6 +41,7 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
       brakcetsQutoEnclose(true), completionEnabled_(true), completionThreshold_(3),
       viewportMarginStart_(0) {
     extraCursorBlinkTimer_ = new QTimer(this);
+    callTip_ = new CallTip(this);
     setBracketHighlightingEnabled(true);
     setLineNumbersVisible(true);
     setMinimapVisible(true);
@@ -554,6 +556,21 @@ void Qutepart::removeMetaData() {
     }
     persitentSelections.clear();
     updateExtraSelections();
+}
+
+void Qutepart::showCallTip(const QString &text) { callTip_->showCallTip(text); }
+
+void Qutepart::updateCallTip(const QString &text) { callTip_->updateCallTip(text); }
+
+void Qutepart::hideCallTip() { callTip_->hideCallTip(); }
+
+bool Qutepart::isCallTipVisible() const { return callTip_->isVisible(); }
+
+void Qutepart::scrollContentsBy(int dx, int dy) {
+    QPlainTextEdit::scrollContentsBy(dx, dy);
+    // The call tip is anchored in viewport coordinates; without this it would
+    // keep floating over what it was anchored to before the scroll.
+    hideCallTip();
 }
 
 void Qutepart::setLineMessage(int lineNumber, const QString &message) {

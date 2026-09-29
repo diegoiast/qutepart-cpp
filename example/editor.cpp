@@ -220,6 +220,36 @@ void initMenuBar(QMenuBar *menuBar, Qutepart::Qutepart *qutepart) {
 
     linesMenu->addSeparator();
     linesMenu->addAction(qutepart->joinLinesAction());
+
+    QMenu *toolsMenu = menuBar->addMenu("Call tips");
+    {
+        auto showCallTipAction = new QAction(toolsMenu);
+        showCallTipAction->setText("Show dummy call tip at cursor");
+        QObject::connect(showCallTipAction, &QAction::triggered, showCallTipAction,
+                         [qutepart]() {
+                             qutepart->showCallTip(
+                                 "<b>str_replace</b>(<i>mixed&nbsp;$search</i>, "
+                                 "<i>mixed&nbsp;$replace</i>, mixed&nbsp;$subject)");
+                         });
+        toolsMenu->addAction(showCallTipAction);
+
+        auto updateCallTipAction = new QAction(toolsMenu);
+        updateCallTipAction->setText("Update call tip");
+        QObject::connect(updateCallTipAction, &QAction::triggered, updateCallTipAction,
+                         [qutepart]() {
+                             qutepart->updateCallTip(
+                                 "<b>str_replace</b>(<i>mixed&nbsp;$search</i>, "
+                                 "<i>mixed&nbsp;$replace</i>, mixed&nbsp;$subject, "
+                                 "<span style=\"color:#a00\">&amp;$count</span>)");
+                         });
+        toolsMenu->addAction(updateCallTipAction);
+
+        auto hideCallTipAction = new QAction(toolsMenu);
+        hideCallTipAction->setText("Hide call tip");
+        QObject::connect(hideCallTipAction, &QAction::triggered, hideCallTipAction,
+                         [qutepart]() { qutepart->hideCallTip(); });
+        toolsMenu->addAction(hideCallTipAction);
+    }
 }
 
 QMainWindow *createMainWindow(Qutepart::Qutepart *qutepart) {
