@@ -10,17 +10,37 @@
 
 namespace Qutepart {
 
-bool hasFlag(const QTextBlock &block, int flag) {
-    auto data = static_cast<TextBlockUserData *>(block.userData());
-    if (!data) {
-        return false;
+/// The block's user data, created if absent.
+///
+/// Kept in step with the copy in qutepart.cpp; both writers of block state need
+/// it, and returning early when there is none makes setFlag() drop the write
+/// silently - so a marker set on a block that had never carried state used to
+/// disappear with nothing to show for it.
+auto ensureBlockData(QTextBlock &block) -> TextBlockUserData * {
+    if (auto *existing = block.userData()) {
+        // dynamic_cast, not static_cast: QTextBlockUserData is Qt's extension
+        // point, so another library may own this block. The cost is a couple of
+        // loads, on a path that runs per visible block per repaint, and in
+        // exchange a foreign owner is reported instead of being reinterpreted
+        // and silently corrupted.
+        if (auto *ours = dynamic_cast<TextBlockUserData *>(existing)) {
+            return ours;
+        }
+        // Replacing it would discard their data, and adopting it would read
+        // fields that are not there. Say so rather than pretend.
+        qWarning() << "Qutepart: block carries foreign user data, not adopting it";
+        return nullptr;
     }
-    auto state = data->state;
-    return state != -1 && state & flag;
+    if (!block.isValid()) {
+        return nullptr;
+    }
+    auto data = new TextBlockUserData({}, {nullptr});
+    block.setUserData(data);
+    return data;
 }
 
 void setFlag(QTextBlock &block, int flag, bool value) {
-    auto data = static_cast<TextBlockUserData *>(block.userData());
+    auto data = ensureBlockData(block);
     if (!data) {
         return;
     }

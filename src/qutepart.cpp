@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <algorithm>
+
 #include <QAction>
 #include <QApplication>
 #include <QStyleHints>
@@ -486,7 +488,22 @@ void Qutepart::modifyBlockFlag(int lineNumber, int bit, bool status, QColor back
         selection.format.setProperty(QTextFormat::FullWidthSelection, true);
         selection.cursor = QTextCursor(block);
         selection.cursor.clearSelection();
-        persitentSelections.append(selection);
+
+        // A line's tint belongs to the flags currently set on it, so the entry
+        // is added or removed rather than appended to unconditionally. Appending
+        // on every call - which is what this used to do - meant clearing a flag
+        // left its background behind, and repeated set/clear cycles accumulated
+        // selections until the line went solid.
+        auto const sameColourOnSameBlock = [&selection](const QTextEdit::ExtraSelection &one) {
+            return one.format.background() == selection.format.background() &&
+                   one.cursor.block() == selection.cursor.block();
+        };
+        auto out = persitentSelections;
+        out.erase(std::remove_if(out.begin(), out.end(), sameColourOnSameBlock), out.end());
+        if (status) {
+            out.append(selection);
+        }
+        persitentSelections = out;
         updateExtraSelections();
     }
     if (markArea_) {
@@ -575,12 +592,123 @@ void Qutepart::scrollContentsBy(int dx, int dy) {
 
 void Qutepart::setLineMessage(int lineNumber, const QString &message) {
     auto block = document()->findBlockByNumber(lineNumber);
-    auto blockData = static_cast<TextBlockUserData *>(block.userData());
+    auto blockData = ensureBlockData(block);
     if (!blockData) {
-        blockData = new TextBlockUserData({}, {nullptr});
-        block.setUserData(blockData);
+        return;
     }
     blockData->metaData.message = message;
+}
+
+void Qutepart::setDiagnostic(int lineNumber, const Diagnostic &diagnostic) {
+    auto block = document()->findBlockByNumber(lineNumber);
+    auto blockData = ensureBlockData(block);
+    if (!blockData) {
+        qDebug() << "Invalid line" << lineNumber << "cannot set diagnostic";
+        return;
+    }
+    // One entry per owner per severity: a server republishing hands us the same
+    // finding again, and the caller has already cleared its previous ones. Two
+    // findings of the same severity from one owner on one line are genuinely
+    // distinct, so the second replaces rather than duplicates only when the
+    // message matches too.
+    for (auto &existing : blockData->diagnostics) {
+        if (existing.owner == diagnostic.owner &&
+            existing.severity == diagnostic.severity &&
+            existing.message == diagnostic.message) {
+            return; // already shown; nothing to repaint
+        }
+    }
+    blockData->diagnostics.append(diagnostic);
+    refreshDiagnosticRendering(block);
+}
+
+void Qutepart::clearDiagnostics(const QString &owner) {
+    auto removed = 0;
+    for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (!blockData || blockData->diagnostics.isEmpty()) {
+            continue;
+        }
+        // erase-remove, so the vector does not keep capacity for every finding
+        // this owner ever had.
+        auto kept = blockData->diagnostics;
+        kept.erase(std::remove_if(kept.begin(), kept.end(),
+                                  [&owner](const Diagnostic &d) { return d.owner == owner; }),
+                   kept.end());
+        if (kept.size() == blockData->diagnostics.size()) {
+            continue;
+        }
+        removed += blockData->diagnostics.size() - kept.size();
+        blockData->diagnostics = kept;
+        refreshDiagnosticRendering(block);
+    }
+    if (removed > 0) {
+        qDebug() << "Qutepart: cleared" << removed << "diagnostic(s) owned by" << owner;
+    }
+}
+
+void Qutepart::clearAllDiagnostics() {
+    auto removed = 0;
+    for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
+        auto blockData = static_cast<TextBlockUserData *>(block.userData());
+        if (!blockData || blockData->diagnostics.isEmpty()) {
+            continue;
+        }
+        removed += blockData->diagnostics.size();
+        blockData->diagnostics.clear();
+        refreshDiagnosticRendering(block);
+    }
+    if (removed > 0) {
+        qDebug() << "Qutepart: cleared" << removed << "diagnostic(s)";
+    }
+}
+
+auto Qutepart::diagnosticsOn(int lineNumber) const -> QVector<Diagnostic> {
+    auto block = document()->findBlockByNumber(lineNumber);
+    auto blockData = static_cast<TextBlockUserData *>(block.userData());
+    if (!blockData) {
+        return {};
+    }
+    return blockData->diagnostics;
+}
+
+auto Qutepart::hasDiagnosticSeverity(int lineNumber, DiagnosticSeverity severity) const -> bool {
+    auto block = document()->findBlockByNumber(lineNumber);
+    auto blockData = static_cast<TextBlockUserData *>(block.userData());
+    if (!blockData) {
+        return false;
+    }
+    for (auto const &diagnostic : blockData->diagnostics) {
+        if (diagnostic.severity == severity) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto Qutepart::diagnosticSeveritiesOn(int lineNumber) const -> QVector<DiagnosticSeverity> {
+    auto out = QVector<DiagnosticSeverity>();
+    for (auto const severity : {DiagnosticSeverity::Error, DiagnosticSeverity::Warning,
+                                DiagnosticSeverity::Information, DiagnosticSeverity::Hint}) {
+        if (hasDiagnosticSeverity(lineNumber, severity)) {
+            out.append(severity);
+        }
+    }
+    return out;
+}
+
+/// Repaints the one block whose diagnostics changed. The margin draws its own
+/// icons from the list rather than from the severity bits, so no flag is touched
+/// here and an unowned setLineError() mark cannot be cleared by accident.
+void Qutepart::refreshDiagnosticRendering(const QTextBlock &block) {
+    if (markArea_) {
+        auto const top = block.position();
+        markArea_->update(QRect(0, top, markArea_->width(), blockBoundingRect(block).height()));
+    }
+    if (miniMap_) {
+        miniMap_->update();
+    }
+    viewport()->update();
 }
 
 auto Qutepart::getColorForLineFlag(int flag) -> QColor {

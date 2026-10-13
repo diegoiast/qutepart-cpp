@@ -21,6 +21,8 @@
 #include <QSharedPointer>
 #include <QTextBlock>
 
+#include "qutepart/diagnostic.h"
+
 class QSyntaxHighlighter;
 
 namespace Qutepart {
@@ -457,6 +459,30 @@ class Qutepart : public QPlainTextEdit {
     void setLineExecuting(int lineNumber, bool status);
     void setLineMessage(int lineNumber, const QString &message);
 
+    /// Attributed diagnostics, kept per line and tagged with the owner that
+    /// produced them. Preferred over the setLineError family whenever the source
+    /// is known, because clearing one owner then cannot disturb another - a
+    /// server restarting, or a build finishing, only removes its own marks.
+    ///
+    /// A line may carry several diagnostics, including several from one owner;
+    /// the margin shows one icon per severity present rather than one per
+    /// diagnostic, and hovering shows every message.
+    void setDiagnostic(int lineNumber, const Diagnostic &diagnostic);
+    /// Removes every diagnostic attributed to `owner`, across the whole document.
+    /// This is how a server that republished replaces its previous findings
+    /// without the caller having to remember which lines it had marked.
+    void clearDiagnostics(const QString &owner);
+    /// Removes every attributed diagnostic, leaving the unowned setLineError
+    /// marks and the other line flags alone.
+    void clearAllDiagnostics();
+    auto diagnosticsOn(int lineNumber) const -> QVector<Diagnostic>;
+    /// Severities present on the line, ascending, so a caller can pick the worst
+    /// without inspecting the diagnostics themselves.
+    auto diagnosticSeveritiesOn(int lineNumber) const -> QVector<DiagnosticSeverity>;
+    /// True when any owner has a diagnostic on the line at `severity`, ignoring
+    /// how many there are - what a single margin icon represents.
+    auto hasDiagnosticSeverity(int lineNumber, DiagnosticSeverity severity) const -> bool;
+
     auto getColorForLineFlag(int flag) -> QColor;
     auto fixLineFlagColors() -> void;
 
@@ -569,6 +595,7 @@ class Qutepart : public QPlainTextEdit {
     bool extraCursorsVisible_ = true;
 
     void initActions();
+    void refreshDiagnosticRendering(const QTextBlock &block);
     QAction *createAction(const QString &text, QKeySequence shortcut, const QString &iconFileName,
                           std::function<void()> const &handler);
 

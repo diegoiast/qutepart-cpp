@@ -75,10 +75,29 @@ void SideArea::mouseMoveEvent(QMouseEvent *event) {
     if (line != this->lastHoeveredLine) {
         lastHoeveredLine = line;
         auto blockData = static_cast<TextBlockUserData *>(block.userData());
-        if (blockData && !blockData->metaData.message.isEmpty()) {
+        // Every finding on the line, not just the one stored message: several
+        // diagnostics can share a line, and a single message slot means the rest
+        // would be unreachable.
+        auto texts = QStringList();
+        if (blockData) {
+            for (auto const &diagnostic : blockData->diagnostics) {
+                if (diagnostic.message.isEmpty()) {
+                    continue;
+                }
+                texts.append(diagnostic.owner.isEmpty()
+                                 ? diagnostic.message
+                                 : diagnostic.owner + ": " + diagnostic.message);
+            }
+            if (!blockData->metaData.message.isEmpty()) {
+                texts.append(blockData->metaData.message);
+            }
+        }
+        if (texts.isEmpty()) {
+            QToolTip::hideText();
+        } else {
             auto lines = QStringList();
             auto lineLength = 100;
-            for (auto &s : blockData->metaData.message.split("\n")) {
+            for (auto &s : texts.join("\n\n").split("\n")) {
                 for (auto i = 0u; i < s.length(); i += lineLength) {
                     lines.append(s.mid(i, lineLength));
                 }
@@ -87,9 +106,6 @@ void SideArea::mouseMoveEvent(QMouseEvent *event) {
             auto fixedMessage = QString("<pre><p style='white-space:pre'>%1</p></pre>")
                                     .arg(message.replace("\n", "<br>"));
             QToolTip::showText(event->globalPosition().toPoint(), fixedMessage, qpart_);
-
-        } else {
-            QToolTip::hideText();
         }
     }
 }
@@ -247,31 +263,47 @@ void MarkArea::paintEvent(QPaintEvent *event) {
         auto bottom = top + height;
 
         if (block.isVisible() && bottom >= event->rect().top()) {
-            struct MarkInfo {
-                bool active;
-                int bit;
-                QColor color;
-            };
-            const MarkInfo marks[] = {
-                {hasFlag(block, ERROR_BIT), ERROR_BIT, QColor(Qt::red).lighter(170)},
-                {hasFlag(block, WARNING_BIT), WARNING_BIT, QColor(Qt::yellow).lighter(150)},
-                {hasFlag(block, INFO_BIT), INFO_BIT, QColor(Qt::cyan).lighter(170)}};
+            // One read of the block data for everything drawn below: the unowned
+            // flags, the attributed diagnostics and the bookmark all come out of
+            // it, and this loop runs for every visible line on every repaint.
+            auto const blockData = static_cast<TextBlockUserData *>(block.userData());
+            auto const state = blockData ? (blockData->state == -1 ? 0 : blockData->state) : 0;
 
-            for (auto const &mark : marks) {
-                if (!mark.active) {
-                    continue;
+            // Attributed diagnostics collapse to one bit per severity present, so
+            // two errors on a line draw one icon rather than two. Built in a
+            // single pass instead of a scan per severity.
+            auto owned = 0;
+            if (blockData && !blockData->diagnostics.isEmpty()) {
+                for (auto const &diagnostic : blockData->diagnostics) {
+                    switch (diagnostic.severity) {
+                    case DiagnosticSeverity::Error:
+                        owned |= ERROR_BIT;
+                        break;
+                    case DiagnosticSeverity::Warning:
+                        owned |= WARNING_BIT;
+                        break;
+                    case DiagnosticSeverity::Information:
+                    case DiagnosticSeverity::Hint:
+                        owned |= INFO_BIT;
+                        break;
+                    }
                 }
-                auto pixmap = getCachedIcon(iconForStatus(mark.bit), width(), scaledIconCache);
-                auto xPos = 0;
-                auto yPos = top;
-                painter.drawPixmap(xPos, yPos, pixmap);
             }
 
-            if (isBookmarked(block)) {
+            // The two channels are drawn independently on purpose: an owned
+            // diagnostic and an unowned setLineError() mark come from different
+            // sources and neither may suppress the other.
+            for (auto const bit : {ERROR_BIT, WARNING_BIT, INFO_BIT}) {
+                if (!((state | owned) & bit)) {
+                    continue;
+                }
+                auto pixmap = getCachedIcon(iconForStatus(bit), width(), scaledIconCache);
+                painter.drawPixmap(0, top, pixmap);
+            }
+
+            if (state & BOOMARK_BIT) {
                 auto pixmap = getCachedIcon(bookmarkPixmap_, width(), scaledIconCache);
-                auto xPos = 0;
-                auto yPos = top;
-                painter.drawPixmap(xPos, yPos, pixmap);
+                painter.drawPixmap(0, top, pixmap);
             }
         }
 

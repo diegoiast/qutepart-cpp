@@ -11,6 +11,7 @@
 #include <QTextBlockUserData>
 
 #include "context_stack.h"
+#include "qutepart/diagnostic.h"
 
 namespace Qutepart {
 
@@ -29,6 +30,12 @@ class TextBlockUserData : public QTextBlockUserData {
         bool folded = false;
     } folding;
     QStack<QString> regions;
+
+    /// Diagnostics attributed to a named owner - one per language server, linter
+    /// or build step. Kept apart from `state` and its severity bits so that
+    /// clearing one owner cannot disturb another, nor the direct setLineError()
+    /// marks that are not owned at all.
+    QVector<Diagnostic> diagnostics;
 
     struct {
         QString message;
