@@ -305,6 +305,23 @@ void MarkArea::paintEvent(QPaintEvent *event) {
                 auto pixmap = getCachedIcon(bookmarkPixmap_, width(), scaledIconCache);
                 painter.drawPixmap(0, top, pixmap);
             }
+
+            // Drawn last, on top of the severity icons. The strip is one icon
+            // wide so they share the same x, and the affordance is the one that
+            // must stay visible - the diagnostic beside it is still legible from
+            // the line tint and the tooltip.
+            if (state & CODE_ACTION_BIT) {
+                // Yellow, the same colour the warning mark uses, so the two read
+                // as the same family rather than as a new signal.
+                auto const tint = qpart_->getColorForLineFlag(WARNING_BIT);
+                // A themed icon wins when one exists, so the mark can be
+                // replaced without touching this code; otherwise the drawn bulb.
+                auto pixmap = QIcon::hasThemeIcon("data-code-action")
+                                  ? getCachedIcon(iconForStatus(CODE_ACTION_BIT), width(),
+                                                  scaledIconCache, tint)
+                                  : getCodeActionPixmap(width(), tint, scaledIconCache);
+                painter.drawPixmap(0, top, pixmap);
+            }
         }
 
         top += height;
@@ -312,8 +329,64 @@ void MarkArea::paintEvent(QPaintEvent *event) {
     }
 }
 
-QPixmap MarkArea::getCachedIcon(QIcon icon, int targetSize, QHash<QString, QPixmap> &cache) {
-    QString key = QString::number(icon.cacheKey()) + "_" + QString::number(targetSize);
+/// A lightbulb, drawn rather than looked up.
+///
+/// No installed icon theme here carries one, and the Qt fallback is a rounded
+/// question mark, which reads as a blob rather than as an affordance. Drawing it
+/// keeps the marker recognisable at line-height size and independent of whatever
+/// theme the user happens to have.
+QPixmap MarkArea::getCodeActionPixmap(int targetSize, const QColor &colour,
+                                      QHash<QString, QPixmap> &cache) {
+    auto const key = QStringLiteral("codeaction_%1_%2")
+                         .arg(targetSize)
+                         .arg(colour.name(QColor::HexArgb));
+    if (cache.contains(key)) {
+        return cache.value(key);
+    }
+
+    auto const dpr = qpart_->devicePixelRatioF();
+    auto pixmap = QPixmap(targetSize * dpr, targetSize * dpr);
+    pixmap.setDevicePixelRatio(dpr);
+    pixmap.fill(Qt::transparent);
+
+    {
+        QPainter painter(&pixmap);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(colour);
+
+        // Proportions are of the full box, so it stays legible down to the ~14px
+        // line height a small font gives.
+        auto const w = qreal(targetSize);
+        auto const bulbRadius = w * 0.30;
+        auto const bulbCentre = QPointF(w * 0.5, w * 0.40);
+
+        painter.drawEllipse(bulbCentre, bulbRadius, bulbRadius);
+
+        // The neck, then the screw base: two bars, the second narrower, which is
+        // what makes the shape read as a bulb rather than a circle on a stick.
+        auto const neckTop = bulbCentre.y() + bulbRadius * 0.80;
+        painter.drawRect(QRectF(w * 0.44, neckTop, w * 0.12, w * 0.10));
+        painter.drawRect(QRectF(w * 0.40, neckTop + w * 0.10, w * 0.20, w * 0.09));
+
+        // A gap so the base does not merge with the bulb at small sizes.
+        painter.setCompositionMode(QPainter::CompositionMode_Clear);
+        painter.setBrush(Qt::transparent);
+        painter.drawRect(QRectF(w * 0.40, neckTop + w * 0.185, w * 0.20, w * 0.02));
+    }
+
+    cache.insert(key, pixmap);
+    return pixmap;
+}
+
+QPixmap MarkArea::getCachedIcon(QIcon icon, int targetSize, QHash<QString, QPixmap> &cache,
+                                const QColor &tint) {
+    // The tint is part of the key: the same icon recoloured is a different
+    // picture, and sharing a cache entry would paint whichever was requested
+    // first.
+    auto const tintKey = tint.isValid() ? tint.name(QColor::HexArgb) : QString();
+    QString key = QString::number(icon.cacheKey()) + "_" + QString::number(targetSize) + "_" +
+                  tintKey;
     if (cache.contains(key)) {
         return cache.value(key);
     }
@@ -359,6 +432,13 @@ QPixmap MarkArea::getCachedIcon(QIcon icon, int targetSize, QHash<QString, QPixm
     {
         QPainter painter(&finalPixmap);
         painter.drawPixmap(topLeft, iconPixmap);
+        if (tint.isValid()) {
+            // SourceIn keeps the icon's alpha and replaces its colour, so the
+            // mark reads as yellow whatever the icon theme supplied - including
+            // a monochrome glyph, which is what the question-mark fallback is.
+            painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+            painter.fillRect(finalPixmap.rect(), tint);
+        }
     }
     cache.insert(key, finalPixmap);
     return finalPixmap;

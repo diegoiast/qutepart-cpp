@@ -62,7 +62,15 @@ class MarkArea : public SideArea {
     QIcon bookmarkPixmap_;
     QHash<QString, QPixmap> scaledIconCache;
 
-    QPixmap getCachedIcon(QIcon icon, int targetSize, QHash<QString, QPixmap> &cache);
+    /// Scaled and centred for the margin. A valid `tint` recolours the result,
+    /// which is how a monochrome fallback glyph becomes a yellow mark.
+    QPixmap getCachedIcon(QIcon icon, int targetSize, QHash<QString, QPixmap> &cache,
+                          const QColor &tint = QColor());
+    /// The code-action mark, drawn rather than looked up: no installed theme
+    /// carries a lightbulb and Qt's fallback is a rounded blob. Yields to a
+    /// themed `data-code-action` icon when one is installed.
+    QPixmap getCodeActionPixmap(int targetSize, const QColor &colour,
+                                QHash<QString, QPixmap> &cache);
     QPixmap getCachedPixmap(QPixmap pixmap, int targetSize, QHash<QString, QPixmap> &cache);
 };
 

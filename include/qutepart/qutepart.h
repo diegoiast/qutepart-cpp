@@ -35,6 +35,10 @@ const int ERROR_BIT         = 1 << 3;
 const int INFO_BIT          = 1 << 4;
 const int BREAKPOINT_BIT    = 1 << 5;
 const int EXECUTING_BIT     = 1 << 6;
+// A fix or refactoring is available at this line. An editor affordance rather
+// than a finding, so it carries no owner, severity or message - which is why it
+// is a flag and not one of the attributed diagnostics.
+const int CODE_ACTION_BIT   = 1 << 7;
 
 // Future expansion
 const int UNUSED9_BIT  = 1 << 7;
@@ -457,6 +461,17 @@ class Qutepart : public QPlainTextEdit {
     void setLineBreakpoint(int lineNumber, bool status);
     bool getLineExecuting(int lineNumber) const;
     void setLineExecuting(int lineNumber, bool status);
+
+    /// Whether a code action is known to be available at `lineNumber`. Purely an
+    /// affordance the client sets: qutepart never asks anyone, and the mark says
+    /// nothing about what the action would do.
+    ///
+    /// Set for the line under the cursor rather than every fixable line, which
+    /// is what every editor surveyed does, and which means there is only ever
+    /// one of these set at a time - so clearing it cannot strand a stale mark on
+    /// a line that has since moved.
+    bool getLineCodeAction(int lineNumber) const;
+    void setLineCodeAction(int lineNumber, bool status);
     void setLineMessage(int lineNumber, const QString &message);
 
     /// Attributed diagnostics, kept per line and tagged with the owner that

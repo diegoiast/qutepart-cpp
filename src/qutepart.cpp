@@ -563,6 +563,17 @@ void Qutepart::setLineExecuting(int lineNumber, bool status) {
     modifyBlockFlag(lineNumber, EXECUTING_BIT, status, getColorForLineFlag(EXECUTING_BIT));
 }
 
+bool Qutepart::getLineCodeAction(int lineNumber) const {
+    return getBlockFlag(lineNumber, CODE_ACTION_BIT);
+}
+
+void Qutepart::setLineCodeAction(int lineNumber, bool status) {
+    // No background passed: this is a marker in the margin, not a tint on the
+    // line, and tinting the whole line for an affordance would fight the
+    // diagnostic tints already there.
+    modifyBlockFlag(lineNumber, CODE_ACTION_BIT, status, Qt::transparent);
+}
+
 void Qutepart::removeMetaData() {
     for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
         auto blockData = static_cast<TextBlockUserData *>(block.userData());
@@ -2967,6 +2978,12 @@ QIcon iconForStatus(int status) {
     }
     if (status & INFO_BIT) {
         return getStatusIconImpl("data-information", QStyle::SP_MessageBoxInformation);
+    }
+    if (status & CODE_ACTION_BIT) {
+        // Themeable as "data-code-action"; no standard Qt icon is a lightbulb,
+        // so it falls back to a question mark, which reads as "something you
+        // could do here" rather than as a problem.
+        return getStatusIconImpl("data-code-action", QStyle::SP_MessageBoxQuestion);
     }
     /*
     if (status & OTHER_BIT) {
