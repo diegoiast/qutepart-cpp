@@ -35,10 +35,24 @@ const int ERROR_BIT         = 1 << 3;
 const int INFO_BIT          = 1 << 4;
 const int BREAKPOINT_BIT    = 1 << 5;
 const int EXECUTING_BIT     = 1 << 6;
-// A fix or refactoring is available at this line. An editor affordance rather
-// than a finding, so it carries no owner, severity or message - which is why it
-// is a flag and not one of the attributed diagnostics.
-const int CODE_ACTION_BIT   = 1 << 7;
+
+/// The line-flag bit a diagnostic severity is drawn with. The two scales are
+/// deliberately separate - a diagnostic carries an owner and a message, a flag does
+/// not - but a severity still has to be shown somewhere, and this is the one place
+/// that decision is made. The margin, the minimap and the line tint all route
+/// through it, so they cannot disagree about what a warning looks like.
+constexpr auto diagnosticBit(DiagnosticSeverity severity) -> int {
+    switch (severity) {
+    case DiagnosticSeverity::Error:
+        return ERROR_BIT;
+    case DiagnosticSeverity::Warning:
+        return WARNING_BIT;
+    case DiagnosticSeverity::Information:
+    case DiagnosticSeverity::Hint:
+        return INFO_BIT;
+    }
+    return INFO_BIT;
+}
 
 // Future expansion
 const int UNUSED9_BIT  = 1 << 7;
@@ -274,6 +288,8 @@ using CompletionCallback = std::function<QFuture<QSet<CompletionItem>>(
 /**
   Code editor widget
 */
+class CodeActionMark;
+
 class Qutepart : public QPlainTextEdit {
     Q_OBJECT
 
@@ -462,16 +478,22 @@ class Qutepart : public QPlainTextEdit {
     bool getLineExecuting(int lineNumber) const;
     void setLineExecuting(int lineNumber, bool status);
 
-    /// Whether a code action is known to be available at `lineNumber`. Purely an
-    /// affordance the client sets: qutepart never asks anyone, and the mark says
-    /// nothing about what the action would do.
+    /// Marks the line whose availability mark is showing, as a block number, or
+    /// -1 for none. Set for the line under the cursor rather than every fixable
+    /// line, which is what every editor surveyed does, and which means there is
+    /// only ever one at a time - so clearing it cannot strand a stale mark on a
+    /// line that has since moved.
     ///
-    /// Set for the line under the cursor rather than every fixable line, which
-    /// is what every editor surveyed does, and which means there is only ever
-    /// one of these set at a time - so clearing it cannot strand a stale mark on
-    /// a line that has since moved.
-    bool getLineCodeAction(int lineNumber) const;
+    /// This is the only state behind the mark. It also used to set a
+    /// CODE_ACTION_BIT flag, but once the mark became a widget positioned from
+    /// this, nothing drew that bit and nothing read it back.
     void setLineCodeAction(int lineNumber, bool status);
+    /// Invoked when the availability mark is clicked, with the line it sits on.
+    /// qutepart has no signals, so this follows the completion callback's shape.
+    using CodeActionCallback = std::function<void(int lineNumber)>;
+    inline void setCodeActionCallback(CodeActionCallback callback) {
+        codeActionCallback_ = std::move(callback);
+    }
     void setLineMessage(int lineNumber, const QString &message);
 
     /// Attributed diagnostics, kept per line and tagged with the owner that
@@ -499,6 +521,10 @@ class Qutepart : public QPlainTextEdit {
     auto hasDiagnosticSeverity(int lineNumber, DiagnosticSeverity severity) const -> bool;
 
     auto getColorForLineFlag(int flag) -> QColor;
+    /// The colour for a diagnostic's severity, via the bit it is drawn with. The
+    /// overload exists so callers holding a diagnostic do not have to know that
+    /// severities and flags are two scales.
+    auto getColorForLineFlag(DiagnosticSeverity severity) -> QColor;
     auto fixLineFlagColors() -> void;
 
     // Actions
@@ -611,6 +637,17 @@ class Qutepart : public QPlainTextEdit {
 
     void initActions();
     void refreshDiagnosticRendering(const QTextBlock &block);
+    /// Tints the line from the worst diagnostic on it, or removes the tint when
+    /// the line has none. Called on every set and every clear so the tint cannot
+    /// outlive the diagnostics that caused it.
+    void updateDiagnosticTint(const QTextBlock &block);
+    /// Repositions, fills and shows or hides the mark widget. Driven from
+    /// paintEvent, which covers everything that can move it.
+    void updateCodeActionMark();
+    /// Where the mark goes, in viewport coordinates, or an empty rect when there
+    /// is none to show. The mark widget takes this as its geometry, so placement
+    /// has exactly one definition.
+    auto codeActionMarkRect() const -> QRect;
     QAction *createAction(const QString &text, QKeySequence shortcut, const QString &iconFileName,
                           std::function<void()> const &handler);
 
@@ -697,6 +734,12 @@ class Qutepart : public QPlainTextEdit {
     LineNumberArea *lineNumberArea_ = nullptr;
     MarkArea *markArea_ = nullptr;
     Minimap *miniMap_ = nullptr;
+    // The line currently showing the availability mark, or -1. Held here rather
+    // than left in a block flag because only ever one is shown at a time, so it
+    // cannot go stale on a line an edit has since moved.
+    int codeActionLine_ = -1;
+    CodeActionCallback codeActionCallback_;
+    CodeActionMark *codeActionMark_ = nullptr;
     Completer *completer_;
     FoldingArea *foldingArea_ = nullptr;
 

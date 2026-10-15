@@ -15,6 +15,8 @@
 #include <QFutureWatcher>
 #include <QKeyEvent>
 #include <QPainter>
+#include <QIcon>
+#include <QPainterPath>
 #include <QScrollBar>
 #include <QStyle>
 
@@ -27,13 +29,188 @@
 #include "text_block_utils.h"
 
 #include "hl/syntax_highlighter.h"
-#include "hl/text_type.h"
 #include "hl_factory.h"
 #include "indent/indent_funcs.h"
 #include "indent/indenter.h"
 #include "theme.h"
 
 namespace Qutepart {
+
+namespace {
+// Marks a persistent selection as a diagnostic tint. QTextFormat has no id for
+// "ours", and without a tag there is no way to tell a tint from an unrelated
+// selection on the same line when the severity changes under it.
+constexpr int DiagnosticTintProperty = QTextFormat::UserProperty + 1;
+
+// Theme name for the availability mark. When the icon theme ships it, it wins over
+// the drawn bulb so the mark can be restyled without touching this code.
+constexpr auto CodeActionIconName = "data-code-action";
+} // namespace
+
+// The mark is a real child widget rather than pixels painted into the viewport.
+// Painting it left the cursor and the click dependent on mouse-move and mouse-press
+// reaching us from the viewport, and QAbstractScrollArea does not forward those -
+// its own viewport filter consumes them first, so a later-installed filter never
+// runs. As a widget, hover, leave, cursor and click are Qt's problem, which is
+// where we want them.
+//
+// It also draws itself. Qutepart only says where the mark goes and which line it is
+// on; everything about its appearance lives here.
+class CodeActionMark : public QWidget {
+public:
+    explicit CodeActionMark(Qutepart *editor)
+        : QWidget(editor->viewport()), editor_(editor) {
+        setCursor(Qt::PointingHandCursor);
+        setAttribute(Qt::WA_TranslucentBackground, true);
+        hide();
+    }
+
+    /// Moves, resizes and shows the mark for `area`, or hides it when the area is
+    /// empty. The area is the grown hit target, so its height - one line - is also
+    /// the bulb's size.
+    void place(QRect area) {
+        if (!area.isValid() || area.height() <= 0) {
+            hide();
+            return;
+        }
+        pixmap_ = buildPixmap(area.height());
+        setGeometry(area);
+        show();
+    }
+
+    std::function<void()> onPress_;
+
+protected:
+    void paintEvent(QPaintEvent *) override {
+        auto p = QPainter(this);
+        p.drawPixmap(0, 0, pixmap_);
+    }
+
+    void mousePressEvent(QMouseEvent *event) override {
+        event->accept();
+        if (onPress_) {
+            onPress_();
+        }
+    }
+
+private:
+    /// 0-255, as QColor uses. Half: enough to define the shape, not enough to look
+    /// pasted over the line.
+    static constexpr int BorderAlpha = 128;
+
+    auto fillColour() const -> QColor {
+        // The plain theme warning yellow. An earlier version mixed this toward the
+        // editor background to make it recede, which is backwards - mixing toward a
+        // colour lowers the contrast with it, so on a light theme the mark faded to
+        // white on white. Receding is the outline's job, not the fill's.
+        return editor_->getColorForLineFlag(WARNING_BIT);
+    }
+
+    auto borderColour() const -> QColor {
+        // The palette's text colour rather than a literal black: on a light theme
+        // that is near-black, and on a dark one a black outline would vanish into
+        // the page and take the mark's only remaining contrast with it.
+        return editor_->viewport()->palette().color(QPalette::Text);
+    }
+
+    /// The bulb, drawn rather than themed. Used when the icon theme has nothing for
+    /// `data-code-action`, which is the usual case - no stock theme ships a
+    /// lightbulb.
+    auto drawnPixmap(int size, const QColor &fill, const QColor &border) const -> QPixmap {
+        auto const dpr = editor_->devicePixelRatioF();
+        QPixmap pixmap(qRound(size * dpr), qRound(size * dpr));
+        pixmap.setDevicePixelRatio(dpr);
+        pixmap.fill(Qt::transparent);
+        auto p = QPainter(&pixmap);
+        p.setRenderHint(QPainter::Antialiasing, true);
+
+        // Proportions are of the full box, so it stays legible down to the ~14px
+        // line height a small font gives.
+        auto const w = qreal(size);
+        auto const bulbRadius = w * 0.28;
+        auto const bulbCentre = QPointF(w * 0.5, w * 0.40);
+        auto const neckTop = bulbCentre.y() + bulbRadius * 0.80;
+
+        // The neck and base overlap the bulb, so they are merged before anything is
+        // drawn. Stroking the pieces separately would draw each primitive's own
+        // outline, leaving seams across the middle of the bulb.
+        auto shape = QPainterPath();
+        shape.addEllipse(bulbCentre, bulbRadius, bulbRadius);
+        shape.addRect(QRectF(w * 0.44, neckTop, w * 0.12, w * 0.10));
+        shape.addRect(QRectF(w * 0.40, neckTop + w * 0.10, w * 0.20, w * 0.09));
+        auto const outline = shape.united(QPainterPath());
+
+        p.setPen(Qt::NoPen);
+        p.setBrush(fill);
+        p.drawPath(outline);
+
+        // The outline is what makes the mark legible, which frees the fill to be
+        // the plain theme yellow instead of a lightness fudged against the page.
+        // Shape rather than hue alone also means it still reads where the colour
+        // cannot.
+        auto translucentBorder = border;
+        translucentBorder.setAlpha(BorderAlpha);
+        auto const penWidth = qMax(1.0, w * 0.07);
+        p.setBrush(Qt::NoBrush);
+        p.setPen(QPen(translucentBorder, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        p.drawPath(outline);
+        return pixmap;
+    }
+
+    /// The themed icon, tinted to match the drawn one so both read as the same
+    /// family. No dpr-aware tint work like the drawn bulb: an icon theme already
+    /// supplies colours, so it is used as given.
+    auto themedPixmap(int size, const QColor &tint) const -> QPixmap {
+        auto const dpr = editor_->devicePixelRatioF();
+        auto const icon = QIcon(QString::fromLatin1(CodeActionIconName));
+        auto iconPixmap = icon.pixmap(QSize(size, size), dpr);
+        auto const drawn = iconPixmap.size() / iconPixmap.devicePixelRatio();
+
+        QPixmap pixmap(qRound(size * dpr), qRound(size * dpr));
+        pixmap.setDevicePixelRatio(dpr);
+        pixmap.fill(Qt::transparent);
+        auto p = QPainter(&pixmap);
+        // Centred: an icon narrower than the box, or one that reports no sizes and
+        // comes back square, should not sit off to one side.
+        p.drawPixmap(QPoint((size - drawn.width()) / 2, (size - drawn.height()) / 2), iconPixmap);
+        if (tint.isValid()) {
+            // SourceIn keeps the icon's alpha and replaces its colour, so the mark
+            // reads as the warning yellow whatever the icon theme supplied -
+            // including a monochrome glyph.
+            p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+            p.fillRect(pixmap.rect(), tint);
+        }
+        return pixmap;
+    }
+
+    auto buildPixmap(int size) -> QPixmap {
+        auto const fill = fillColour();
+        auto const border = borderColour();
+        auto const themed = QIcon::hasThemeIcon(CodeActionIconName);
+
+        // Cached per size, both colours and which of the two sources was used - the
+        // themed flag is part of the key because the two produce different pictures
+        // at the same size and colour, and sharing an entry would paint whichever
+        // was requested first.
+        auto const key = QStringLiteral("%1_%2_%3_%4")
+                             .arg(size)
+                             .arg(themed)
+                             .arg(fill.name(QColor::HexArgb))
+                             .arg(border.name(QColor::HexArgb));
+        if (auto const cached = cache_.constFind(key); cached != cache_.constEnd()) {
+            return cached.value();
+        }
+
+        auto pixmap = themed ? themedPixmap(size, fill) : drawnPixmap(size, fill, border);
+        cache_.insert(key, pixmap);
+        return pixmap;
+    }
+
+    Qutepart *editor_;
+    QPixmap pixmap_;
+    QHash<QString, QPixmap> cache_;
+};
+
 
 Qutepart::Qutepart(QWidget *parent, const QString &text)
     : QPlainTextEdit(text, parent), indenter_(new Indenter(this)), markArea_(new MarkArea(this)),
@@ -42,6 +219,12 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
       enableSmartHomeEnd_(true), softLineWrapping_(true), smartFolding_(true), lineLengthEdge_(80),
       brakcetsQutoEnclose(true), completionEnabled_(true), completionThreshold_(3),
       viewportMarginStart_(0) {
+    codeActionMark_ = new CodeActionMark(this);
+    codeActionMark_->onPress_ = [this] {
+        if (codeActionCallback_) {
+            codeActionCallback_(codeActionLine_);
+        }
+    };
     extraCursorBlinkTimer_ = new QTimer(this);
     callTip_ = new CallTip(this);
     setBracketHighlightingEnabled(true);
@@ -563,15 +746,39 @@ void Qutepart::setLineExecuting(int lineNumber, bool status) {
     modifyBlockFlag(lineNumber, EXECUTING_BIT, status, getColorForLineFlag(EXECUTING_BIT));
 }
 
-bool Qutepart::getLineCodeAction(int lineNumber) const {
-    return getBlockFlag(lineNumber, CODE_ACTION_BIT);
+void Qutepart::setLineCodeAction(int lineNumber, bool status) {
+    if (status) {
+        codeActionLine_ = lineNumber;
+    } else if (codeActionLine_ == lineNumber) {
+        codeActionLine_ = -1;
+    }
+    // Repositioning happens in paintEvent, so this repaint is what moves the mark.
+    // No minimap update: the bit that used to be set was never drawn there, so it
+    // was repainting for nothing.
+    viewport()->update();
 }
 
-void Qutepart::setLineCodeAction(int lineNumber, bool status) {
-    // No background passed: this is a marker in the margin, not a tint on the
-    // line, and tinting the whole line for an affordance would fight the
-    // diagnostic tints already there.
-    modifyBlockFlag(lineNumber, CODE_ACTION_BIT, status, Qt::transparent);
+void Qutepart::updateCodeActionMark() {
+    codeActionMark_->place(codeActionMarkRect());
+}
+
+auto Qutepart::codeActionMarkRect() const -> QRect {
+    if (codeActionLine_ < 0) {
+        return {};
+    }
+    auto block = document()->findBlockByNumber(codeActionLine_);
+    if (!block.isValid() || !block.isVisible()) {
+        return {};
+    }
+
+    auto const size = qRound(double(cursorRect(block, 0, 0).height()));
+    auto const lastChar = qMax(0, block.length() - 1);
+    auto const endRect = cursorRect(block, lastChar, 0);
+    auto const left = endRect.right() + size / 4;
+    auto const top = endRect.top() + (endRect.height() - size) / 2;
+    // Grown a little so the target is a comfortable click rather than a pixel-precise
+    // one; the mark is only a few pixels across at a normal line height.
+    return QRect(left - size / 4, top, size + size / 2, size);
 }
 
 void Qutepart::removeMetaData() {
@@ -596,8 +803,6 @@ bool Qutepart::isCallTipVisible() const { return callTip_->isVisible(); }
 
 void Qutepart::scrollContentsBy(int dx, int dy) {
     QPlainTextEdit::scrollContentsBy(dx, dy);
-    // The call tip is anchored in viewport coordinates; without this it would
-    // keep floating over what it was anchored to before the scroll.
     hideCallTip();
 }
 
@@ -617,16 +822,11 @@ void Qutepart::setDiagnostic(int lineNumber, const Diagnostic &diagnostic) {
         qDebug() << "Invalid line" << lineNumber << "cannot set diagnostic";
         return;
     }
-    // One entry per owner per severity: a server republishing hands us the same
-    // finding again, and the caller has already cleared its previous ones. Two
-    // findings of the same severity from one owner on one line are genuinely
-    // distinct, so the second replaces rather than duplicates only when the
-    // message matches too.
     for (auto &existing : blockData->diagnostics) {
         if (existing.owner == diagnostic.owner &&
             existing.severity == diagnostic.severity &&
             existing.message == diagnostic.message) {
-            return; // already shown; nothing to repaint
+            return;
         }
     }
     blockData->diagnostics.append(diagnostic);
@@ -640,8 +840,6 @@ void Qutepart::clearDiagnostics(const QString &owner) {
         if (!blockData || blockData->diagnostics.isEmpty()) {
             continue;
         }
-        // erase-remove, so the vector does not keep capacity for every finding
-        // this owner ever had.
         auto kept = blockData->diagnostics;
         kept.erase(std::remove_if(kept.begin(), kept.end(),
                                   [&owner](const Diagnostic &d) { return d.owner == owner; }),
@@ -711,7 +909,60 @@ auto Qutepart::diagnosticSeveritiesOn(int lineNumber) const -> QVector<Diagnosti
 /// Repaints the one block whose diagnostics changed. The margin draws its own
 /// icons from the list rather than from the severity bits, so no flag is touched
 /// here and an unowned setLineError() mark cannot be cleared by accident.
+void Qutepart::updateDiagnosticTint(const QTextBlock &block) {
+    if (!block.isValid()) {
+        return;
+    }
+
+    auto const tagged = [&block](const QTextEdit::ExtraSelection &selection) {
+        return selection.cursor.block() == block &&
+               selection.format.property(DiagnosticTintProperty).isValid();
+    };
+    auto const existing = std::find_if(persitentSelections.cbegin(), persitentSelections.cend(),
+                                       tagged);
+    auto const hadTint = existing != persitentSelections.cend();
+    auto const previousColour = hadTint ? existing->format.background() : QColor();
+    // Worst wins across every owner, so a line carrying both a clangd error and a
+    // build error shows the error colour rather than whichever was applied last.
+    auto worst = DiagnosticSeverity::Hint;
+    auto any = false;
+    auto const *blockData = static_cast<TextBlockUserData *>(block.userData());
+    if (blockData) {
+        for (auto const &diagnostic : blockData->diagnostics) {
+            // The scale runs Error, Warning, Information, Hint, so the worst is the
+            // lowest. Hints are skipped: they are the bulk of what a server reports
+            // and tinting every one of them would drown the errors.
+            if (diagnostic.severity != DiagnosticSeverity::Hint &&
+                (!any || diagnostic.severity < worst)) {
+                worst = diagnostic.severity;
+                any = true;
+            }
+        }
+    }
+
+    auto const wantTint = any;
+    auto const wantColour = wantTint ? getColorForLineFlag(worst) : QColor();
+    if (hadTint == wantTint && (!wantTint || previousColour == wantColour)) {
+        return;
+    }
+
+    auto out = persitentSelections;
+    out.erase(std::remove_if(out.begin(), out.end(), tagged), out.end());
+    if (wantTint) {
+        QTextEdit::ExtraSelection selection;
+        selection.format.setBackground(wantColour);
+        selection.format.setProperty(DiagnosticTintProperty, true);
+        selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+        selection.cursor = QTextCursor(block);
+        selection.cursor.clearSelection();
+        out.append(selection);
+    }
+    persitentSelections = out;
+    updateExtraSelections();
+}
+
 void Qutepart::refreshDiagnosticRendering(const QTextBlock &block) {
+    updateDiagnosticTint(block);
     if (markArea_) {
         auto const top = block.position();
         markArea_->update(QRect(0, top, markArea_->width(), blockBoundingRect(block).height()));
@@ -720,6 +971,14 @@ void Qutepart::refreshDiagnosticRendering(const QTextBlock &block) {
         miniMap_->update();
     }
     viewport()->update();
+}
+
+auto Qutepart::getColorForLineFlag(DiagnosticSeverity severity) -> QColor {
+    // Every source of a finding ends up here - clangd, the build output, whatever
+    // comes next - so the background for a given severity is one decision, not one
+    // per producer. Two errors from different sources are the same colour because
+    // there is only one error colour.
+    return getColorForLineFlag(diagnosticBit(severity));
 }
 
 auto Qutepart::getColorForLineFlag(int flag) -> QColor {
@@ -1175,6 +1434,7 @@ bool Qutepart::eventFilter(QObject *obj, QEvent *event) {
             setTheme(theme);
         }
     }
+
     return QPlainTextEdit::eventFilter(obj, event);
 }
 
@@ -1641,6 +1901,11 @@ void Qutepart::paintEvent(QPaintEvent *event) {
     }
 
     drawIndentMarkersAndEdge(event->rect());
+
+    // Repositioned here because it covers every way the mark can move - scroll,
+    // resize, theme, font, block visibility - without needing to be hooked into
+    // each one. Paint events outnumber those.
+    updateCodeActionMark();
 }
 
 void Qutepart::changeEvent(QEvent *event) {
@@ -2978,12 +3243,6 @@ QIcon iconForStatus(int status) {
     }
     if (status & INFO_BIT) {
         return getStatusIconImpl("data-information", QStyle::SP_MessageBoxInformation);
-    }
-    if (status & CODE_ACTION_BIT) {
-        // Themeable as "data-code-action"; no standard Qt icon is a lightbulb,
-        // so it falls back to a question mark, which reads as "something you
-        // could do here" rather than as a problem.
-        return getStatusIconImpl("data-code-action", QStyle::SP_MessageBoxQuestion);
     }
     /*
     if (status & OTHER_BIT) {
