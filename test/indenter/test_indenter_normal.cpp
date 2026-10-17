@@ -101,6 +101,24 @@ class Test : public BaseTest {
         qpart.setIndentAlgorithm(Qutepart::INDENT_ALG_NORMAL);
         runDataDrivenTest();
     }
+
+    void shiftEnter_data() {
+        addColumns();
+
+        // Shift+Enter keeps the indentation of the previous line
+        QTest::newRow("shiftenter1") << "foo\n" << std::make_pair(0, 3) << "\\sbar"
+                                   << "foo\n"
+                                      "bar\n";
+
+        QTest::newRow("shiftenter2") << "    foo\n" << std::make_pair(0, 7) << "\\sbar"
+                                   << "    foo\n"
+                                      "    bar\n";
+    }
+
+    void shiftEnter() {
+        qpart.setIndentAlgorithm(Qutepart::INDENT_ALG_NORMAL);
+        runDataDrivenTest();
+    }
 };
 
 QTEST_MAIN(Test)

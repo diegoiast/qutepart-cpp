@@ -59,6 +59,11 @@ void BaseTest::runDataDrivenTest() {
                 enter();
             } else if (*ch == '\t') {
                 tab();
+            } else if ((*ch == '\\') && ((ch + 1) != input.end()) && (*(ch + 1) == 's')) {
+                // "\s" is Shift+Enter: a line is opened inside the current
+                // construct, it does not start a new one
+                shiftEnter();
+                ++ch;
             } else {
                 type(*ch);
             }

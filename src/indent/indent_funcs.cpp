@@ -99,14 +99,15 @@ auto lineCommentContinuation(const QTextBlock &block, const QString &marker) -> 
     }
 
     // Keep the white space after the marker, so the new line is aligned with
-    // the previous one. A comment without any text gets a single space.
+    // the previous one. A comment without any text gets a single space - but
+    // only one, repeating enter must not grow it.
     auto end = start + marker.length();
     while ((end < text.length()) && (text[end].isSpace())) {
         end++;
     }
 
     auto prefix = text.mid(start, end - start);
-    if (end >= text.length()) {
+    if ((end >= text.length()) && (end == start + marker.length())) {
         prefix += ' ';
     }
 

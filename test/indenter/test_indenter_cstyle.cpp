@@ -790,6 +790,68 @@ class Test : public BaseTest {
                                     << std::make_pair(0, 29) << "\nbaz"
                                     << "char *s = \"// not a comment\";\n"
                                        "baz\n";
+
+        // A comment line which ends with the marker and a space does not get
+        // another space appended.
+        QTest::newRow("linecomment12") << "// \n"
+                                    << std::make_pair(0, 3) << "\nbar"
+                                    << "// \n"
+                                       "// bar\n";
+
+        // Repeating enter on a comment does not grow the trailing space.
+        QTest::newRow("linecomment13") << "// foo\n"
+                                    << std::make_pair(0, 6) << "\n\nbar"
+                                    << "// foo\n"
+                                       "// \n"
+                                       "// bar\n";
+    }
+
+    // Shift+Enter opens a line inside the comment, like Kate does
+    void LineCommentShiftEnter() { runDataDrivenTest(); }
+
+    void LineCommentShiftEnter_data() {
+        addColumns();
+
+        QTest::newRow("shiftenter1") << "// foo\n"
+                                   << std::make_pair(0, 6) << "\\sbar"
+                                   << "// foo\n"
+                                      "// bar\n";
+
+        QTest::newRow("shiftenter2") << "//\n"
+                                   << std::make_pair(0, 2) << "\\sbar"
+                                   << "//\n"
+                                      "// bar\n";
+
+        // No second space is appended to a line which already has one.
+        QTest::newRow("shiftenter3") << "// \n"
+                                   << std::make_pair(0, 3) << "\\sbar"
+                                   << "// \n"
+                                      "// bar\n";
+
+        // Repeating shift+enter does not grow the trailing space.
+        QTest::newRow("shiftenter4") << "// foo\n"
+                                   << std::make_pair(0, 6) << "\\s\\sbar"
+                                   << "// foo\n"
+                                      "// \n"
+                                      "// bar\n";
+
+        // The indentation is kept.
+        QTest::newRow("shiftenter5") << "  // foo\n"
+                                   << std::make_pair(0, 8) << "\\sbar"
+                                   << "  // foo\n"
+                                      "  // bar\n";
+
+        // Splitting in the middle keeps the text after the cursor.
+        QTest::newRow("shiftenter6") << "// foobar\n"
+                                   << std::make_pair(0, 6) << "\\sX"
+                                   << "// foo\n"
+                                      "// Xbar\n";
+
+        // A comment behind code is not continued.
+        QTest::newRow("shiftenter7") << "bar(); // foo\n"
+                                   << std::make_pair(0, 13) << "\\sbaz"
+                                   << "bar(); // foo\n"
+                                      "baz\n";
     }
 
     void Aplist() { runDataDrivenTest(); }
