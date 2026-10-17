@@ -350,9 +350,11 @@ void Qutepart::setHighlighter(const QString &languageId) {
     hl = static_cast<SyntaxHighlighter *>(highlighter_);
     if (hl) {
         auto lang = hl->getLanguage();
+        indenter_->setLineCommentMarker(lang->getSingleLineComment());
         completer_->setKeywords(lang->allLanguageKeywords());
         hl->setTheme(theme);
     } else {
+        indenter_->setLineCommentMarker(QString());
         completer_->setKeywords({});
     }
 }
@@ -360,6 +362,7 @@ void Qutepart::setHighlighter(const QString &languageId) {
 void Qutepart::removeHighlighter() {
     delete highlighter_;
     highlighter_ = nullptr;
+    indenter_->setLineCommentMarker(QString());
     completer_->setKeywords({});
 }
 

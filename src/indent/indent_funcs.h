@@ -34,6 +34,13 @@ QString makeIndentAsColumn(QTextBlock block, int column, int confIndentWidth, bo
 
 QString prevNonEmptyBlockIndent(const QTextBlock &block);
 
+/* If the given block ends inside a single line comment, return the text which
+continues that comment on a new line: the indentation of the block, the comment
+marker and the white space following it.
+Returns a null string when the block is not in a single line comment.
+*/
+auto lineCommentContinuation(const QTextBlock &block, const QString &marker) -> QString;
+
 // Block text with comments replaced with space
 QString textWithCommentsWiped(const QTextBlock &block);
 

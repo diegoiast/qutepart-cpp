@@ -77,6 +77,42 @@ QString prevNonEmptyBlockIndent(const QTextBlock &block) {
     return blockIndent(prevNonEmptyBlock(block));
 }
 
+auto lineCommentContinuation(const QTextBlock &block, const QString &marker) -> QString {
+    if (!block.isValid() || marker.isEmpty()) {
+        return QString();
+    }
+
+    auto const text = block.text();
+    auto const typeMap = textTypeMap(block);
+
+    // Only a line which is a comment on its own is continued. A comment
+    // behind code ("foo(); // bar") is not - it is a trailing comment.
+    auto start = firstNonSpaceColumn(text);
+    if (text.mid(start, marker.length()) != marker) {
+        return QString();
+    }
+
+    /* The highlighter marks comment markers as comment. This rejects a line
+    where the marker is part of a string, like '"// not a comment"'. */
+    if ((start >= typeMap.length()) || (typeMap[start] != 'c')) {
+        return QString();
+    }
+
+    // Keep the white space after the marker, so the new line is aligned with
+    // the previous one. A comment without any text gets a single space.
+    auto end = start + marker.length();
+    while ((end < text.length()) && (text[end].isSpace())) {
+        end++;
+    }
+
+    auto prefix = text.mid(start, end - start);
+    if (end >= text.length()) {
+        prefix += ' ';
+    }
+
+    return lineIndent(text) + prefix;
+}
+
 QString textWithCommentsWiped(const QTextBlock &block) {
     QString text = block.text();
     QString typeMap = textTypeMap(block);

@@ -33,6 +33,12 @@ class Indenter : public QObject {
 
     void setLanguage(const QString &language);
 
+    /* The marker which starts a single line comment in the current language,
+     * like '//' in C++ or '#' in Ruby. Used to continue such a comment when a
+     * new line is started.
+     */
+    void setLineCommentMarker(const QString &marker);
+
     bool shouldAutoIndentOnEvent(QKeyEvent *event) const;
     bool shouldUnindentWithBackspace(const QTextCursor &cursor) const;
 #if 0
@@ -52,6 +58,7 @@ class Indenter : public QObject {
     bool useTabs_;
     int width_;
     QString language_;
+    QString lineCommentMarker_;
 };
 
 } // namespace Qutepart

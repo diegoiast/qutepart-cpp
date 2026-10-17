@@ -20,8 +20,6 @@ const bool CFG_INDENT_CASE = true;      // indent 'case' and 'default' in a swit
 const bool CFG_INDENT_NAMESPACE = true; // indent after 'namespace'?
 const bool CFG_AUTO_INSERT_STAR = true; // auto insert '*' in C-comments
 const bool CFG_SNAP_SLASH = true;       // snap '/' to '*/' in C-comments
-// const bool CFG_AUTO_INSERT_SLACHES = false;  // auto insert '//' after
-// C++-comments
 
 /* indent level of access modifiers, relative to the class indent level
    set to -1 to disable auto-indendation after access modifiers.
@@ -233,65 +231,6 @@ QString IndentAlgCstyle::tryCComment(const QTextBlock &block) const {
     return QString();
 }
 
-#if 0 // disabled while porting to C++
-/* C++ comment checking. when we want to insert slashes:
-#, #/, #! #/<, #!< and ##...
-return: filler string or null, if not in a star comment
-NOTE: otherwise comments get skipped generally and we use the last code-line
-*/
-QString IndentAlgCstyle::tryCppComment(const QTextBlock& block) const {
-    if ( (! block.previous().isValid()) ||
-         (! CFG_AUTO_INSERT_SLACHES)) {
-        return QString();
-    }
-
-    QString prevLineText = block.previous().text();
-
-    QString indentation;
-    bool comment = stripLeftWhitespace(prevLineText).startsWith('#');
-
-    // allowed are: #, #/, #! #/<, #!< and ##...
-    if (comment) {
-        QString prevLineText = block.previous().text();
-        QString lstrippedText = stripLeftWhitespace(block.previous().text());
-
-        QChar char3, char4;
-        if (lstrippedText.length() >= 4) {
-            char3 = lstrippedText[2];
-            char4 = lstrippedText[3];
-        }
-
-        indentation = lineIndent(prevLineText);
-        QRegularExpressionMatch match;
-        if (CFG_AUTO_INSERT_SLACHES) {
-            if (prevLineText.mid(2, 4) == "//") {
-                // match ##... and replace by only two: #
-                static const QRegularExpression rx("^\\s*(\\/\\/)");
-                match = rx.match(prevLineText);
-            } else if (char3 == '/' || char3 == '!') {
-                // match #/, #!, #/< and #!
-                static const QRegularExpression rx("^\\s*(\\/\\/[\\/!][<]?\\s*)");
-                match = rx.match(prevLineText);
-            } else {
-                // only #, nothing else:
-                static const QRegularExpression rx("^\\s*(\\/\\/\\s*)");
-                match = rx.match(prevLineText);
-            }
-
-            if (match.hasMatch()) {
-                qpart.insertText((block.blockNumber(), 0), match.captured(1));
-            }
-        }
-    }
-
-    if ( ! indentation.isNull()) {
-        dbg(QString("tryCppComment: success in line %1").arg(block.previous().blockNumber()));
-    }
-
-    return indentation;
-}
-#endif
-
 namespace {
 
 bool isNamespace(QTextBlock block) {
@@ -340,7 +279,7 @@ QString IndentAlgCstyle::tryBrace(const QTextBlock &block) const {
 Check for if, else, while, do, switch, private, public, protected, signals,
 default, case etc... keywords, as we want to indent then. If   is
 non-null/True, then indentation is not increased.
-Note: The code is written to be called *after* tryCComment and tryCppComment!
+Note: The code is written to be called *after* tryCComment!
 */
 QString IndentAlgCstyle::tryCKeywords(const QTextBlock &block, bool isBrace) const {
     QTextBlock currentBlock = prevNonEmptyNonCommentBlock(block);
@@ -399,7 +338,7 @@ QString IndentAlgCstyle::tryCKeywords(const QTextBlock &block, bool isBrace) con
 
 /* Search for if, do, while, for, ... as we want to indent then.
 Return null, if nothing useful found.
-Note: The code is written to be called *after* tryCComment and tryCppComment!
+Note: The code is written to be called *after* tryCComment!
 */
 QString IndentAlgCstyle::tryCondition(const QTextBlock &block) const {
     QTextBlock currentBlock = prevNonEmptyNonCommentBlock(block);
@@ -702,15 +641,6 @@ QString IndentAlgCstyle::indentLine(const QTextBlock &block, bool autoIndent) co
     if (!indent.isNull()) {
         return indent;
     }
-
-#if 0 // disabled while porting to C++
-    if ( ! autoIndent) {
-        indent = tryCppComment(block);
-        if ( ! indent.isNull()) {
-            return indent;
-        }
-    }
-#endif
 
     indent = trySwitchStatement(block);
     if (!indent.isNull()) {

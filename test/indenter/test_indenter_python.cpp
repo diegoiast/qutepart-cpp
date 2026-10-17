@@ -161,6 +161,79 @@ class Test : public BaseTest {
                                                 "    x";
     }
 
+    void linecomment_data() {
+        addColumns();
+
+        // Pressing enter on a '#' line continues the comment.
+        QTest::newRow("linecomment1") << "# foo\n"
+                                    << std::make_pair(0, 5) << "\nbar"
+                                    << "# foo\n"
+                                       "# bar\n";
+
+        // ...keeping the indentation of the comment.
+        QTest::newRow("linecomment2") << "  # foo\n"
+                                    << std::make_pair(0, 7) << "\nbar"
+                                    << "  # foo\n"
+                                       "  # bar\n";
+
+        // ...keeping the extra space after the comment marker.
+        QTest::newRow("linecomment3") << "#foo bar\n"
+                                    << std::make_pair(0, 8) << "\nbaz"
+                                    << "#foo bar\n"
+                                       "#baz\n";
+
+        // An empty '#' line also continues.
+        QTest::newRow("linecomment4") << "  #\n"
+                                    << std::make_pair(0, 3) << "\nfoo"
+                                    << "  #\n"
+                                       "  # foo\n";
+
+        // Inside a function.
+        QTest::newRow("linecomment5") << "def f():\n"
+                                        "    # comment\n"
+                                        "\n"
+                                    << std::make_pair(1, 13) << "\nnext"
+                                    << "def f():\n"
+                                       "    # comment\n"
+                                       "    # next\n"
+                                       "\n";
+
+        // A comment behind code is not continued - it is a trailing comment.
+        QTest::newRow("linecomment6") << "x = 1  # comment\n"
+                                    << std::make_pair(0, 16) << "\nnext"
+                                    << "x = 1  # comment\n"
+                                       "next\n";
+
+        // An empty line in between breaks the continuation.
+        QTest::newRow("linecomment7") << "# foo\n"
+                                        "\n"
+                                    << std::make_pair(1, 0) << "\nbar"
+                                    << "# foo\n"
+                                       "\n"
+                                       "bar\n";
+
+        // Code following a comment is not part of the comment.
+        QTest::newRow("linecomment8") << "# foo\n"
+                                        "bar\n"
+                                    << std::make_pair(1, 3) << "\nbaz"
+                                    << "# foo\n"
+                                       "bar\n"
+                                       "baz\n";
+
+        // A comment marker inside a string does not continue.
+        QTest::newRow("linecomment9") << "s = \"# not a comment\"\n"
+                                    << std::make_pair(0, 21) << "\nbaz"
+                                    << "s = \"# not a comment\"\n"
+                                       "baz\n";
+    }
+
+    void linecomment() {
+        qpart.setHighlighter("python.xml");
+        qpart.setIndentAlgorithm(Qutepart::INDENT_ALG_PYTHON);
+        qpart.setIndentWidth(4);
+        runDataDrivenTest();
+    }
+
     void python() {
         qpart.setIndentAlgorithm(Qutepart::INDENT_ALG_PYTHON);
         qpart.setIndentWidth(2);

@@ -27,7 +27,6 @@ class IndentAlgCstyle : public IndentAlgImpl {
     QString trySwitchStatement(const QTextBlock &block) const;
     QString tryAccessModifiers(const QTextBlock &block) const;
     QString tryCComment(const QTextBlock &block) const;
-    QString tryCppComment(const QTextBlock &block) const;
     QString tryBrace(const QTextBlock &block) const;
     QString tryCKeywords(const QTextBlock &block, bool isBrace) const;
     QString tryCondition(const QTextBlock &block) const;

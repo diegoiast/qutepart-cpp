@@ -103,13 +103,13 @@ class Test : public BaseTest {
                                 << std::make_pair(0, 12)
                                 << "\ndef foo\nif gets\nputs\nelse\nexit\nend\nend"
                                 << "# basic1.txt\n"
-                                   "def foo\n"
-                                   "  if gets\n"
-                                   "    puts\n"
-                                   "  else\n"
-                                   "    exit\n"
-                                   "  end\n"
-                                   "end\n";
+                                   "# def foo\n"
+                                   "# if gets\n"
+                                   "# puts\n"
+                                   "# else\n"
+                                   "# exit\n"
+                                   "# end\n"
+                                   "# end\n";
         QTest::newRow("basic2")
             <<  "# basic2.txt\n"
                 "\n"
@@ -162,9 +162,9 @@ class Test : public BaseTest {
                                      << "\n"
                                         "\n"
                                         "# Comment\n"
-                                        "def foo\n"
-                                        "  bar\n"
-                                        "end\n";
+                                        "# def foo\n"
+                                        "# bar\n"
+                                        "# end\n";
     }
 
     void RegExp() {
@@ -255,7 +255,7 @@ class Test : public BaseTest {
                                 << "# no-do1.txt\n"
                                    "if foo\n"
                                    "  # nothing to do\n"
-                                   "end\n";
+                                   "  # end\n";
 
         QTest::newRow("no_do2") << "# no-do2.txt\n"
                                    "if foo\n"
@@ -264,8 +264,8 @@ class Test : public BaseTest {
                                 << "# no-do2.txt\n"
                                    "if foo\n"
                                    "  # nothing to do\n"
-                                   "  f\n"
-                                   "end\n";
+                                   "  # f\n"
+                                   "  # end\n";
 
         QTest::newRow("no_do3") << "# no-do3.txt\n"
                                    "if foo\n"
@@ -495,7 +495,7 @@ class Test : public BaseTest {
                                         << std::make_pair(1, 34) << "\nfoo"
                                         << "  array = [ :a, :b, :c ] # comment\n"
                                            "                         # comment\n"
-                                           "  foo\n";
+                                           "                         # foo\n";
 
         QTest::newRow("array_comment2") << "  array = [ # comment\n"
                                         << std::make_pair(0, 21) << "\n:a"
@@ -954,8 +954,8 @@ class Test : public BaseTest {
                                     << "# multiline4.txt\n"
                                        "s = \"hello\" +\n"
                                        "    # Comment\n"
-                                       "    \"world\"\n"
-                                       "bar\n";
+                                       "    # \"world\"\n"
+                                       "    # bar\n";
 
         QTest::newRow("multiline5") << "# multiline5.txt\n"
                                        "s = \"hello\" +\n"
@@ -964,8 +964,8 @@ class Test : public BaseTest {
                                     << "# multiline5.txt\n"
                                        "s = \"hello\" +\n"
                                        "# Misplaced comment\n"
-                                       "    \"world\"\n"
-                                       "bar\n";
+                                       "# \"world\"\n"
+                                       "# bar\n";
 
 #if 0
         QTest::newRow("multiline6")
@@ -1194,7 +1194,7 @@ class Test : public BaseTest {
                                         << "  foobar(foo,\n"
                                            "         bar, # comment\n"
                                            "         # comment\n"
-                                           "         baz\n";
+                                           "         # baz\n";
 
         QTest::newRow("plist_comment5") << "  foobar(foo,\n"
                                            "         bar, bar, # comment\n"
@@ -1203,7 +1203,7 @@ class Test : public BaseTest {
                                         << "  foobar(foo,\n"
                                            "         bar, bar, # comment\n"
                                            "                   # comment\n"
-                                           "         baz\n";
+                                           "                   # baz\n";
 
         QTest::newRow("plist_comment6") << "  foobar(foo,\n"
                                            "         bar,\n"
@@ -1219,7 +1219,7 @@ class Test : public BaseTest {
                                         << std::make_pair(1, 27) << "\nbaz"
                                         << "  foobar(foo(bar, # comment\n"
                                            "                  # comment\n"
-                                           "             baz\n";
+                                           "                  # baz\n";
 
         QTest::newRow("plist_comment8") << "  foobar(foo(bar,\n"
                                            "  # comment\n"
@@ -1239,7 +1239,7 @@ class Test : public BaseTest {
                                            "             baz), # comment\n"
                                            "         foobaz(), # comment\n"
                                            "                   # comment\n"
-                                           "         blah\n";
+                                           "                   # blah\n";
 
         QTest::newRow("plist_comment10") << "  foobar(foo(bar,\n"
                                             "             baz),\n"
@@ -1252,7 +1252,7 @@ class Test : public BaseTest {
                                             "       # comment\n"
                                             "         blah)\n"
                                             "       # comment\n"
-                                            "  foobaz\n";
+                                            "       # foobaz\n";
     }
 
     void Comment() { runDataDrivenTest(); }
@@ -1267,7 +1267,7 @@ class Test : public BaseTest {
                                   << "# comment1.txt\n"
                                      "if foo\n"
                                      "  # Comment\n"
-                                     "end\n";
+                                     "  # end\n";
 
         QTest::newRow("comment2") << "# comment2.txt\n"
                                      "if foo\n"
@@ -1276,8 +1276,8 @@ class Test : public BaseTest {
                                   << "# comment2.txt\n"
                                      "if foo\n"
                                      "  # Comment\n"
-                                     "  bar\n"
-                                     "end\n";
+                                     "  # bar\n"
+                                     "  # end\n";
 
         QTest::newRow("comment3") << "# comment3.txt\n"
                                      "if foo\n"
@@ -1286,9 +1286,9 @@ class Test : public BaseTest {
                                   << "# comment3.txt\n"
                                      "if foo\n"
                                      "  # Comment\n"
-                                     "  bar\n"
-                                     "  # Another comment\n"
-                                     "end\n";
+                                     "  # bar\n"
+                                     "  # # Another comment\n"
+                                     "  # end\n";
 
         QTest::newRow("comment4") << "# comment4.txt\n"
                                      "if foo\n"
@@ -1297,8 +1297,8 @@ class Test : public BaseTest {
                                   << "# comment4.txt\n"
                                      "if foo\n"
                                      "  # Comment\n"
-                                     "  bar # Another comment\n"
-                                     "end\n";
+                                     "  # bar # Another comment\n"
+                                     "  # end\n";
 
         QTest::newRow("comment5") << "# comment5.txt\n"
                                      "if foo\n"
@@ -1307,8 +1307,8 @@ class Test : public BaseTest {
                                   << "# comment5.txt\n"
                                      "if foo\n"
                                      "     # Misplaced comment\n"
-                                     "  bar\n"
-                                     "end\n";
+                                     "     # bar\n"
+                                     "     # end\n";
 
         QTest::newRow("comment6") << "# comment6.txt\n"
                                      "if foo\n"
@@ -1317,8 +1317,80 @@ class Test : public BaseTest {
                                   << "# comment6.txt\n"
                                      "if foo\n"
                                      "# Misplaced comment\n"
-                                     "  bar\n"
-                                     "end\n";
+                                     "# bar\n"
+                                     "# end\n";
+    }
+
+    void LineComment() { runDataDrivenTest(); }
+
+    void LineComment_data() {
+        addColumns();
+
+        // Pressing enter on a '#' line continues the comment.
+        QTest::newRow("linecomment1") << "# foo\n"
+                                    << std::make_pair(0, 5) << "\nbar"
+                                    << "# foo\n"
+                                       "# bar\n";
+
+        // ...keeping the indentation of the comment.
+        QTest::newRow("linecomment2") << "  # foo\n"
+                                    << std::make_pair(0, 7) << "\nbar"
+                                    << "  # foo\n"
+                                       "  # bar\n";
+
+        // ...keeping the extra space after the comment marker.
+        QTest::newRow("linecomment3") << "#foo bar\n"
+                                    << std::make_pair(0, 8) << "\nbaz"
+                                    << "#foo bar\n"
+                                       "#baz\n";
+
+        // An empty '#' line also continues.
+        QTest::newRow("linecomment4") << "  #\n"
+                                    << std::make_pair(0, 3) << "\nfoo"
+                                    << "  #\n"
+                                       "  # foo\n";
+
+        // Inside a block.
+        QTest::newRow("linecomment5") << "if foo\n"
+                                        "  # comment\n"
+                                        "end\n"
+                                    << std::make_pair(1, 11) << "\nnext"
+                                    << "if foo\n"
+                                       "  # comment\n"
+                                       "  # next\n"
+                                       "end\n";
+
+        // A comment behind code is not continued - it is a trailing comment.
+        QTest::newRow("linecomment6") << "if foo\n"
+                                        "  bar # comment\n"
+                                        "end\n"
+                                    << std::make_pair(1, 15) << "\nnext"
+                                    << "if foo\n"
+                                       "  bar # comment\n"
+                                       "  next\n"
+                                       "end\n";
+
+        // An empty line in between breaks the continuation.
+        QTest::newRow("linecomment7") << "# foo\n"
+                                        "\n"
+                                    << std::make_pair(1, 0) << "\nbar"
+                                    << "# foo\n"
+                                       "\n"
+                                       "bar\n";
+
+        // Code following a comment is not part of the comment.
+        QTest::newRow("linecomment8") << "# foo\n"
+                                        "bar\n"
+                                    << std::make_pair(1, 3) << "\nbaz"
+                                    << "# foo\n"
+                                       "bar\n"
+                                       "baz\n";
+
+        // A comment marker inside a string does not continue.
+        QTest::newRow("linecomment9") << "s = \"# not a comment\"\n"
+                                    << std::make_pair(0, 21) << "\nbaz"
+                                    << "s = \"# not a comment\"\n"
+                                       "baz\n";
     }
 
     void Heredoc() { runDataDrivenTest(); }

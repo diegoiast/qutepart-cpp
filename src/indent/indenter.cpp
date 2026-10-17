@@ -114,6 +114,8 @@ void Indenter::setLanguage(const QString &language) {
     alg_->setLanguage(language_);
 }
 
+void Indenter::setLineCommentMarker(const QString &marker) { lineCommentMarker_ = marker; }
+
 bool Indenter::shouldAutoIndentOnEvent(QKeyEvent *event) const {
     return (!event->text().isEmpty() && alg_->triggerCharacters().contains(event->text()));
 }
@@ -125,14 +127,14 @@ bool Indenter::shouldUnindentWithBackspace(const QTextCursor &cursor) const {
 }
 
 void Indenter::indentBlock(QTextBlock block, int cursorPos, int typedKey) const {
-    QString prevBlockText = block.previous().text(); // invalid block returns empty text
-    QString indent;
+    auto prevBlockText = block.previous().text(); // invalid block returns empty text
+    auto indent = QString();
     if (typedKey == Qt::Key_Enter && prevBlockText.trimmed().isEmpty()) {
         // continue indentation, if no text
         indent = prevBlockIndent(block);
 
         if (alg_->shouldTrimPrevEmptyLine() && (!prevBlockText.isEmpty())) {
-            QTextBlock prevBlock = block.previous();
+            auto prevBlock = block.previous();
             QTextCursor prevCursor(prevBlock);
             prevCursor.select(QTextCursor::LineUnderCursor);
             prevCursor.removeSelectedText();
@@ -142,17 +144,28 @@ void Indenter::indentBlock(QTextBlock block, int cursorPos, int typedKey) const 
             QTextCursor cursor(block);
             cursor.insertText(indent);
         }
-    }
- else {
+    } else {
         QString indentedLine;
-        if (typedKey == 0) { // format line on shortcut
-            indentedLine = alg_ ? alg_->autoFormatLine(block) : QString();
-        } else {
-            indentedLine = alg_ ? alg_->indentLine(block, cursorPos) : QString();
+        if (typedKey == Qt::Key_Enter || typedKey == Qt::Key_Return) {
+            // A new line continues a single line comment, like '//' in C++ or
+            // '#' in Ruby.
+            auto continuation =
+                lineCommentContinuation(block.previous(), lineCommentMarker_);
+            if (!continuation.isNull()) {
+                indentedLine = continuation + stripLeftWhitespace(block.text());
+            }
+        }
+
+        if (indentedLine.isNull()) {
+            if (typedKey == 0) { // format line on shortcut
+                indentedLine = alg_ ? alg_->autoFormatLine(block) : QString();
+            } else {
+                indentedLine = alg_ ? alg_->indentLine(block, cursorPos) : QString();
+            }
         }
 
         if ((!indentedLine.isNull()) && indentedLine != block.text()) {
-            QTextCursor cursor(block);
+            auto cursor = QTextCursor(block);
             cursor.select(QTextCursor::LineUnderCursor);
             cursor.insertText(indentedLine);
         }
@@ -164,7 +177,12 @@ void Indenter::indentWrappedBlock(QTextBlock block, int cursorPos) const {
         return;
     }
 
-    auto indent = alg_->computeWrapIndent(block, cursorPos);
+    // A wrapped line continues a single line comment, like a new line does.
+    auto indent = lineCommentContinuation(block.previous(), lineCommentMarker_);
+    if (indent.isNull()) {
+        indent = alg_->computeWrapIndent(block, cursorPos);
+    }
+
     if (indent.isNull()) {
         return;
     }

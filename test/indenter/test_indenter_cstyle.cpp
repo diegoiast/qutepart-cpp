@@ -189,7 +189,7 @@ class Test : public BaseTest {
                                << std::make_pair(0, 62) << "\nok"
                                << "// leading comment should not cause second "
                                   "line to be indented\n"
-                                  "ok\n";
+                                  "// ok\n";
     }
 
     void If() { runDataDrivenTest(); }
@@ -700,13 +700,96 @@ class Test : public BaseTest {
                                   << "  int foo() {\n"
                                      "    x;\n"
                                      "//     y;\n"
-                                     "    ok\n";
+                                     "//     ok\n";
 
         QTest::newRow("comment2") << "foo(); // \"comment\"\n"
                                      ""
                                   << std::make_pair(0, 19) << "\nok"
                                   << "foo(); // \"comment\"\n"
                                      "ok\n";
+    }
+
+    void LineComment() { runDataDrivenTest(); }
+
+    void LineComment_data() {
+        addColumns();
+
+        // Pressing enter on a '//' line continues the comment.
+        QTest::newRow("linecomment1") << "// foo\n"
+                                    << std::make_pair(0, 6) << "\nbar"
+                                    << "// foo\n"
+                                       "// bar\n";
+
+        // ...keeping the indentation of the comment.
+        QTest::newRow("linecomment2") << "  // foo\n"
+                                    << std::make_pair(0, 8) << "\nbar"
+                                    << "  // foo\n"
+                                       "  // bar\n";
+
+        // ...keeping the extra space after the comment marker.
+        QTest::newRow("linecomment3") << "//foo bar\n"
+                                    << std::make_pair(0, 9) << "\nbaz"
+                                    << "//foo bar\n"
+                                       "//baz\n";
+
+        QTest::newRow("linecomment4") << "//  foo bar\n"
+                                    << std::make_pair(0, 11) << "\nbaz"
+                                    << "//  foo bar\n"
+                                       "//  baz\n";
+
+        // An empty '//' line also continues.
+        QTest::newRow("linecomment5") << "  //\n"
+                                    << std::make_pair(0, 4) << "\nfoo"
+                                    << "  //\n"
+                                       "  // foo\n";
+
+        // Inside a function body.
+        QTest::newRow("linecomment6") << "int foo() {\n"
+                                        "  // comment\n"
+                                        "}\n"
+                                    << std::make_pair(1, 12) << "\nnext"
+                                    << "int foo() {\n"
+                                       "  // comment\n"
+                                       "  // next\n"
+                                       "}\n";
+
+        // A comment behind code is not continued - it is a trailing comment.
+        QTest::newRow("linecomment7") << "int foo() {\n"
+                                        "  bar();  // comment\n"
+                                        "}\n"
+                                    << std::make_pair(1, 20) << "\nnext"
+                                    << "int foo() {\n"
+                                       "  bar();  // comment\n"
+                                       "  next\n"
+                                       "}\n";
+
+        // An empty line in between breaks the continuation.
+        QTest::newRow("linecomment8") << "// foo\n"
+                                        "\n"
+                                    << std::make_pair(1, 0) << "\nbar"
+                                    << "// foo\n"
+                                       "\n"
+                                       "bar\n";
+
+        // Code following a comment is not part of the comment.
+        QTest::newRow("linecomment9") << "// foo\n"
+                                        "int bar();\n"
+                                    << std::make_pair(1, 10) << "\nbaz"
+                                    << "// foo\n"
+                                       "int bar();\n"
+                                       "baz\n";
+
+        // A line with code only is not indented as a comment.
+        QTest::newRow("linecomment10") << "int foo();\n"
+                                    << std::make_pair(0, 10) << "\nbar"
+                                    << "int foo();\n"
+                                       "bar\n";
+
+        // A comment marker inside a string does not continue.
+        QTest::newRow("linecomment11") << "char *s = \"// not a comment\";\n"
+                                    << std::make_pair(0, 29) << "\nbaz"
+                                    << "char *s = \"// not a comment\";\n"
+                                       "baz\n";
     }
 
     void Aplist() { runDataDrivenTest(); }
