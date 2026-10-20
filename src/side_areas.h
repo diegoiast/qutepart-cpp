@@ -8,6 +8,7 @@
 #include <QWidget>
 
 class QShowEvent;
+class TestMinimapSync;
 
 namespace Qutepart {
 
@@ -73,6 +74,8 @@ class MarkArea : public SideArea {
 
 class Minimap : public SideArea {
     Q_OBJECT
+    friend class ::TestMinimapSync;
+
   public:
     Minimap(Qutepart *textEdit);
 

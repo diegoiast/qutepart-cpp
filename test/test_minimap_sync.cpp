@@ -2,12 +2,7 @@
 #include <QApplication>
 #include <QScrollBar>
 #include "qutepart/qutepart.h"
-
-#define private public
-#define protected public
 #include "side_areas.h"
-#undef protected
-#undef private
 
 class TestMinimapSync : public QObject {
     Q_OBJECT
