@@ -2321,13 +2321,10 @@ void Qutepart::updateViewport() {
     auto isLargeDoc = document()->blockCount() > 20000;
     if (miniMap_) {
         auto w = miniMap_->widthHint();
+        // Note: contentsRect does not include the scrollbar, so its width does not
+        // change when the scrollbar policy changes. Do not add the scrollbar width
+        // here, or the decision flips back and forth (infinite resize recursion).
         auto shouldHideMinimap = isLargeDoc || cr.width() < w * 4;
-        // If we hide the scrollbar we gain width, so re-evaluate (only for narrow check, not large doc)
-        if (!isLargeDoc && shouldHideMinimap && verticalScrollBar()->isVisible()) {
-            if (cr.width() + verticalScrollBar()->width() >= w * 4) {
-                shouldHideMinimap = false;
-            }
-        }
         Qt::ScrollBarPolicy desired =
             shouldHideMinimap ? Qt::ScrollBarAlwaysOn : Qt::ScrollBarAlwaysOff;
         if (verticalScrollBarPolicy() != desired) {
@@ -2376,9 +2373,6 @@ void Qutepart::updateViewport() {
 
         if (shouldHide) {
             miniMap_->hide();
-            if (verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOn) {
-                setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-            }
         } else {
             miniMap_->show();
             miniMap_->setGeometry(QRect(cr.width() - width - deltaOrizontal, top, width, height));
