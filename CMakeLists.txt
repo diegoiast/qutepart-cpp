@@ -2,13 +2,17 @@ cmake_minimum_required(VERSION 3.20.0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 option(QUTEPART_ENABLE_DOCS "Should we build documentation for qutepart" OFF)
-option(QUTEPART_USE_MOLD "Should we link using mold?" ON)
+if(NOT WIN32)
+  option(QUTEPART_USE_MOLD "Should we link using mold?" ON)
+endif()
 option(QUTEPART_USE_CMAKEFORMAT "Should we add an clang-format target" ON)
 option(QUTEPART_TESTS "Should we build tests" ON)
 
 project(qutepart)
 
-include(cmake/mold-linker.cmake)
+if(NOT WIN32)
+  include(cmake/mold-linker.cmake)
+endif()
 
 if (QUTEPART_USE_CMAKEFORMAT)
   include(FetchContent)
@@ -30,7 +34,7 @@ if(QUTEPART_ENABLE_DOCS)
 endif()
 
 set(QUTEPART_VERSION_MAJOR 0)
-set(QUTEPART_VERSION_MINOR 1)
+set(QUTEPART_VERSION_MINOR 2)
 set(QUTEPART_VERSION_PATCH 0)
 set(QUTEPART_VERSION
     ${QUTEPART_VERSION_MAJOR}.${QUTEPART_VERSION_MINOR}.${QUTEPART_VERSION_PATCH}
