@@ -546,6 +546,34 @@ bool Qutepart::minimapVisible() const {
     return true;
 }
 
+bool Qutepart::markAreaVisible() const {
+    if (!markArea_) {
+        return false;
+    }
+    return markArea_->isVisible();
+}
+
+void Qutepart::setMarkAreaVisible(bool value) {
+    if (!markArea_) {
+        return;
+    }
+    markArea_->setVisible(value);
+}
+
+bool Qutepart::foldingAreaVisible() const {
+    if (!foldingArea_) {
+        return false;
+    }
+    return foldingArea_->isVisible();
+}
+
+void Qutepart::setFoldingAreaVisible(bool value) const {
+    if (!foldingArea_) {
+        return ;
+    }
+    foldingArea_->setVisible(value);
+}
+
 void Qutepart::setMinimapVisible(bool value) {
     if ((miniMap_ != nullptr) == value) {
         return;
@@ -2345,21 +2373,21 @@ void Qutepart::updateViewport() {
     auto viewportMarginEnd = 0;
     auto deltaOrizontal = verticalScrollBar()->isVisible() ? verticalScrollBar()->width() : 0;
 
-    if (lineNumberArea_) {
+    if (lineNumberArea_ && lineNumberArea_->isVisible()) {
         auto width = lineNumberArea_->widthHint();
         lineNumberArea_->setGeometry(QRect(currentX, top, width, height));
         currentX += width;
         viewportMarginStart += width;
     }
 
-    {
+    if (markArea_ && markArea_->isVisible()){
         auto width = markArea_->widthHint();
         markArea_->setGeometry(QRect(currentX, top, width, height));
         viewportMarginStart += width;
         currentX += width;
     }
 
-    if (foldingArea_) {
+    if (foldingArea_ && foldingArea_->isVisible()) {
         auto width = foldingArea_->widthHint();
         foldingArea_->setGeometry(QRect(currentX, top, width, height));
         viewportMarginStart += width;

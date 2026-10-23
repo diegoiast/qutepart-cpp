@@ -407,6 +407,12 @@ class Qutepart : public QPlainTextEdit {
     bool minimapVisible() const;
     void setMinimapVisible(bool value);
 
+    bool markAreaVisible() const;
+    void setMarkAreaVisible(bool value);
+
+    bool foldingAreaVisible() const;
+    void setFoldingAreaVisible(bool value) const;
+
     /// To to logical, or phisical end/start of line.
     bool getSmartHomeEnd() const;
     /// To to logical, or phisical end/start of line.
