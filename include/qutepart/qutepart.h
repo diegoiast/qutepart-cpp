@@ -733,6 +733,7 @@ class Qutepart : public QPlainTextEdit {
 
     QTimer *currentWordTimer = nullptr;
     QString lastWordUnderCursor;
+    int widthHintLast_ = 0;
 
     QSyntaxHighlighter *highlighter_ = nullptr;
     Indenter *indenter_;

@@ -269,9 +269,18 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
     });
     connect(document(), &QTextDocument::blockCountChanged, this, [this]() { updateViewport(); });
 
-    connect(document(), &QTextDocument::contentsChange, this, [this]() {
+    connect(document(), &QTextDocument::contentsChange, this, [this](int /*position*/, int /*charsRemoved*/, int /*charsInserted*/) {
         auto block = textCursor().block();
         this->setLineModified(block, true);
+
+        // Only update viewport if the line number area width hint has changed.
+        // This avoids calling updateViewport() on every keystroke (e.g. pressing Enter),
+        // since blockCountChanged and widthChanged already handle viewport updates.
+        auto newWidthHint = lineNumberArea_ ? lineNumberArea_->widthHint() : 0;
+        if (newWidthHint != widthHintLast_) {
+            widthHintLast_ = newWidthHint;
+            updateViewport();
+        }
 
         // Event is fired when destructing as well
         if (markArea_) {
