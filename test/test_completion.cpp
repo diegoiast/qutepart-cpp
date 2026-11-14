@@ -70,6 +70,39 @@ class Test : public QObject {
 
         QTRY_COMPARE(qpart.lines().at(1).text(), QString("MY_IMPLEMENTATION"));
     }
+
+    void CompletionListHasOpaqueBackground() {
+        Qutepart::Qutepart qpart(nullptr, "");
+        qpart.setCompletionEnabled(true);
+        qpart.setCompletionThreshold(1);
+        qpart.setPlainText("IMPLemented\nimpl");
+        qpart.goTo(1, 4);
+
+        // Some styles (WinUI3) make Base translucent so widgets blend with the
+        // window backdrop. The completion list is a child of the editor, not a
+        // popup, so it must not inherit that transparency.
+        auto palette = qpart.viewport()->palette();
+        palette.setColor(QPalette::Base, QColor(255, 255, 255, 128));
+        palette.setColor(QPalette::Window, QColor(0, 0, 0, 128));
+        qpart.viewport()->setPalette(palette);
+
+        // Wait for word set update
+        QTest::qWait(200);
+
+        qpart.invokeCompletionAction()->trigger();
+
+        QListView *list = nullptr;
+        for (int i = 0; i < 10; ++i) {
+            list = qpart.viewport()->findChild<QListView *>();
+            if (list) break;
+            QTest::qWait(100);
+        }
+
+        QVERIFY(list != nullptr);
+        QCOMPARE(list->palette().color(QPalette::Base).alpha(), 255);
+        QCOMPARE(list->palette().color(QPalette::Window).alpha(), 255);
+        QCOMPARE(list->viewport()->palette().color(QPalette::Base).alpha(), 255);
+    }
 };
 
 QTEST_MAIN(Test)

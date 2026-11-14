@@ -170,11 +170,25 @@ class CompletionList : public QListView {
   public:
     CompletionList(Qutepart *qpart, CompletionModel *model)
         : QListView(qpart->viewport()), qpart_(qpart), completionModel_(model), selectedIndex_(-1) {
-        // ensure good selected item background on Windows
+        // The list is a child of the editor viewport, not a popup window. Styles
+        // may make QPalette::Base translucent so content sits on the window
+        // backdrop (WinUI3 does this); inheriting it here would let the editor
+        // text show through the list. Give the list its own opaque surface.
         QPalette newPalette = palette();
+        for (auto group : {QPalette::Active, QPalette::Inactive, QPalette::Disabled}) {
+            for (auto role : {QPalette::Base, QPalette::Window}) {
+                auto color = newPalette.color(group, role);
+                color.setAlpha(255);
+                newPalette.setColor(group, role, color);
+            }
+        }
+
+        // ensure good selected item background on Windows
         newPalette.setColor(QPalette::Inactive, QPalette::Highlight,
                             newPalette.color(QPalette::Active, QPalette::Highlight));
         setPalette(newPalette);
+        viewport()->setPalette(newPalette);
+        setAutoFillBackground(true);
 
         setAttribute(Qt::WA_DeleteOnClose);
         setFrameStyle(QFrame::Raised);
