@@ -18,6 +18,7 @@
 #include <QIcon>
 #include <QPainterPath>
 #include <QScrollBar>
+#include <QShowEvent>
 #include <QStyle>
 
 #include "bracket_highlighter.h"
@@ -268,19 +269,9 @@ Qutepart::Qutepart(QWidget *parent, const QString &text)
         }
     });
     connect(document(), &QTextDocument::blockCountChanged, this, [this]() { updateViewport(); });
-
-    connect(document(), &QTextDocument::contentsChange, this, [this](int /*position*/, int /*charsRemoved*/, int /*charsInserted*/) {
+    connect(document(), &QTextDocument::contentsChange, this, [this]() {
         auto block = textCursor().block();
         this->setLineModified(block, true);
-
-        // Only update viewport if the line number area width hint has changed.
-        // This avoids calling updateViewport() on every keystroke (e.g. pressing Enter),
-        // since blockCountChanged and widthChanged already handle viewport updates.
-        auto newWidthHint = lineNumberArea_ ? lineNumberArea_->widthHint() : 0;
-        if (newWidthHint != widthHintLast_) {
-            widthHintLast_ = newWidthHint;
-            updateViewport();
-        }
 
         // Event is fired when destructing as well
         if (markArea_) {
@@ -2382,7 +2373,7 @@ void Qutepart::updateViewport() {
     auto viewportMarginEnd = 0;
     auto deltaOrizontal = verticalScrollBar()->isVisible() ? verticalScrollBar()->width() : 0;
 
-    if (lineNumberArea_ && lineNumberArea_->isVisible()) {
+    if (lineNumberArea_) {
         auto width = lineNumberArea_->widthHint();
         lineNumberArea_->setGeometry(QRect(currentX, top, width, height));
         currentX += width;
@@ -2426,6 +2417,14 @@ void Qutepart::updateViewport() {
 
 void Qutepart::resizeEvent(QResizeEvent *event) {
     QPlainTextEdit::resizeEvent(event);
+    updateViewport();
+}
+
+void Qutepart::showEvent(QShowEvent *event) {
+    QPlainTextEdit::showEvent(event);
+    // A tab page is laid out while hidden, so becoming visible may not generate a
+    // resizeEvent. The side areas were not visible when updateViewport() last ran,
+    // which left the viewport margins and their geometry stale. Recompute them now.
     updateViewport();
 }
 
