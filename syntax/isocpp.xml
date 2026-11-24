@@ -530,7 +530,7 @@
       </context>
 
       <context name="RawString" attribute="String" lineEndContext="#stay" fallthrough="true" fallthroughContext="#pop!LineError">
-        <RegExpr attribute="String" context="#pop!InRawString" String="([^\(]{0,16})\(" />
+        <RegExpr attribute="String" context="#pop!InRawString" String="R\((#+)?" />
       </context>
 
       <context name="InRawString" attribute="String" lineEndContext="#stay" dynamic="true">
