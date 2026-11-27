@@ -173,7 +173,10 @@ QSharedPointer<QTextCharFormat> makeFormat(const QString &defStyle, const QStrin
         return {};
     }
 
-    if (!color.isNull()) {
+    /* XML colors are a fallback for default styles without a built-in color.
+     * A light-theme literal such as #303030 must not override the palette-aware
+     * color already chosen by defaultFormat(). */
+    if (!color.isNull() && format->foreground().style() == Qt::NoBrush) {
         format->setForeground(QColor(color));
     }
 

@@ -56,7 +56,8 @@ void TextToMatch::shiftOnce() {
     cachedWordDeliminators = nullptr;
     QChar prevChar = text.at(0);
     firstNonSpace = firstNonSpace && prevChar.isSpace();
-    isWordStart = (!isWordStart) && textLength > 1 && isWordChar(text.at(1));
+    isWordStart = !isWordChar(prevChar) && textLength > 1 &&
+                  isWordChar(text.at(1));
 
     currentColumnIndex++;
     text = text.right(text.length() - 1);
@@ -68,7 +69,8 @@ void TextToMatch::shift(int count) {
     for (int i = 0; i < count; i++) {
         QChar prevChar = text.at(i);
         firstNonSpace = firstNonSpace && prevChar.isSpace();
-        isWordStart = (!isWordStart) && textLength > (i + 1) && isWordChar(text.at(i + 1));
+        isWordStart = !isWordChar(prevChar) && textLength > (i + 1) &&
+                      isWordChar(text.at(i + 1));
     }
 
     currentColumnIndex += count;
