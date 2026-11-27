@@ -6,6 +6,7 @@ if(NOT WIN32)
   option(QUTEPART_USE_MOLD "Should we link using mold?" ON)
 endif()
 option(QUTEPART_USE_CMAKEFORMAT "Should we add an clang-format target" ON)
+option(QUTEPART_EXANOKE "Should we build the example" ON)
 option(QUTEPART_TESTS "Should we build tests" ON)
 
 project(qutepart)
@@ -119,9 +120,11 @@ else()
   target_compile_options(qutepart PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
-# Build example executable
-add_executable(editor example/editor.cpp)
-target_link_libraries(editor Qt::Core Qt::Widgets qutepart)
+if(QUTEPART_DEMO)
+    # Build example executable
+    add_executable(editor example/editor.cpp)
+    target_link_libraries(editor Qt::Core Qt::Widgets qutepart)
+endif()
 
 # Install only library, not binaries
 install(TARGETS qutepart DESTINATION lib)
